@@ -16,16 +16,16 @@ export default function Header() {
         <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
-        
+
         <Link to="/" className="logo">
           <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear" />
-          olivka_store
+          olivka.store
         </Link>
 
-        {/* Десктопне меню */}
+        {/* Десктопна навігація */}
         <nav className="nav desktop-nav">
           <Link to="/" className="nav-link nav-link-highlight">Новинки</Link>
-          
+
           <div className="dropdown-container">
             <Link to="/catalog" className="nav-link dropdown-trigger">Каталог</Link>
             <div className="dropdown-menu">
@@ -34,20 +34,18 @@ export default function Header() {
                   {cat.name}
                 </Link>
               ))}
-              <Link to="/catalog" className="dropdown-item" style={{borderTop: '1px solid var(--color-stone-100)', marginTop: '0.5rem', paddingTop: '0.5rem'}}>
+              <Link to="/catalog" className="dropdown-item" style={{ borderTop: '1px solid var(--color-stone-100)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
                 Всі товари
               </Link>
             </div>
           </div>
-          
-          <Link to="/#about" className="nav-link">Про нас</Link>
         </nav>
 
         <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
           <ShoppingBag size={24} color="var(--color-stone-600)" />
           <AnimatePresence>
             {cartCount > 0 && (
-              <motion.span 
+              <motion.span
                 key={cartCount}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1, rotate: [0, -10, 10, -10, 10, 0] }}
@@ -76,18 +74,18 @@ export default function Header() {
         </button>
       </div>
 
-      {/* Мобильное меню (пока простое) */}
+      {/* Мобільне меню */}
       {isMobileMenuOpen && (
         <div className="mobile-menu" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="container" style={{display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0'}}>
+          <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0' }}>
             <Link to="/" className="nav-link nav-link-highlight">Новинки</Link>
-            <div style={{fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem'}}>Категорії:</div>
+            <div style={{ fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem' }}>Категорії:</div>
             {CATEGORIES.map(cat => (
-              <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{paddingLeft: '1rem'}}>
+              <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '1rem' }}>
                 - {cat.name}
               </Link>
             ))}
-            <Link to="/catalog" className="nav-link" style={{paddingLeft: '1rem'}}>
+            <Link to="/catalog" className="nav-link" style={{ paddingLeft: '1rem' }}>
               - Всі товари
             </Link>
           </div>

@@ -10,7 +10,7 @@ export default function Home() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Hero Section */}
+      {/* Головна секція (Hero) */}
       <section className="hero">
         <div className="hero-content">
           <motion.h1 
@@ -40,7 +40,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products */}
+      {/* Рекомендовані товари */}
       <section id="catalog" className="section container">
         <h2 className="section-title">Новинки</h2>
         <div className="products-grid">

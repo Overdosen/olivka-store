@@ -1,12 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Minimalist Bear Icon for Olivka Store -->
-  <circle cx="50" cy="55" r="30" fill="#627b58" /> <!-- Head -->
-  <circle cx="30" cy="30" r="12" fill="#627b58" /> <!-- Left Ear -->
-  <circle cx="70" cy="30" r="12" fill="#627b58" /> <!-- Right Ear -->
-  <circle cx="30" cy="30" r="6" fill="#dae5d4" />  <!-- Left Inner Ear -->
-  <circle cx="70" cy="30" r="6" fill="#dae5d4" />  <!-- Right Inner Ear -->
-  <circle cx="50" cy="65" r="10" fill="#dae5d4" /> <!-- Muzzle -->
-  <circle cx="42" cy="50" r="3" fill="#1c1917" />  <!-- Left Eye -->
-  <circle cx="58" cy="50" r="3" fill="#1c1917" />  <!-- Right Eye -->
-  <path d="M47 62 Q50 65 53 62" stroke="#1c1917" stroke-width="2" fill="none" stroke-linecap="round" /> <!-- Nose/Mouth -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="bodyGrad" cx="45%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#DEB887"/>
+      <stop offset="60%" stop-color="#C49A6C"/>
+      <stop offset="100%" stop-color="#A0785A"/>
+    </radialGradient>
+    <radialGradient id="bellyGrad" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#F2DEC4"/>
+      <stop offset="100%" stop-color="#DEC8A8"/>
+    </radialGradient>
+    <radialGradient id="earInner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8C99A"/>
+      <stop offset="100%" stop-color="#C8A878"/>
+    </radialGradient>
+    <radialGradient id="headGrad" cx="42%" cy="35%" r="58%">
+      <stop offset="0%" stop-color="#DEB887"/>
+      <stop offset="70%" stop-color="#C49A6C"/>
+      <stop offset="100%" stop-color="#A8815E"/>
+    </radialGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="0.4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ноги -->
+  <ellipse cx="34" cy="84" rx="14" ry="10" fill="url(#bodyGrad)"/>
+  <ellipse cx="66" cy="84" rx="14" ry="10" fill="url(#bodyGrad)"/>
+  <!-- Подушечки лап -->
+  <ellipse cx="34" cy="88" rx="9" ry="5.5" fill="url(#bellyGrad)" opacity="0.9"/>
+  <ellipse cx="66" cy="88" rx="9" ry="5.5" fill="url(#bellyGrad)" opacity="0.9"/>
+  <circle cx="29" cy="90" r="2" fill="#C8A878" opacity="0.7"/>
+  <circle cx="34" cy="91.5" r="2" fill="#C8A878" opacity="0.7"/>
+  <circle cx="39" cy="90" r="2" fill="#C8A878" opacity="0.7"/>
+  <circle cx="61" cy="90" r="2" fill="#C8A878" opacity="0.7"/>
+  <circle cx="66" cy="91.5" r="2" fill="#C8A878" opacity="0.7"/>
+  <circle cx="71" cy="90" r="2" fill="#C8A878" opacity="0.7"/>
+
+  <!-- Тело -->
+  <ellipse cx="50" cy="68" rx="27" ry="26" fill="url(#bodyGrad)"/>
+  <!-- Живот (светлое пятно) -->
+  <ellipse cx="50" cy="70" rx="15" ry="16" fill="url(#bellyGrad)" opacity="0.85"/>
+
+  <!-- Ручки -->
+  <ellipse cx="22" cy="65" rx="9" ry="13" fill="url(#bodyGrad)" transform="rotate(-15,22,65)"/>
+  <ellipse cx="78" cy="65" rx="9" ry="13" fill="url(#bodyGrad)" transform="rotate(15,78,65)"/>
+
+  <!-- Ушки (внешние) -->
+  <circle cx="29" cy="18" r="12" fill="url(#bodyGrad)"/>
+  <circle cx="71" cy="18" r="12" fill="url(#bodyGrad)"/>
+  <!-- Ушки (внутренние) -->
+  <circle cx="29" cy="18" r="7" fill="url(#earInner)"/>
+  <circle cx="71" cy="18" r="7" fill="url(#earInner)"/>
+
+  <!-- Голова -->
+  <circle cx="50" cy="38" r="26" fill="url(#headGrad)"/>
+
+  <!-- Мордочка (светлая часть) -->
+  <ellipse cx="50" cy="47" rx="13" ry="10" fill="url(#bellyGrad)" opacity="0.9"/>
+
+  <!-- Глаза -->
+  <circle cx="41" cy="36" r="4" fill="#5C3D2E"/>
+  <circle cx="59" cy="36" r="4" fill="#5C3D2E"/>
+  <circle cx="41" cy="36" r="2.5" fill="#2C1A0E"/>
+  <circle cx="59" cy="36" r="2.5" fill="#2C1A0E"/>
+  <!-- Блики в глазах -->
+  <circle cx="42.5" cy="34.5" r="1.2" fill="white" opacity="0.9"/>
+  <circle cx="60.5" cy="34.5" r="1.2" fill="white" opacity="0.9"/>
+
+  <!-- Нос -->
+  <ellipse cx="50" cy="43" rx="5" ry="3.5" fill="#3D2314"/>
+  <ellipse cx="49" cy="42" rx="2" ry="1.2" fill="#6B4535" opacity="0.5"/>
+
+  <!-- Улыбка -->
+  <path d="M 44 48 Q 50 54 56 48" stroke="#8B5C40" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+
+  <!-- Брови (линии над глазами) -->
+  <path d="M 38 30.5 Q 41 29 44 30.5" stroke="#A07858" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+  <path d="M 56 30.5 Q 59 29 62 30.5" stroke="#A07858" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+  <!-- Бантик на шее -->
+  <path d="M 50 62 L 42 57 L 50 60 L 58 57 Z" fill="#F0E8D8" stroke="#D4C8B0" stroke-width="0.5"/>
+  <circle cx="50" cy="60" r="2.5" fill="#E8DCC8" stroke="#C8BAA0" stroke-width="0.5"/>
+  <!-- Ленточки бантика -->
+  <path d="M 42 57 Q 38 55 40 58" stroke="#D4C8B0" stroke-width="1" fill="#F0E8D8"/>
+  <path d="M 58 57 Q 62 55 60 58" stroke="#D4C8B0" stroke-width="1" fill="#F0E8D8"/>
+
+  <!-- Лёгкая акварельная текстура — пятна -->
+  <circle cx="30" cy="55" r="8" fill="#A07850" opacity="0.08"/>
+  <circle cx="68" cy="72" r="7" fill="#A07850" opacity="0.07"/>
+  <circle cx="45" cy="25" r="6" fill="#C49A6C" opacity="0.09"/>
 </svg>

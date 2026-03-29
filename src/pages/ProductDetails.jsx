@@ -32,7 +32,7 @@ export default function ProductDetails() {
         className="container section text-center"
       >
         <h2>Товар не знайдено</h2>
-        <Link to="/catalog" className="btn btn-primary" style={{marginTop: '2rem'}}>В каталог</Link>
+        <Link to="/catalog" className="btn btn-primary" style={{marginTop: '2rem'}}>До каталогу</Link>
       </motion.div>
     );
   }
@@ -89,6 +89,7 @@ export default function ProductDetails() {
           onClick={handleAddToCart}
         >
           <ShoppingBag size={20} style={{marginRight: '0.5rem'}} />
+          // Якщо catId немає, значить показуємо весь каталог
           Додати до кошика
         </motion.button>
 

@@ -12,7 +12,7 @@ export default function CartDrawer() {
     <AnimatePresence>
       {isCartOpen && (
         <>
-          {/* Фон затемнения */}
+          {/* Фон затемнення */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.5 }}
@@ -29,7 +29,7 @@ export default function CartDrawer() {
             }}
           />
 
-          {/* Плашка корзины */}
+          {/* Плашка кошика */}
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
@@ -50,7 +50,7 @@ export default function CartDrawer() {
               fontFamily: 'var(--font-sans)',
             }}
           >
-            {/* Header корзины */}
+            {/* Header кошика */}
             <div
               style={{
                 padding: '1.5rem',
@@ -128,7 +128,7 @@ export default function CartDrawer() {
               )}
             </div>
 
-            {/* Footer корзины */}
+            {/* Footer кошика */}
             {cartItems.length > 0 && (
               <div
                 style={{
@@ -164,7 +164,7 @@ export default function CartDrawer() {
   );
 }
 
-// Простенькая SVG иконка для визуализации пустой сумки
+// Проста SVG іконка для візуалізації порожньої сумки
 const ShoppingBagEmptyIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"

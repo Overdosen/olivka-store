@@ -18,7 +18,7 @@ export default function Category() {
         className="container section text-center"
       >
         <h2>Категорія не знайдена</h2>
-        <Link to="/catalog" className="btn btn-primary" style={{marginTop: '2rem'}}>В каталог</Link>
+        <Link to="/catalog" className="btn btn-primary" style={{marginTop: '2rem'}}>До каталогу</Link>
       </motion.div>
     );
   }
