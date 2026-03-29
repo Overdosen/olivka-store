@@ -1,14 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Menu, X } from 'lucide-react';
 import bearImg from '../assets/teddy_bear.png';
-import { CATEGORIES } from '../data';
+import { CATEGORIES as STATIC_CATEGORIES } from '../data';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 export default function Header() {
   const { cartCount, setIsCartOpen } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [categories, setCategories] = useState(STATIC_CATEGORIES);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (error) {
+        console.error('Помилка при завантаженні категорій:', error);
+      } else if (data) {
+        setCategories(data);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   return (
     <header className="header">
@@ -29,7 +46,7 @@ export default function Header() {
           <div className="dropdown-container">
             <Link to="/catalog" className="nav-link dropdown-trigger">Каталог</Link>
             <div className="dropdown-menu">
-              {CATEGORIES.map(cat => (
+              {categories.map(cat => (
                 <Link key={cat.id} to={`/category/${cat.id}`} className="dropdown-item">
                   {cat.name}
                 </Link>
@@ -80,7 +97,7 @@ export default function Header() {
           <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0' }}>
             <Link to="/" className="nav-link nav-link-highlight">Новинки</Link>
             <div style={{ fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem' }}>Категорії:</div>
-            {CATEGORIES.map(cat => (
+            {categories.map(cat => (
               <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '1rem' }}>
                 - {cat.name}
               </Link>

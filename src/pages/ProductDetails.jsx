@@ -1,18 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import { PRODUCTS } from '../data';
+import { PRODUCTS as STATIC_PRODUCTS } from '../data';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const product = PRODUCTS.find(p => p.id === id);
+  const [product, setProduct] = useState(STATIC_PRODUCTS.find(p => p.id === id));
+  const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('');
   const { addToCart } = useCart();
 
+  useEffect(() => {
+    async function fetchProduct() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Помилка при завантаженні товару:', error);
+      } else if (data) {
+        setProduct({ ...data, image: data.image_url });
+      }
+      setLoading(false);
+    }
+    fetchProduct();
+  }, [id]);
+
   const handleAddToCart = () => {
+    if (!product) return;
     if (product.sizes && product.sizes.length > 0 && !selectedSize) {
       toast.error('Будь ласка, оберіть розмір');
       return;
@@ -23,7 +45,7 @@ export default function ProductDetails() {
     });
   };
 
-  if (!product) {
+  if (!product && !loading) {
     return (
       <motion.div 
         initial={{ opacity: 0 }}
@@ -34,6 +56,14 @@ export default function ProductDetails() {
         <h2>Товар не знайдено</h2>
         <Link to="/catalog" className="btn btn-primary" style={{marginTop: '2rem'}}>До каталогу</Link>
       </motion.div>
+    );
+  }
+
+  if (loading && !product) {
+    return (
+      <div className="container section text-center">
+        <h2>Завантаження...</h2>
+      </div>
     );
   }
 
@@ -89,7 +119,6 @@ export default function ProductDetails() {
           onClick={handleAddToCart}
         >
           <ShoppingBag size={20} style={{marginRight: '0.5rem'}} />
-          // Якщо catId немає, значить показуємо весь каталог
           Додати до кошика
         </motion.button>
 

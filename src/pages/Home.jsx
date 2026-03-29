@@ -1,8 +1,29 @@
-import { CATEGORIES, PRODUCTS } from '../data';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { PRODUCTS as STATIC_PRODUCTS } from '../data';
+import { supabase } from '../lib/supabase';
 
 export default function Home() {
+  const [featuredProducts, setFeaturedProducts] = useState(STATIC_PRODUCTS.filter(p => p.isNew));
+
+  useEffect(() => {
+    async function fetchNewArrivals() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_new', true);
+      
+      if (error) {
+        console.error('Помилка при завантаженні новинок:', error);
+      } else if (data) {
+        // Мапимо image_url у image для сумісності
+        setFeaturedProducts(data.map(p => ({ ...p, image: p.image_url })));
+      }
+    }
+    fetchNewArrivals();
+  }, []);
+
   return (
     <motion.main 
       initial={{ opacity: 0 }}
@@ -44,7 +65,7 @@ export default function Home() {
       <section id="catalog" className="section container">
         <h2 className="section-title">Новинки</h2>
         <div className="products-grid">
-          {PRODUCTS.filter(p => p.isNew).map((product, index) => (
+          {featuredProducts.map((product, index) => (
             <motion.div 
               key={product.id}
               initial={{ opacity: 0, scale: 0.95 }}

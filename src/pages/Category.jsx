@@ -1,15 +1,61 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CATEGORIES, PRODUCTS } from '../data';
 import { motion } from 'framer-motion';
+import { CATEGORIES as STATIC_CATEGORIES, PRODUCTS as STATIC_PRODUCTS } from '../data';
+import { supabase } from '../lib/supabase';
 
 export default function Category() {
   const { catId } = useParams();
   
-  // Якщо catId немає, значить показуємо весь каталог
-  const category = catId ? CATEGORIES.find(c => c.id === catId) : { name: 'Весь каталог' };
-  const products = catId ? PRODUCTS.filter(p => p.categoryId === catId) : PRODUCTS;
+  const [category, setCategory] = useState(
+    catId ? STATIC_CATEGORIES.find(c => c.id === catId) : { name: 'Весь каталог' }
+  );
+  const [products, setProducts] = useState(
+    catId ? STATIC_PRODUCTS.filter(p => p.categoryId === catId) : STATIC_PRODUCTS
+  );
+  const [loading, setLoading] = useState(true);
 
-  if (!category) {
+  useEffect(() => {
+    async function fetchCategoryData() {
+      setLoading(true);
+      
+      // Спершу отримуємо назву категорії, якщо це не "Весь каталог"
+      if (catId) {
+        const { data: catData, error: catError } = await supabase
+          .from('categories')
+          .select('name')
+          .eq('id', catId)
+          .single();
+        
+        if (!catError && catData) {
+          setCategory({ id: catId, name: catData.name });
+        }
+      } else {
+        setCategory({ name: 'Весь каталог' });
+      }
+
+      // Потім отримуємо товари
+      let query = supabase.from('products').select('*');
+      
+      if (catId) {
+        query = query.eq('category_id', catId);
+      }
+      
+      const { data: prodData, error: prodError } = await query;
+      
+      if (prodError) {
+        console.error('Помилка при завантаженні товарів:', prodError);
+      } else if (prodData) {
+        setProducts(prodData.map(p => ({ ...p, image: p.image_url })));
+      }
+      
+      setLoading(false);
+    }
+
+    fetchCategoryData();
+  }, [catId]);
+
+  if (!category && !loading) {
     return (
       <motion.div 
         initial={{ opacity: 0 }}
@@ -31,9 +77,9 @@ export default function Category() {
       transition={{ duration: 0.4 }}
       className="container section"
     >
-      <h1 className="section-title">{category.name}</h1>
+      <h1 className="section-title">{category?.name}</h1>
       
-      {products.length === 0 ? (
+      {products.length === 0 && !loading ? (
         <div className="text-center" style={{padding: '4rem 0', color: 'var(--color-stone-500)'}}>
           <p>У цій категорії поки що немає товарів.</p>
         </div>
