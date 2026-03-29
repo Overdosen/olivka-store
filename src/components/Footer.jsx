@@ -1,8 +1,13 @@
+import bearImg from '../assets/teddy_bear.png';
+
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="container">
-        <a href="/" className="footer-logo">store.olivka</a>
+        <a href="/" className="footer-logo">
+          <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" />
+          olivka_store
+        </a>
         <p style={{marginBottom: '1.5rem'}}>
           З любов'ю для найменших ✨
         </p>
@@ -13,7 +18,7 @@ export default function Footer() {
           </a>
         </div>
         <p style={{fontSize: '0.75rem', color: 'var(--color-stone-500)'}}>
-          © {new Date().getFullYear()} store.olivka. Всі права захищені.
+          © {new Date().getFullYear()} olivka_store. Всі права захищені.
         </p>
       </div>
     </footer>

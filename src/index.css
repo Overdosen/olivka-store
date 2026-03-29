@@ -127,11 +127,21 @@ button {
 
 .logo {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-style: italic;
-  font-weight: 500;
-  letter-spacing: 0.025em;
-  color: var(--color-olive-800);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-olive-900);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  line-height: 1;
+}
+
+.logo-bear {
+  height: 2.8rem;
+  width: auto;
+  margin-right: -0.2rem; /* Сближаем еще больше для эффекта "воедино" */
 }
 
 .nav {
@@ -297,11 +307,20 @@ button {
 
 .footer-logo {
   font-family: var(--font-serif);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-style: italic;
+  font-weight: 600;
   color: var(--color-stone-50);
-  margin-bottom: 1rem;
-  display: inline-block;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-bear-footer {
+  height: 2.8rem;
+  width: auto;
+  filter: brightness(0) invert(1) opacity(0.8); /* В футере сделаем мишку светлым, если он темный */
 }
 
 .footer p {

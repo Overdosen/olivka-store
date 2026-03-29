@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Menu, X } from 'lucide-react';
+import bearImg from '../assets/teddy_bear.png';
 import { CATEGORIES } from '../data';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +18,8 @@ export default function Header() {
         </button>
         
         <Link to="/" className="logo">
-          store.olivka
+          <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear" />
+          olivka_store
         </Link>
 
         {/* Десктопне меню */}
