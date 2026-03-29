@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container">
         <a href="/" className="footer-logo">
           <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" />
-          olivka_store
+          olivka.store
         </a>
         <p style={{ marginBottom: '1.5rem' }}>
           З любов'ю для найменших ✨

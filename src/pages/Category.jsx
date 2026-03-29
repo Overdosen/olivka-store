@@ -85,7 +85,11 @@ export default function Category() {
         </div>
       ) : (
         <div className="products-grid">
-          {products.map((product, index) => (
+          {products.map((product, index) => {
+            const hasSizes = product.sizes && product.sizes.length > 0;
+            const isAvailable = hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0;
+            
+            return (
             <motion.div 
               key={product.id}
               initial={{ opacity: 0, y: 15 }}
@@ -93,20 +97,28 @@ export default function Category() {
               transition={{ duration: 0.5, delay: index * 0.05 }}
             >
               <Link to={`/product/${product.id}`} className="product-card">
-                <div className="product-image-wrapper">
+                <div className="product-image-wrapper" style={{ position: 'relative' }}>
                   <img 
-                    src={product.image} 
+                    src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}  
                     alt={product.name} 
                     className="product-image"
+                    style={{ opacity: isAvailable ? 1 : 0.6 }}
                   />
+                  {!isAvailable && (
+                    <div style={{
+                      position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(28, 25, 23, 0.85)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10
+                    }}>
+                      Немає в наявності
+                    </div>
+                  )}
                 </div>
-                <div className="product-info">
+                <div className="product-info" style={{ opacity: isAvailable ? 1 : 0.6 }}>
                   <h3 className="product-title">{product.name}</h3>
                   <p className="product-price">{product.price} грн</p>
                 </div>
               </Link>
             </motion.div>
-          ))}
+          )})}
         </div>
       )}
     </motion.main>
