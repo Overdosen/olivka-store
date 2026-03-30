@@ -16,8 +16,9 @@ export default function Header() {
     async function fetchCategories() {
       const { data, error } = await supabase
         .from('categories')
-        .select('*');
-      
+        .select('*')
+        .order('sort_order', { ascending: true });
+
       if (error) {
         console.error('Помилка при завантаженні категорій:', error);
       } else if (data) {
@@ -36,13 +37,13 @@ export default function Header() {
 
         <Link to="/" className="logo">
           <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear" />
-          olivka.store
+          store.olivka
         </Link>
 
         {/* Десктопна навігація */}
         <nav className="nav desktop-nav">
-          <Link to="/" className="nav-link nav-link-highlight">Новинки</Link>
-
+          <Link to="/" className="nav-link nav-link-highlight">Головна</Link>
+          
           <div className="dropdown-container">
             <Link to="/catalog" className="nav-link dropdown-trigger">Каталог</Link>
             <div className="dropdown-menu">
@@ -56,6 +57,8 @@ export default function Header() {
               </Link>
             </div>
           </div>
+          
+          <a href="/#about" className="nav-link">Про нас</a>
         </nav>
 
         <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
@@ -95,16 +98,18 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className="mobile-menu" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0' }}>
-            <Link to="/" className="nav-link nav-link-highlight">Новинки</Link>
-            <div style={{ fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem' }}>Категорії:</div>
+            <Link to="/" className="nav-link nav-link-highlight">Головна</Link>
+            <Link to="/catalog" className="nav-link">Каталог</Link>
+            <div style={{ fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem', paddingLeft: '1rem' }}>Категорії:</div>
             {categories.map(cat => (
-              <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '1rem' }}>
+              <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '2rem' }}>
                 - {cat.name}
               </Link>
             ))}
-            <Link to="/catalog" className="nav-link" style={{ paddingLeft: '1rem' }}>
+            <Link to="/catalog" className="nav-link" style={{ paddingLeft: '2rem' }}>
               - Всі товари
             </Link>
+            <a href="/#about" className="nav-link" style={{ marginTop: '0.5rem' }}>Про нас</a>
           </div>
         </div>
       )}

@@ -43,10 +43,28 @@ export default function ProductDetails() {
   const isAvailable = product && 
     (hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0);
 
-  const galleryImages = product ? [
-    product.image,
-    ...(product.gallery || []).map(url => url.startsWith('http') ? url : `/images/${url}`)
-  ].filter(Boolean) : [];
+  const getGalleryLinks = () => {
+    if (!product || !product.gallery) return [];
+    let galleryLinks = [];
+    if (Array.isArray(product.gallery)) {
+      galleryLinks = product.gallery;
+    } else if (typeof product.gallery === 'string') {
+      try {
+        if (product.gallery.startsWith('[')) {
+          galleryLinks = JSON.parse(product.gallery);
+        } else {
+          // Postgres array string {}
+          galleryLinks = product.gallery.replace(/^{|}$/g, '').split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+        }
+      } catch(e) { console.error('Error parsing gallery', e); }
+    }
+    return galleryLinks.map(url => url.startsWith('http') ? url : `/images/${url}`);
+  };
+
+  const galleryImages = [
+    product?.image,
+    ...getGalleryLinks()
+  ].filter(Boolean);
 
   const handleScroll = (e) => {
     const scrollAmount = e.target.scrollLeft;
@@ -118,16 +136,16 @@ export default function ProductDetails() {
       >
         <div 
           ref={sliderRef}
-          className="flex overflow-x-auto snap-x snap-mandatory aspect-[4/5] object-cover bg-stone-50"
+          className="flex overflow-x-auto snap-x snap-mandatory aspect-[4/5] bg-stone-50 rounded-xl"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           onScroll={handleScroll}
         >
           {galleryImages.map((src, i) => (
-            <div key={i} className="min-w-full flex-shrink-0 snap-center relative">
+            <div key={i} className="snap-center relative bg-stone-50 flex items-center justify-center overflow-hidden" style={{ flex: '0 0 100%', height: '100%' }}>
               <img 
                 src={src} 
                 alt={`${product.name} - Фото ${i + 1}`} 
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                className="absolute inset-0 w-full h-full object-contain"
               />
             </div>
           ))}

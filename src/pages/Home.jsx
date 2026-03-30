@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PRODUCTS as STATIC_PRODUCTS } from '../data';
 import { supabase } from '../lib/supabase';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState(STATIC_PRODUCTS.filter(p => p.isNew));
+  const carouselRef = useRef(null);
 
   useEffect(() => {
     async function fetchNewArrivals() {
@@ -23,6 +25,29 @@ export default function Home() {
     }
     fetchNewArrivals();
   }, []);
+
+  useEffect(() => {
+    if (featuredProducts.length <= 4) return;
+    const interval = setInterval(() => {
+      if (carouselRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          carouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          const itemWidth = carouselRef.current.children[0].offsetWidth;
+          carouselRef.current.scrollBy({ left: itemWidth, behavior: 'smooth' });
+        }
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [featuredProducts]);
+
+  const scroll = (dir) => {
+    if (carouselRef.current) {
+      const itemWidth = carouselRef.current.children[0].offsetWidth;
+      carouselRef.current.scrollBy({ left: dir * itemWidth, behavior: 'smooth' });
+    }
+  };
 
   return (
     <motion.main 
@@ -63,48 +88,77 @@ export default function Home() {
 
       {/* Рекомендовані товари */}
       <section id="catalog" className="section container">
-        <h2 className="section-title">Новинки</h2>
-        <div className="products-grid">
-          {featuredProducts.map((product, index) => {
-            const hasSizes = product.sizes && product.sizes.length > 0;
-            const isAvailable = hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0;
-            
-            return (
-            <motion.div 
-              key={product.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-            >
-              <Link to={`/product/${product.id}`} className="product-card">
-                <div className="product-image-wrapper" style={{ position: 'relative' }}>
-                  <img 
-                    src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`} 
-                    alt={product.name} 
-                    className="product-image"
-                    style={{ opacity: isAvailable ? 1 : 0.6 }}
-                  />
-                  {!isAvailable && (
-                    <div style={{
-                      position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(28, 25, 23, 0.85)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10
-                    }}>
-                      Немає в наявності
-                    </div>
-                  )}
-                </div>
-                <div className="product-info" style={{ opacity: isAvailable ? 1 : 0.6 }}>
-                  <h3 className="product-title">{product.name}</h3>
-                  <p className="product-price">{product.price} грн</p>
-                </div>
-              </Link>
-            </motion.div>
-          )})}
+        <h2 className="section-title">Популярні товари</h2>
+        
+        <div style={{ position: 'relative', padding: '0 10px', maxWidth: '1000px', margin: '0 auto' }}>
+          {featuredProducts.length > 4 && (
+            <button onClick={() => scroll(-1)} className="carousel-btn left"><ChevronLeft /></button>
+          )}
+          
+          <div ref={carouselRef} className="hide-scrollbar" style={{ 
+            display: 'flex', 
+            overflowX: 'auto', 
+            scrollSnapType: 'x mandatory', 
+            padding: '1rem 0'
+          }}>
+            {featuredProducts.map((product, index) => {
+              const hasSizes = product.sizes && product.sizes.length > 0;
+              const isAvailable = hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0;
+              
+              return (
+              <div 
+                key={product.id}
+                className="popular-card"
+                style={{ scrollSnapAlign: 'start' }}
+              >
+                <Link to={`/product/${product.id}`} className="popular-card-inner">
+                  <div className="product-image-wrapper" style={{ position: 'relative', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                    <img 
+                      src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`} 
+                      alt={product.name} 
+                      className="product-image"
+                      style={{ opacity: isAvailable ? 1 : 0.6 }}
+                    />
+                    {!isAvailable && (
+                      <div style={{
+                        position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(28, 25, 23, 0.85)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10
+                      }}>
+                        Немає в наявності
+                      </div>
+                    )}
+                  </div>
+                  <div className="product-info" style={{ opacity: isAvailable ? 1 : 0.6 }}>
+                    <h3 className="product-title" style={{ fontSize: '0.95rem' }}>{product.name}</h3>
+                    <p className="product-price">{product.price} грн</p>
+                  </div>
+                </Link>
+              </div>
+            )})}
+          </div>
+
+          {featuredProducts.length > 4 && (
+            <button onClick={() => scroll(1)} className="carousel-btn right"><ChevronRight /></button>
+          )}
         </div>
         
         <div className="text-center" style={{marginTop: '4rem'}}>
           <Link to="/catalog" className="btn btn-outline" style={{ padding: '0.75rem 3rem' }}>
             Весь каталог
+          </Link>
+        </div>
+      </section>
+
+      {/* Про нас */}
+      <section id="about" className="section container">
+        <h2 className="section-title">Про нас</h2>
+        <div className="products-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          <Link to="#" className="product-card" style={{ padding: '2rem', backgroundColor: 'var(--color-stone-100)', borderRadius: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '160px', textDecoration: 'none' }}>
+            <h3 className="product-title" style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Публічна оферта</h3>
+            <p style={{ color: 'var(--color-stone-500)', fontSize: '0.875rem' }}>Умови надання послуг та правила</p>
+          </Link>
+          <Link to="#" className="product-card" style={{ padding: '2rem', backgroundColor: 'var(--color-stone-100)', borderRadius: '1rem', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: '160px', textDecoration: 'none' }}>
+            <h3 className="product-title" style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Куточок споживача</h3>
+            <p style={{ color: 'var(--color-stone-500)', fontSize: '0.875rem' }}>Важлива інформація для покупців</p>
           </Link>
         </div>
       </section>

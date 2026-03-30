@@ -68,8 +68,22 @@ export default function ProductForm() {
           isMain: true
         });
       }
-      if (data.gallery && Array.isArray(data.gallery)) {
-        data.gallery.forEach((rawUrl, index) => {
+      
+      let parsedGallery = [];
+      if (Array.isArray(data.gallery)) {
+        parsedGallery = data.gallery;
+      } else if (typeof data.gallery === 'string') {
+        try {
+          if (data.gallery.startsWith('[')) {
+            parsedGallery = JSON.parse(data.gallery);
+          } else {
+            parsedGallery = data.gallery.replace(/^{|}$/g, '').split(',').map(s => s.trim().replace(/^"|"$/g, ''));
+          }
+        } catch(e) { console.error(e) }
+      }
+
+      if (parsedGallery.length > 0) {
+        parsedGallery.filter(Boolean).forEach((rawUrl, index) => {
           fetchedImages.push({
             id: `gallery_${index}`,
             url: rawUrl.startsWith('http') ? rawUrl : `/images/${rawUrl}`,
@@ -383,7 +397,7 @@ export default function ProductForm() {
                 className="w-5 h-5 rounded border-stone-300 text-stone-800 focus:ring-stone-800 transition-all peer"
               />
             </div>
-            <span className="font-medium text-stone-700 group-hover:text-stone-900 transition-colors">Помітка "Новинка"</span>
+            <span className="font-medium text-stone-700 group-hover:text-stone-900 transition-colors">Популярні товари (головна сторінка)</span>
           </label>
         </div>
 
