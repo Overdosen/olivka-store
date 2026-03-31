@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
-import { PRODUCTS as STATIC_PRODUCTS } from '../data';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -9,7 +8,7 @@ import { supabase } from '../lib/supabase';
 
 export default function ProductDetails() {
   const { id } = useParams();
-  const [product, setProduct] = useState(STATIC_PRODUCTS.find(p => p.id === id));
+  const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('');
   const [activeSlide, setActiveSlide] = useState(0);
@@ -192,6 +191,11 @@ export default function ProductDetails() {
         className="product-info"
       >
         <h1>{product.name}</h1>
+        {product.sku && (
+          <div style={{ color: '#524f25', opacity: 0.7, fontSize: '1rem', marginTop: '0.5rem' }}>
+            Артикул: <span style={{ fontWeight: 500 }}>{product.sku}</span>
+          </div>
+        )}
         <div className="price">{product.price} грн</div>
         
         <p className="desc">{product.description}</p>

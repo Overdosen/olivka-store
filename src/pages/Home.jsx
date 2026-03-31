@@ -2,11 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { PRODUCTS as STATIC_PRODUCTS } from '../data';
 import { supabase } from '../lib/supabase';
 
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState(STATIC_PRODUCTS.filter(p => p.isNew));
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const carouselRef = useRef(null);
 
   useEffect(() => {
@@ -58,29 +57,37 @@ export default function Home() {
     >
       {/* Головна секція (Hero) */}
       <section className="hero">
+        <img src="/images/banner.png" alt="Hero Banner" className="hero-banner-img" />
         <div className="hero-content">
           <motion.h1 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Ніжність у кожній деталі
+            Базовий одяг<br />
+            для новонароджених,<br />
+            який справді потрібен
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Естетичний та комфортний одяг для ваших малюків. 
-            Створюємо речі, в які закохуєшся з першого дотику.
+            Натуральні тканини, продумані набори,<br />
+            нічого зайвого для комфорту малюка<br />
+            і спокою мами.
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
+            className="hero-buttons"
           >
-            <Link to="/catalog" className="btn btn-primary" style={{ padding: '1rem 2.5rem' }}>
-              Дивитися колекцію
+            <button className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', backgroundColor: '#524f25' }}>
+              Обрати набір
+            </button>
+            <Link to="/catalog" className="btn btn-outline" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', borderColor: '#524f25', color: '#524f25' }}>
+              Перейти в каталог
             </Link>
           </motion.div>
         </div>

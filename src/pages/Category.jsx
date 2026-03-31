@@ -1,18 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CATEGORIES as STATIC_CATEGORIES, PRODUCTS as STATIC_PRODUCTS } from '../data';
 import { supabase } from '../lib/supabase';
 
 export default function Category() {
   const { catId } = useParams();
   
   const [category, setCategory] = useState(
-    catId ? STATIC_CATEGORIES.find(c => c.id === catId) : { name: 'Весь каталог' }
+    catId ? null : { name: 'Весь каталог' }
   );
-  const [products, setProducts] = useState(
-    catId ? STATIC_PRODUCTS.filter(p => p.categoryId === catId) : STATIC_PRODUCTS
-  );
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

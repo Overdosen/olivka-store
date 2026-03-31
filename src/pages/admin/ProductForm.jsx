@@ -16,6 +16,7 @@ export default function ProductForm() {
   const [images, setImages] = useState([]);
 
   const [formData, setFormData] = useState({
+    sku: '',
     name: '',
     price: '',
     description: '',
@@ -48,6 +49,7 @@ export default function ProductForm() {
       if (error) throw error;
       
       setFormData({
+        sku: data.sku || '',
         name: data.name || '',
         price: data.price || '',
         description: data.description || '',
@@ -251,16 +253,28 @@ export default function ProductForm() {
         
         {/* Basic Info */}
         <div className="space-y-6">
-          <div>
-            <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Назва товару <span className="text-red-400">*</span></label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
-              placeholder="Напр., В'язаний кардиган"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Назва товару <span className="text-red-400">*</span></label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                placeholder="Напр., В'язаний кардиган"
+              />
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Артикул</label>
+              <input
+                type="text"
+                value={formData.sku}
+                onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                placeholder="OLV-001"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

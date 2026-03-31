@@ -111,7 +111,10 @@ export default function AdminProducts() {
                         )}
                       </div>
                     </td>
-                    <td className="p-5 font-medium text-stone-800">{product.name}</td>
+                    <td className="p-5">
+                      <div className="font-medium text-stone-800">{product.name}</div>
+                      {product.sku && <div className="text-xs text-stone-500 mt-1">Арт: {product.sku}</div>}
+                    </td>
                     <td className="p-5 text-stone-500">{product.categories?.name || '—'}</td>
                     <td className="p-5 font-semibold text-stone-800">{product.price} ₴</td>
                     <td className="p-5 text-center">

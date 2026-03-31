@@ -21,8 +21,8 @@
   --color-olive-800: #41513c;
   --color-olive-900: #364432;
 
-  --font-sans: 'Century Gothic', 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Century Gothic', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Century Gothic', Georgia, serif;
 }
 
 * {
@@ -88,14 +88,14 @@ button {
 }
 
 .btn-primary {
-  background-color: var(--color-olive-700);
+  background-color: #524f25;
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: var(--color-olive-800);
+  background-color: #43411e;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(78, 98, 71, 0.2);
+  box-shadow: 0 4px 12px rgba(82, 79, 37, 0.2);
 }
 
 .btn-outline {
@@ -177,47 +177,93 @@ button {
 
 /* Hero Section */
 .hero {
-  padding: 6rem 0;
-  text-align: center;
   background-color: var(--color-olive-50);
   border-radius: 2rem;
   margin: 2rem 1.5rem;
   overflow: hidden;
   position: relative;
+  display: block;
+}
+
+.hero-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .hero-content {
-  position: relative;
+  position: absolute;
+  top: 55%; /* Зсунути вниз після хмаринок */
+  left: 8%; /* Відступ від лівого краю */
+  transform: translateY(-50%);
   z-index: 10;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
+  max-width: 42%;
+  display: flex;
+  flex-direction: column;
 }
 
 .hero h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  line-height: 1.1;
-  color: var(--color-olive-900);
+  font-size: clamp(1.5rem, 3vw, 2.5rem); /* Адаптивний шрифт */
+  margin-bottom: 3%;
+  line-height: 1.15;
+  color: #524f25;
 }
 
 .hero p {
-  color: var(--color-stone-600);
-  font-size: 1.125rem;
-  margin-bottom: 2rem;
+  color: #524f25;
+  font-size: clamp(0.85rem, 1.5vw, 1rem); /* Адаптивний шрифт */
+  margin-bottom: 5%;
+  line-height: 1.5;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Tablet Hero adjustments */
+@media (max-width: 1024px) {
+  .hero-content {
+    max-width: 50%;
+  }
 }
 
 /* Mobile Hero adjustments */
 @media (max-width: 639px) {
   .hero {
-    padding: 4rem 1rem;
     margin: 1rem;
+    border-radius: 1rem;
   }
+  
+  .hero-content {
+    max-width: 90%;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+  
+  .hero-banner-img {
+    height: 300px;
+    object-fit: cover;
+    object-position: center 20%;
+  }
+
   .hero h1 {
-    font-size: 2.25rem;
+    font-size: 2rem;
+    margin-bottom: 1rem;
   }
+  
   .hero p {
     font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .hero-buttons {
+    justify-content: center;
   }
 }
 
@@ -230,7 +276,7 @@ button {
   text-align: center;
   font-size: 2rem;
   margin-bottom: 3rem;
-  color: var(--color-stone-900);
+  color: #524f25;
 }
 
 .products-grid {
@@ -294,11 +340,11 @@ button {
   font-weight: 500;
   font-size: 1rem;
   margin-bottom: 0.25rem;
-  color: var(--color-stone-800);
+  color: #524f25;
 }
 
 .product-price {
-  color: var(--color-stone-500);
+  color: #524f25;
   font-size: 0.875rem;
 }
 
@@ -477,19 +523,22 @@ button {
 .product-info h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  line-height: 1.1;
 }
 
 .product-info .price {
-  font-size: 1.5rem;
-  color: var(--color-olive-700);
-  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: #524f25;
+  margin-top: 1rem;
+  margin-bottom: 2.5rem;
   font-family: var(--font-serif);
 }
 
 .product-info .desc {
-  color: var(--color-stone-600);
+  color: #524f25;
   margin-bottom: 2rem;
   line-height: 1.6;
+  text-align: justify;
 }
 
 .size-selector {
@@ -521,9 +570,9 @@ button {
 }
 
 .size-btn.active {
-  background-color: var(--color-olive-600);
+  background-color: #524f25;
   color: white;
-  border-color: var(--color-olive-600);
+  border-color: #524f25;
 }
 
 .details-list {
