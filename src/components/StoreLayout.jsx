@@ -5,7 +5,9 @@ import Footer from './Footer';
 import CartDrawer from './CartDrawer';
 import Home from '../pages/Home';
 import Category from '../pages/Category';
+import CatalogGrid from '../pages/CatalogGrid';
 import ProductDetails from '../pages/ProductDetails';
+import AboutPage from '../pages/AboutPage';
 
 export default function StoreLayout() {
   const location = useLocation();
@@ -13,13 +15,14 @@ export default function StoreLayout() {
     <div className="min-h-screen flex flex-col">
       <Header />
       <CartDrawer />
-      <main className="flex-grow">
-        <AnimatePresence mode="wait">
+      <main className="flex-grow" style={{ position: 'relative' }}>
+        <AnimatePresence mode="wait" initial={false}>
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />
-            <Route path="/catalog" element={<Category />} />
+            <Route path="/catalog" element={<CatalogGrid />} />
             <Route path="/category/:catId" element={<Category />} />
             <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/about" element={<AboutPage />} />
           </Routes>
         </AnimatePresence>
       </main>

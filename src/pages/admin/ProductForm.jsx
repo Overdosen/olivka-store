@@ -65,7 +65,7 @@ export default function ProductForm() {
       if (data.image_url) {
         fetchedImages.push({
           id: 'main_existing',
-          url: data.image_url.startsWith('http') ? data.image_url : `/images/${data.image_url}`,
+          url: data.image_url?.startsWith('http') ? data.image_url : `/images/${data.image_url}`,
           rawUrl: data.image_url,
           isMain: true
         });
@@ -155,6 +155,17 @@ export default function ProductForm() {
     return data.publicUrl;
   };
 
+  const translite = (text) => {
+    const map = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+      'з': 'z', 'и': 'y', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+      'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+      'і': 'i', 'ї': 'yi', 'є': 'ye'
+    };
+    return text.toLowerCase().split('').map(char => map[char] || char).join('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -187,9 +198,19 @@ export default function ProductForm() {
       };
 
       if (!isEditing) {
-        // ID is auto-generated usually, but your schema requires explicit ID
-        // Let's generate a simple slug-like ID
-        productPayload.id = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
+        // Беремо перші 5 букв саме з оригіналу, щоб "Чолов" перетворилось на "cholov"
+        const nameToTranslit = (formData.name || '').substring(0, 5);
+        const namePart = translite(nameToTranslit)
+          .replace(/[^a-z0-9]/g, ''); // видаляємо все крім букв і цифр
+        
+        // Очищаємо артикул (SKU)
+        const skuPart = formData.sku ? String(formData.sku).toLowerCase().replace(/[^a-z0-9]/g, '-') : '555';
+        
+        // Формуємо фінальний ID: [назва]-art-[артикул]-[таймштамп]
+        let generatedId = `${namePart}-art-${skuPart}-${Date.now()}`;
+        
+        // Очищаємо від подвійних дефісів та початкових/кінцевих дефісів
+        productPayload.id = generatedId.replace(/-+/g, '-').replace(/^-|-$/g, '');
       }
 
       const { error } = isEditing

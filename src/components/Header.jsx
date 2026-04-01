@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import bearImg from '../assets/teddy_bear.png';
+import TextBorderAnimation from './TextBorderAnimation';
 import { CATEGORIES as STATIC_CATEGORIES } from '../data';
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,10 +45,14 @@ export default function Header() {
 
         {/* Десктопна навігація */}
         <nav className="nav desktop-nav">
-          <Link to="/" className="nav-link">Головна</Link>
+          <Link to="/" className="nav-link">
+            <TextBorderAnimation text="Головна" />
+          </Link>
           
           <div className="dropdown-container">
-            <Link to="/catalog" className="nav-link dropdown-trigger">Каталог</Link>
+            <Link to="/catalog" className="nav-link dropdown-trigger">
+              <TextBorderAnimation text="Каталог" />
+            </Link>
             <div className="dropdown-menu">
               {categories.map(cat => (
                 <Link key={cat.id} to={`/category/${cat.id}`} className="dropdown-item">
@@ -60,7 +65,9 @@ export default function Header() {
             </div>
           </div>
           
-          <a href="/#about" className="nav-link">Про нас</a>
+          <Link to="/about" className="nav-link">
+            <TextBorderAnimation text="Про нас" />
+          </Link>
         </nav>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', justifySelf: 'end' }}>
@@ -117,7 +124,7 @@ export default function Header() {
             <Link to="/catalog" className="nav-link" style={{ paddingLeft: '2rem' }}>
               - Всі товари
             </Link>
-            <a href="/#about" className="nav-link" style={{ marginTop: '0.5rem' }}>Про нас</a>
+            <Link to="/about" className="nav-link" style={{ marginTop: '0.5rem' }}>Про нас</Link>
           </div>
         </div>
       )}

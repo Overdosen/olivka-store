@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -102,7 +102,7 @@ export default function AdminProducts() {
                       <div className="w-24 h-24 rounded-xl overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200/50 shadow-sm">
                         {product.image_url ? (
                           <img 
-                            src={product.image_url.startsWith('http') ? product.image_url : `/images/${product.image_url}`} 
+                            src={product.image_url?.startsWith('http') ? product.image_url : `/images/${product.image_url}`} 
                             alt={product.name} 
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import AddToCartButton from '../components/AddToCartButton';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export default function ProductDetails() {
         console.error('Помилка при завантаженні товару:', error);
       } else if (data) {
         const imageUrl = data.image_url 
-          ? (data.image_url.startsWith('http') ? data.image_url : `/images/${data.image_url}`)
+          ? (data.image_url?.startsWith('http') ? data.image_url : `/images/${data.image_url}`)
           : '';
         setProduct({ ...data, image: imageUrl });
       }
@@ -84,11 +85,12 @@ export default function ProductDetails() {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product || !isAvailable) return;
     if (hasSizes && !selectedSize) {
       toast.error('Будь ласка, оберіть розмір');
-      return;
+      // Re-throw so the button knows it didn't succeed
+      throw new Error('no-size');
     }
     // We pass the size name to addToCart
     addToCart(product, selectedSize);
@@ -229,27 +231,33 @@ export default function ProductDetails() {
           </div>
         )}
 
-        <motion.button 
-          whileTap={isAvailable ? { scale: 0.95 } : {}}
-          className="btn btn-primary" 
-          disabled={!isAvailable}
-          style={{ 
-            width: '100%', 
-            padding: '1rem', 
-            fontSize: '1rem', 
-            marginTop: '1rem',
-            backgroundColor: isAvailable ? undefined : '#ccc',
-            borderColor: isAvailable ? undefined : '#ccc',
-            cursor: isAvailable ? 'pointer' : 'not-allowed'
-          }}
-          onClick={handleAddToCart}
-        >
-          {isAvailable ? (
-            <><ShoppingBag size={20} style={{marginRight: '0.5rem'}} /> Додати до кошика</>
-          ) : (
-            'Немає в наявності'
-          )}
-        </motion.button>
+        {isAvailable ? (
+          <AddToCartButton
+            onAdd={handleAddToCart}
+            label="Додати до кошика"
+            addedLabel="Додано до кошика"
+          />
+        ) : (
+          <button
+            disabled
+            style={{
+              width: '100%',
+              height: '3.25rem',
+              borderRadius: '9999px',
+              backgroundColor: '#ccc',
+              border: 'none',
+              color: 'white',
+              fontSize: '0.95rem',
+              fontWeight: 500,
+              letterSpacing: '0.05em',
+              textTransform: 'uppercase',
+              cursor: 'not-allowed',
+              marginTop: '1rem',
+            }}
+          >
+            Немає в наявності
+          </button>
+        )}
 
         {product.details && product.details.length > 0 && (
           <ul className="details-list">
