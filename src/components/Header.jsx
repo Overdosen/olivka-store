@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import bearImg from '../assets/teddy_bear.png';
 import TextBorderAnimation from './TextBorderAnimation';
-import { CATEGORIES as STATIC_CATEGORIES } from '../data';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import AuthModal from './AuthModal';
 
 export default function Header() {
   const { cartCount, setIsCartOpen } = useCart();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  function handleUserClick() {
+    if (user) navigate('/account');
+    else setIsAuthOpen(true);
+  }
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -31,7 +40,7 @@ export default function Header() {
 
   return (
     <header className="header">
-      <div className="header-inner" style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 2rem', display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) auto minmax(150px, 1fr)', alignItems: 'center' }}>
+      <div className="header-inner" style={{ maxWidth: '1600px', margin: '0 auto', padding: '0 2rem 0 1rem', display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) auto minmax(150px, 1fr)', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -71,8 +80,27 @@ export default function Header() {
         </nav>
 
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', justifySelf: 'end' }}>
-          <button className="btn btn-icon" onClick={() => console.log('Account clicked')} title="Особистий кабінет">
-            <User size={24} color="var(--color-stone-600)" />
+          {/* Кнопка акаунту */}
+          <button
+            className="btn btn-icon"
+            onClick={handleUserClick}
+            title={user ? 'Особистий кабінет' : 'Увійти / Зареєструватись'}
+            style={{ position: 'relative' }}
+          >
+            {user ? (
+              /* Аватар з першою літерою імені або пошти */
+              <span style={{
+                width: '32px', height: '32px', borderRadius: '50%',
+                background: '#524f25', color: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontFamily: 'var(--font-serif)', fontSize: '0.95rem',
+                fontWeight: 500, lineHeight: 1,
+              }}>
+                {((profile?.full_name || user?.email || '?')[0] || '?').toUpperCase()}
+              </span>
+            ) : (
+              <User size={24} color="var(--color-stone-600)" />
+            )}
           </button>
           
           <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
@@ -128,6 +156,9 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      {/* Модальне вікно авторизації */}
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </header>
   );
 }

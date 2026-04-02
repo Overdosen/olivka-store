@@ -1,31 +1,52 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-// КОЛИ БУДУТЬ СВОЇ ІКОНКИ, РОЗКОМЕНТУЙТЕ ІМПОРТИ НИЖЧЕ:
-import deliveryIcon from '../assets/icons/delivery.png';
-import cottonIcon from '../assets/icons/cotton.png';
+import InfoModal from '../components/InfoModal';
+
+// Імпорти
+import deliveryIcon from '../assets/icons/deliveryandpay.png';
+import cottonIcon from '../assets/icons/procotton.png';
+import checklistIcon from '../assets/icons/checklist.png';
+import consumerIcon from '../assets/icons/consumer.png';
+import ofertaIcon from '../assets/icons/oferta.png';
+import contactIcon from '../assets/icons/contact.png';
+
 const sections = [
   {
     id: 'oferta',
-    icon: '📄', // Сюди можна буде вставити змінну іконки, наприклад: icon: ofertaIcon
+    icon: ofertaIcon,
     title: "Публічна оферта",
     desc: "Умови надання послуг, права та обов'язки сторін",
     color: '#f5f2ea',
     accent: '#c9c3a0',
+    modalType: 'text_file',
+    modalSrc: '/docs/offer.txt'
   },
   {
     id: 'consumer',
-    icon: '🛡️',
-    title: "Куточок споживача",
+    icon: consumerIcon,
+    title: "Про обробку та оплату персональних даних",
     desc: "Важлива інформація та права для покупців",
     color: '#edf3e9',
     accent: '#9cb691',
+    modalType: 'static_text',
+    modalSrc: `Інформація про суб'єкта господарювання (Продавця):
+Продавець:
+Фізична особа-підприємець Сопіна Вікторія Іванівна
+Реєстраційний номер облікової картки платника податків 3522303066
+Адреса реєстрації: Україна, 84108, Донецька обл., Краматорський р-н, місто Слов'янськ, вулиця Путилівська, будинок 5
+Адреса електронної пошти: olivka.hello@gmail.com \ sopinaviktoriia@gmail.com 
+Номер телефону: 0950643443
+Поточний рахунок: UA203052990000026002043900812`
   },
   {
     id: 'checklist',
-    icon: '🍼',
+    icon: checklistIcon,
     title: "Чек-лист в пологовий",
-    desc: "Що взяти з собою — корисний список для майбутніх мам",
+    desc: "Від пологової зали до виписки. Що взяти з собою - корисний список для майбутніх мам",
     color: '#f0f4fb',
     accent: '#a3b4cf',
+    modalType: 'pdf',
+    modalSrc: '/docs/checklist.pdf'
   },
   {
     id: 'delivery',
@@ -34,26 +55,54 @@ const sections = [
     desc: "Способи оплати, терміни та умови доставки по Україні",
     color: '#fdf1e8',
     accent: '#e0b98a',
+    modalType: 'static_text',
+    modalSrc: `Інформація про суб'єкта господарювання (Продавця):
+Продавець:
+Фізична особа-підприємець Сопіна Вікторія Іванівна
+Реєстраційний номер облікової картки платника податків 3522303066
+Адреса реєстрації: Україна, 84108, Донецька обл., Краматорський р-н, місто Слов'янськ, вулиця Путилівська, будинок 5
+Адреса електронної пошти: olivka.hello@gmail.com \ sopinaviktoriia@gmail.com 
+Номер телефону: 0950643443
+Поточний рахунок: UA203052990000026002043900812
+`
   },
   {
     id: 'fabrics',
     icon: cottonIcon,
     title: "Про тканини",
-    desc: "Склад матеріалів, сертифікати та турбота про шкіру малюка",
+    desc: "Про особливості наших матеріалів",
     color: '#f9f5f0',
     accent: '#c4a882',
+    modalType: 'carousel',
+    modalSrc: [
+      '/images/about/fabrics/1.jpg',
+      '/images/about/fabrics/2.jpg',
+      '/images/about/fabrics/3.jpg',
+      '/images/about/fabrics/4.jpg',
+      '/images/about/fabrics/5.jpg',
+      '/images/about/fabrics/6.jpg'
+    ]
   },
   {
     id: 'contacts',
-    icon: '✉️',
+    icon: contactIcon,
     title: "Контакти",
     desc: "Зв'яжіться з нами — ми завжди на зв'язку",
     color: '#faf5ee',
     accent: '#bab5a0',
+    modalType: 'static_text',
+    modalSrc: `Ми завжди на зв'язку, щоб допомогти вам із вибором розміру, проконсультувати щодо асортименту або оперативно вирішити будь-яке питання щодо вашого замовлення.
+Якщо у вас є зауваження чи пропозиції щодо нашої роботи, ви можете звернутися за електронною адресою, яка вказана.
+Instagram: https://www.instagram.com/store.olivka/ 
+E-mail: olivka.hello@gmail.com.`
   },
 ];
 
 export default function AboutPage() {
+  const [activeModal, setActiveModal] = useState(null);
+
+  const handleClose = () => setActiveModal(null);
+
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -82,7 +131,7 @@ export default function AboutPage() {
             marginBottom: '1rem',
           }}
         >
-          Olivka.store
+          store.olivka
         </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
@@ -110,7 +159,7 @@ export default function AboutPage() {
             lineHeight: 1.6,
           }}
         >
-          Все, що вам потрібно знати про нас, наш одяг та покупки у нашому магазині
+          Дізнайтеся більше про наші цінності, сервіс, умови покупок та корисні матеріали, які ми підготували для вашої впевненості у кожному замовленні.
         </motion.p>
       </div>
 
@@ -130,6 +179,7 @@ export default function AboutPage() {
             >
               <button
                 type="button"
+                onClick={() => setActiveModal(sec)}
                 style={{
                   width: '100%',
                   textAlign: 'left',
@@ -169,13 +219,13 @@ export default function AboutPage() {
 
                 {/* Рендеримо іконку */}
                 <div style={{ height: '50px', display: 'flex', alignItems: 'center' }}>
-                  {typeof sec.icon === 'string' && sec.icon.length < 5 ? (
+                  {typeof sec.icon === 'string' && sec.icon.length < 10 ? (
                     <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{sec.icon}</span>
                   ) : (
                     <img
                       src={sec.icon}
                       alt=""
-                      style={{ height: '45px', width: 'auto', objectFit: 'contain' }}
+                      style={{ height: '65px', width: 'auto', objectFit: 'contain' }}
                     />
                   )}
                 </div>
@@ -220,6 +270,14 @@ export default function AboutPage() {
           ))}
         </div>
       </div>
+
+      <InfoModal
+        isOpen={!!activeModal}
+        onClose={handleClose}
+        title={activeModal?.title}
+        type={activeModal?.modalType}
+        src={activeModal?.modalSrc}
+      />
     </motion.main>
   );
 }

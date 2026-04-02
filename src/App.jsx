@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
 import ScrollToTop from './components/ScrollToTop';
 
 // Store Layout (Public)
@@ -16,7 +17,8 @@ import ProductForm from './pages/admin/ProductForm';
 
 function App() {
   return (
-    <CartProvider>
+    <AuthProvider>
+      <CartProvider>
       <Router>
         <ScrollToTop />
         <Toaster 
@@ -51,7 +53,8 @@ function App() {
           <Route path="/*" element={<StoreLayout />} />
         </Routes>
       </Router>
-    </CartProvider>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 

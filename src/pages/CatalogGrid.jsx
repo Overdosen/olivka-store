@@ -11,14 +11,14 @@ export default function CatalogGrid() {
   const targetCategories = [
     { name: 'Комплекти', slug: 'sets' },
     { name: 'Боді', slug: 'body' },
-    { name: 'Пісочники, ромпери', slug: 'cap' },
+    { name: 'Пісочники, ромпери', slug: 'pisochniki' },
     { name: 'Чоловічки', slug: 'men' },
     { name: 'Чепчики, шапочки', slug: 'caps' },
     { name: 'Шкарпетки', slug: 'socks' },
     { name: 'Штанці', slug: 'pants' },
     { name: 'Кокони', slug: 'cocoons' },
-    { name: 'Текстиль (Пелюшки, Пледи)', slug: 'swaddles' },
-    { name: 'Костюми', slug: 'suits' }
+    { name: 'Текстиль (пелюшки, пледи)', slug: 'swaddles' },
+    { name: 'Костюми, сукні', slug: 'suits' }
   ];
 
   useEffect(() => {
@@ -40,8 +40,8 @@ export default function CatalogGrid() {
   // Мапимо статичний список на дані з бази (для отримання ID)
   const gridCategories = targetCategories.map(target => {
     // Шукаємо співпадіння за ім'ям або за ID
-    const dbCat = dbCategories.find(c => 
-      c.id === target.slug || 
+    const dbCat = dbCategories.find(c =>
+      c.id === target.slug ||
       c.name.toLowerCase().trim() === target.name.toLowerCase().trim()
     );
     return {
@@ -51,12 +51,12 @@ export default function CatalogGrid() {
   });
 
   const getCategoryImage = (slug) => {
-    return `/images/categories/${slug}.jpg`;
+    return `/images/categories/${slug}.png`;
   };
 
   if (loading) {
     return (
-      <div className="container section text-center" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="container section text-center" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '4rem' }}>
         <p className="font-serif italic text-[#524f25]/60">Завантаження...</p>
       </div>
     );
@@ -77,13 +77,14 @@ export default function CatalogGrid() {
           Оберіть категорію товарів
         </p>
       </header>
-      
+
       <div className="categories-grid" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(2, 1fr)',
         gap: '1.5rem'
       }}>
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           .categories-grid {
             display: grid !important;
             grid-template-columns: repeat(2, 1fr) !important;
@@ -112,7 +113,7 @@ export default function CatalogGrid() {
             aspect-ratio: 1 / 1;
             overflow: hidden;
             border-radius: 1.5rem;
-            background-color: #f3f0e8;
+            background-color: #e9e5d6;
             margin-bottom: 1.25rem;
             position: relative;
             box-shadow: 0 4px 15px rgba(82, 79, 37, 0.05);
@@ -149,24 +150,8 @@ export default function CatalogGrid() {
           .category-tile:hover .category-name {
             color: var(--color-olive-600);
           }
-          
-          .category-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #524f25;
-            font-family: var(--font-serif);
-            font-size: 1.1rem;
-            opacity: 0.3;
-            padding: 20px;
-            text-align: center;
-            background-color: #e9e5d6;
-            z-index: 1;
-          }
         `}} />
-        
+
         {gridCategories.map((cat, index) => (
           <motion.div
             key={cat.slug}
@@ -176,8 +161,8 @@ export default function CatalogGrid() {
           >
             <Link to={`/category/${cat.id}`} className="category-tile">
               <div className="category-image-wrapper">
-                <img 
-                  src={getCategoryImage(cat.slug)} 
+                <img
+                  src={getCategoryImage(cat.slug)}
                   alt={cat.name}
                   className="category-image"
                   style={{ position: 'relative', zIndex: 2 }}

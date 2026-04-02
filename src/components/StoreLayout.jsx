@@ -8,6 +8,7 @@ import Category from '../pages/Category';
 import CatalogGrid from '../pages/CatalogGrid';
 import ProductDetails from '../pages/ProductDetails';
 import AboutPage from '../pages/AboutPage';
+import AccountPage from '../pages/AccountPage';
 
 export default function StoreLayout() {
   const location = useLocation();
@@ -23,6 +24,7 @@ export default function StoreLayout() {
             <Route path="/category/:catId" element={<Category />} />
             <Route path="/product/:id" element={<ProductDetails />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/account" element={<AccountPage />} />
           </Routes>
         </AnimatePresence>
       </main>

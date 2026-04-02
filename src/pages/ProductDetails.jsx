@@ -38,6 +38,14 @@ export default function ProductDetails() {
     fetchProduct();
   }, [id]);
 
+  if (loading) {
+    return (
+      <div className="container section text-center" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '4rem' }}>
+        <p className="font-serif italic text-[#524f25]/60">Завантаження...</p>
+      </div>
+    );
+  }
+
   const hasSizes = product && product.sizes && product.sizes.length > 0;
   
   const isAvailable = product && 
@@ -75,13 +83,21 @@ export default function ProductDetails() {
 
   const scrollPrev = () => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: -sliderRef.current.clientWidth, behavior: 'smooth' });
+      if (activeSlide === 0) {
+        sliderRef.current.scrollTo({ left: sliderRef.current.scrollWidth, behavior: 'smooth' });
+      } else {
+        sliderRef.current.scrollBy({ left: -sliderRef.current.clientWidth, behavior: 'smooth' });
+      }
     }
   };
 
   const scrollNext = () => {
     if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: sliderRef.current.clientWidth, behavior: 'smooth' });
+      if (activeSlide === galleryImages.length - 1) {
+        sliderRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        sliderRef.current.scrollBy({ left: sliderRef.current.clientWidth, behavior: 'smooth' });
+      }
     }
   };
 
@@ -113,13 +129,6 @@ export default function ProductDetails() {
     );
   }
 
-  if (loading && !product) {
-    return (
-      <div className="container section text-center">
-        <h2>Завантаження...</h2>
-      </div>
-    );
-  }
 
   return (
     <motion.main 
@@ -156,17 +165,17 @@ export default function ProductDetails() {
           <>
             <button 
               onClick={scrollPrev}
-              className={`absolute top-1/2 left-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 ${activeSlide === 0 ? 'opacity-0 pointer-events-none' : 'opacity-90 hover:opacity-100'}`}
+              className="absolute top-1/2 left-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 opacity-90 hover:opacity-100"
               style={{ 
-                backgroundColor: 'rgba(235, 215, 210, 0.95)', // більш темний бежево-рожевий фон
-                color: '#8c5a55' // темніша контрастна іконка
+                backgroundColor: 'rgba(235, 215, 210, 0.95)', 
+                color: '#8c5a55'
               }}
             >
               <ChevronLeft size={28} />
             </button>
             <button 
               onClick={scrollNext}
-              className={`absolute top-1/2 right-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 ${activeSlide === galleryImages.length - 1 ? 'opacity-0 pointer-events-none' : 'opacity-90 hover:opacity-100'}`}
+              className="absolute top-1/2 right-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 opacity-90 hover:opacity-100"
               style={{ 
                 backgroundColor: 'rgba(235, 215, 210, 0.95)', 
                 color: '#8c5a55'

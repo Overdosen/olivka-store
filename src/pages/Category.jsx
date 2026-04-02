@@ -52,6 +52,14 @@ export default function Category() {
     fetchCategoryData();
   }, [catId]);
 
+  if (loading) {
+    return (
+      <div className="container section text-center" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: '4rem' }}>
+        <p className="font-serif italic text-[#524f25]/60">Завантаження...</p>
+      </div>
+    );
+  }
+
   if (!category && !loading) {
     return (
       <motion.div 
