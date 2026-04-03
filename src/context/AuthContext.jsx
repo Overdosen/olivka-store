@@ -33,14 +33,17 @@ export function AuthProvider({ children }) {
       console.log('[AuthContext] syncAuth event:', !!session);
       if (!mounted) return;
       
-      setLoading(true); // <--- Force loading true while we sync
+      // Removed: setLoading(true) - this causes unmounting of children in ProtectedRoute
+      // on every background session sync (e.g. when window is focused).
+      
       setUser(session?.user ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
-      console.log('[AuthContext] syncAuth complete, setting loading false');
+      
+      console.log('[AuthContext] syncAuth complete');
       setLoading(false);
     };
 

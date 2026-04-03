@@ -133,6 +133,7 @@ export default function ProductForm() {
   const handleRemoveImage = (id) => {
     setImages(prev => {
       const filtered = prev.filter(img => img.id !== id);
+      // Ensure one image is always main if there are any
       if (filtered.length > 0 && !filtered.some(img => img.isMain)) {
         filtered[0].isMain = true;
       }
@@ -141,18 +142,28 @@ export default function ProductForm() {
   };
 
   const uploadImage = async (file) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError;
 
-    const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
-    return data.publicUrl;
+      const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+      if (!data?.publicUrl) throw new Error('Не вдалося отримати URL завантаженого фото');
+      
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw error;
+    }
   };
 
   const translite = (text) => {
@@ -168,6 +179,13 @@ export default function ProductForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (images.length === 0) {
+      if (!confirm('Ви не додали жодного фото. Продовжити?')) {
+        return;
+      }
+    }
+
     setSaving(true);
     
     try {
@@ -177,39 +195,47 @@ export default function ProductForm() {
 
       const processedImages = [];
       for (const img of images) {
-        if (img.file) {
-          const uploadedUrl = await uploadImage(img.file);
-          processedImages.push({ ...img, finalUrl: uploadedUrl });
-        } else {
-          processedImages.push({ ...img, finalUrl: img.rawUrl }); // existing image URL
+        try {
+          if (img.file) {
+            const uploadedUrl = await uploadImage(img.file);
+            processedImages.push({ ...img, finalUrl: uploadedUrl, file: null });
+          } else {
+            processedImages.push({ ...img, finalUrl: img.rawUrl }); // existing image URL
+          }
+        } catch (err) {
+          toast.error(`Помилка завантаження одного з фото: ${err.message}`);
+          throw err;
         }
       }
       toast.dismiss('upload');
       
-      const mainImage = processedImages.find(img => img.isMain);
-      const galleryImages = processedImages.filter(img => !img.isMain).map(img => img.finalUrl);
+      // Більш надійна логіка вибору головного фото
+      let mainImage = processedImages.find(img => img.isMain);
+      if (!mainImage && processedImages.length > 0) {
+        mainImage = processedImages[0];
+      }
+      
+      const galleryImages = processedImages
+        .filter(img => img !== mainImage)
+        .map(img => img.finalUrl)
+        .filter(Boolean);
 
       const productPayload = {
         ...formData,
-        price: parseFloat(formData.price),
+        price: parseFloat(formData.price) || 0,
         stock: parseInt(formData.stock) || 0,
         image_url: mainImage ? mainImage.finalUrl : '',
         gallery: galleryImages,
       };
 
       if (!isEditing) {
-        // Беремо перші 5 букв саме з оригіналу, щоб "Чолов" перетворилось на "cholov"
         const nameToTranslit = (formData.name || '').substring(0, 5);
         const namePart = translite(nameToTranslit)
-          .replace(/[^a-z0-9]/g, ''); // видаляємо все крім букв і цифр
+          .replace(/[^a-z0-9]/g, '');
         
-        // Очищаємо артикул (SKU)
         const skuPart = formData.sku ? String(formData.sku).toLowerCase().replace(/[^a-z0-9]/g, '-') : '555';
-        
-        // Формуємо фінальний ID: [назва]-art-[артикул]-[таймштамп]
         let generatedId = `${namePart}-art-${skuPart}-${Date.now()}`;
         
-        // Очищаємо від подвійних дефісів та початкових/кінцевих дефісів
         productPayload.id = generatedId.replace(/-+/g, '-').replace(/^-|-$/g, '');
       }
 

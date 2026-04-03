@@ -24,7 +24,7 @@ const sections = [
   {
     id: 'consumer',
     icon: consumerIcon,
-    title: "Про обробку та оплату персональних даних",
+    title: "Про обробку та захист персональних даних",
     desc: "Важлива інформація та права для покупців",
     color: '#edf3e9',
     accent: '#9cb691',
