@@ -1,10 +1,20 @@
 {
   "version": 1,
   "skills": {
+    "ceo-skill": {
+      "source": "guo-yu/skills",
+      "sourceType": "github",
+      "computedHash": "4679c05a1a6575cb6ff1dca8437705b44a155fe7f029bd3884dee4f20fa90957"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
-      "computedHash": "645b891da1edbae76ab79c7b088d4e73397464f8396edaf773c0e01971ce75d6"
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "framer-motion-animator": {
+      "source": "patricio0312rev/skills",
+      "sourceType": "github",
+      "computedHash": "22a8401fab0cdf32d5c153b98aba5e95435a479810896879535dc7ac3710efbe"
     }
   }
 }

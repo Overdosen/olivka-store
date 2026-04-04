@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import InfoModal from '../components/InfoModal';
+import SEO from '../components/SEO';
 
 // Імпорти
 import deliveryIcon from '../assets/icons/deliveryandpay.png';
@@ -110,7 +111,7 @@ const sections = [
     color: '#faf5ee',
     accent: '#bab5a0',
     modalType: 'static_text',
-    modalSrc: `**КОНТАКТИ:**<br>Ми завжди на зв'язку, щоб допомогти вам із вибором розміру, проконсультувати щодо асортименту або оперативно вирішити будь-яке питання щодо вашого замовлення.<br><br>
+    modalSrc: `Ми завжди на зв'язку, щоб допомогти вам із вибором розміру, проконсультувати щодо асортименту або оперативно вирішити будь-яке питання щодо вашого замовлення.<br><br>
 Instagram: https://www.instagram.com/store.olivka/ 
 E-mail: olivka.hello@gmail.com. <br><br>
 **Порядок прийняття претензій:**<br>
@@ -147,6 +148,10 @@ export default function AboutPage() {
       transition={{ duration: 0.4 }}
       style={{ paddingBottom: '6rem' }}
     >
+      <SEO
+        title="Про нас"
+        description="Дізнайтеся більше про Store Olivka: наші цінності, умови оплати та доставки, публічну оферту та корисні матеріали для мам."
+      />
       {/* Header */}
       <div style={{
         background: 'linear-gradient(135deg, #f5f2e9 0%, #eae6d8 100%)',
@@ -212,6 +217,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.55, delay: i * 0.08 }}
+              style={{ display: 'flex' }}
             >
               <button
                 type="button"
@@ -228,7 +234,8 @@ export default function AboutPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '1.2rem',
-                  minHeight: '220px',
+                  minHeight: '280px',
+                  height: '100%',
                   position: 'relative',
                   overflow: 'hidden',
                 }}
@@ -299,8 +306,7 @@ export default function AboutPage() {
                   textTransform: 'uppercase',
                   fontWeight: 600,
                 }}>
-                  Дізнатись більше
-                  <span style={{ fontSize: '1.1rem' }}>→</span>
+
                 </div>
               </button>
             </motion.div>

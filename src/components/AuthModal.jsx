@@ -279,7 +279,7 @@ export default function AuthModal({ isOpen, onClose }) {
                       color: 'rgba(82,79,37,0.4)',
                       letterSpacing: '0.05em',
                     }}>
-                      Телефон необов'язковий
+
                     </p>
 
                     <label className="relative inline-flex items-center cursor-pointer gap-4">
@@ -292,8 +292,7 @@ export default function AuthModal({ isOpen, onClose }) {
                           setPhoneUa(e.target.checked ? '+' : '+380');
                         }}
                       />
-                      <div className="relative group peer bg-white rounded-full duration-300 w-12 h-6 ring-2 ring-yellow-500 after:duration-300 after:bg-yellow-500 peer-checked:after:bg-green-500 peer-checked:ring-green-500 after:rounded-full after:absolute after:h-4 after:w-4 after:top-1 after:left-1 after:flex after:justify-center after:items-center peer-checked:after:translate-x-6 peer-hover:after:scale-95"></div>
-                      <span className="text-[0.7rem] font-sans uppercase tracking-wider text-stone-400">міжнародний</span>
+
                     </label>
                   </div>
                   <AuthButton loading={loading} label="Зареєструватись" />

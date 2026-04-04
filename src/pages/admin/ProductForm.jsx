@@ -25,7 +25,14 @@ export default function ProductForm() {
     is_published: true,
     image_url: '',
     stock: 0,
-    sizes: []
+    sizes: [],
+    meta_keywords: '',
+    meta_description: '',
+    measurements: '',
+    gender: '',
+    age: [],
+    material: [],
+    color: []
   });
   
   const [sizeInput, setSizeInput] = useState('');
@@ -58,7 +65,14 @@ export default function ProductForm() {
         is_published: data.is_published ?? true,
         image_url: data.image_url || '',
         stock: data.stock || 0,
-        sizes: data.sizes || []
+        sizes: data.sizes || [],
+        meta_keywords: data.meta_keywords || '',
+        meta_description: data.meta_description || '',
+        measurements: data.measurements || '',
+        gender: data.gender || '',
+        age: data.age || [],
+        material: data.material || [],
+        color: data.color || []
       });
       
       const fetchedImages = [];
@@ -226,6 +240,13 @@ export default function ProductForm() {
         stock: parseInt(formData.stock) || 0,
         image_url: mainImage ? mainImage.finalUrl : '',
         gallery: galleryImages,
+        meta_keywords: formData.meta_keywords,
+        meta_description: formData.meta_description,
+        measurements: formData.measurements,
+        gender: formData.gender,
+        age: formData.age,
+        material: formData.material,
+        color: formData.color
       };
 
       if (!isEditing) {
@@ -375,6 +396,18 @@ export default function ProductForm() {
               placeholder="Детальний опис товару..."
             />
           </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Заміри виробу (Markdown)</label>
+            <textarea
+              rows="5"
+              value={formData.measurements}
+              onChange={(e) => setFormData({...formData, measurements: e.target.value})}
+              className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar font-mono text-sm"
+              placeholder="Заміри виробу..."
+            />
+            <p className="text-[10px] text-stone-400 mt-2 italic">Підтримує форматування: **жирний**, нові рядки.</p>
+          </div>
         </div>
 
         <hr className="border-stone-100" />
@@ -430,6 +463,94 @@ export default function ProductForm() {
               </div>
             )}
             <p className="text-sm text-stone-500">Якщо ви додасте хоча б один розмір, на сторінці товару з'явиться вибір розміру для клієнта.</p>
+          </div>
+        </div>
+
+        <hr className="border-stone-100" />
+
+        {/* Filters */}
+        <div className="space-y-6">
+          <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">Характеристики для фільтрів</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Стать</label>
+              <select
+                value={formData.gender}
+                onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium appearance-none"
+              >
+                <option value="">Не обрано</option>
+                <option value="Хлопчик">Хлопчик</option>
+                <option value="Дівчинка">Дівчинка</option>
+                <option value="Унісекс">Унісекс</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Колір (оберіть один або декілька)</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {['Молочний', 'Рожевий/пудра', 'Сірий', 'Беж/коричневий', 'Гірчичний', 'Інші кольори'].map((color) => (
+                  <label key={color} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
+                      checked={formData.color.includes(color)}
+                      onChange={(e) => {
+                        const newColors = e.target.checked 
+                          ? [...formData.color, color]
+                          : formData.color.filter(c => c !== color);
+                        setFormData({...formData, color: newColors});
+                      }}
+                    />
+                    <span className="text-sm font-medium text-stone-700">{color}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Вік</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {['0-1 місяць', '0-3 місяці', '1-3 місяці', '3-6 місяців', '6-9 місяців', '9-12 місяців', '12-18 місяців', '2 роки'].map((age) => (
+                  <label key={age} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
+                      checked={formData.age.includes(age)}
+                      onChange={(e) => {
+                        const newAges = e.target.checked 
+                          ? [...formData.age, age]
+                          : formData.age.filter(a => a !== age);
+                        setFormData({...formData, age: newAges});
+                      }}
+                    />
+                    <span className="text-sm font-medium text-stone-700">{age}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Матеріал</label>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {['Інтерлок', 'Футер', 'Перфорація', 'Муслін', 'Бавовна'].map((mat) => (
+                  <label key={mat} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
+                      checked={formData.material.includes(mat)}
+                      onChange={(e) => {
+                        const newMats = e.target.checked 
+                          ? [...formData.material, mat]
+                          : formData.material.filter(m => m !== mat);
+                        setFormData({...formData, material: newMats});
+                      }}
+                    />
+                    <span className="text-sm font-medium text-stone-700">{mat}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -522,6 +643,37 @@ export default function ProductForm() {
               Завантажуйте кілька фотографій одночасно. Зробіть одне з фото <strong>Головним</strong> натиснувши на кнопку з зірочкою.<br/>
               Рекомендований розмір: 1000x1000px (пропорції 1:1).
             </p>
+          </div>
+        </div>
+
+        <hr className="border-stone-100" />
+
+        {/* SEO Settings */}
+        <div className="space-y-6">
+          <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">SEO Налаштування (Пошукова оптимізація)</label>
+          <div className="grid grid-cols-1 gap-6 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Ключові слова (через кому)</label>
+              <input
+                type="text"
+                value={formData.meta_keywords}
+                onChange={(e) => setFormData({...formData, meta_keywords: e.target.value})}
+                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium"
+                placeholder="напр., дитячий одяг, бавовна, боді для малюка, подарунок"
+              />
+              <p className="text-[10px] text-stone-400 mt-2 italic">Допомагає Google зрозуміти тематику товару. Пишіть слова, за якими клієнт може шукати такий товар.</p>
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Опис (якщо порожній - буде використано звичайний опис)</label>
+              <textarea
+                rows="3"
+                value={formData.meta_description}
+                onChange={(e) => setFormData({...formData, meta_description: e.target.value})}
+                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 resize-none"
+                placeholder="Короткий привабливий текст для результатів пошуку..."
+              />
+              <p className="text-[10px] text-stone-400 mt-2 italic">Цей текст користувач бачить у Google під назвою сайту. Рекомендується до 160 символів.</p>
+            </div>
           </div>
         </div>
 

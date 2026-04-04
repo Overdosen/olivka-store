@@ -373,8 +373,37 @@ button {
   transition: transform 0.5s ease;
 }
 
-.product-card:hover .product-image {
-  transform: scale(1.05);
+/* Hero Cloud Animations */
+@keyframes cloudLoop {
+  0% { transform: translateX(-25vw); }
+  100% { transform: translateX(130vw); }
+}
+
+.cloud-layer {
+  position: absolute;
+  pointer-events: none;
+  animation-name: cloudLoop;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Highly varied speeds and staggered starts to prevent clustering */
+.cloud-1 { animation-duration: 65s; animation-delay: -15s; }
+.cloud-2 { animation-duration: 140s; animation-delay: -90s; }
+.cloud-3 { animation-duration: 105s; animation-delay: -30s; }
+.cloud-4 { animation-duration: 160s; animation-delay: -110s; }
+.cloud-5 { animation-duration: 85s; animation-delay: -50s; }
+.cloud-6 { animation-duration: 120s; animation-delay: -10s; }
+
+/* Stork Flight Animation */
+@keyframes storkFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(2deg); }
+}
+
+.stork-float {
+  animation: storkFloat 4s ease-in-out infinite;
 }
 
 .product-info {

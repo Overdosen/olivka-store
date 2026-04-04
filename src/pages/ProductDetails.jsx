@@ -6,6 +6,9 @@ import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import AddToCartButton from '../components/AddToCartButton';
+import SEO from '../components/SEO';
+import InfoModal from '../components/InfoModal';
+import sizeIcon from '../assets/icons/size.png';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -13,6 +16,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('');
   const [activeSlide, setActiveSlide] = useState(0);
+  const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const sliderRef = useRef(null);
   const { addToCart } = useCart();
 
@@ -138,6 +142,15 @@ export default function ProductDetails() {
       transition={{ duration: 0.4 }}
       className="container product-details"
     >
+      {product && (
+        <SEO 
+          title={product.name}
+          description={product.meta_description || product.description}
+          keywords={product.meta_keywords}
+          image={product.image}
+          type="product"
+        />
+      )}
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -209,11 +222,26 @@ export default function ProductDetails() {
         )}
         <div className="price">{product.price} грн</div>
         
-        <p className="desc">{product.description}</p>
 
         {hasSizes && (
           <div className="size-selector">
-            <h3>Розмір <span style={{fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px'}}>(Оберіть доступний)</span></h3>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6">
+              <div /> {/* Spacer */}
+              <h3 className="m-0 leading-none text-center">
+                Розмір <span style={{fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px'}}>(Оберіть доступний)</span>
+              </h3>
+              <div className="flex items-center">
+                {product.measurements && (
+                  <button 
+                    onClick={() => setIsSizeGuideOpen(true)}
+                    className="flex items-center justify-center -translate-y-3 hover:scale-110 active:scale-95 transition-transform"
+                    style={{ marginLeft: 'calc(1cm - 10px)' }}
+                  >
+                    <img src={sizeIcon} alt="Size Guide" className="w-12 h-12 object-contain" />
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="size-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
               {product.sizes.map(size => {
                 const isOutOfStock = size.quantity <= 0;
@@ -268,6 +296,8 @@ export default function ProductDetails() {
           </button>
         )}
 
+        <p className="desc" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>{product.description}</p>
+
         {product.details && product.details.length > 0 && (
           <ul className="details-list">
             {product.details.map((detail, idx) => (
@@ -276,6 +306,15 @@ export default function ProductDetails() {
           </ul>
         )}
       </motion.div>
+
+      <InfoModal 
+        isOpen={isSizeGuideOpen} 
+        onClose={() => setIsSizeGuideOpen(false)} 
+        title="Заміри виробу" 
+        type="static_text" 
+        src={product.measurements} 
+        maxWidth="max-w-[360px]"
+      />
     </motion.main>
   );
 }

@@ -11,7 +11,7 @@ const IconMail = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height
 const IconExternalLink = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>;
 const IconLoader = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>;
 
-export default function InfoModal({ isOpen, onClose, title, type, src }) {
+export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [textContent, setTextContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,7 +64,6 @@ export default function InfoModal({ isOpen, onClose, title, type, src }) {
       }
 
       const urlMatch = currentLine.match(/https?:\/\/[^\s]+/);
-      const isEmail = currentLine.includes('@') && !currentLine.startsWith('http');
       
       const formattedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       
@@ -86,12 +85,6 @@ export default function InfoModal({ isOpen, onClose, title, type, src }) {
                 </a>
                 <span dangerouslySetInnerHTML={{ __html: formattedLine.split(urlMatch[0])[1] }} />
               </p>
-            ) : isEmail ? (
-              <a 
-                href={`mailto:${currentLine}`}
-                className="text-[#c4a882] underline hover:text-[#524f25] transition-colors font-medium decoration-[#c4a882]/40"
-                dangerouslySetInnerHTML={{ __html: formattedLine }}
-              />
             ) : (
               <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formattedLine }} />
             )}
@@ -101,7 +94,7 @@ export default function InfoModal({ isOpen, onClose, title, type, src }) {
     });
   };
 
-  const maxWidthClass = type === 'carousel' ? 'max-w-lg' : 'max-w-4xl';
+  const maxWidthClass = maxWidth || (type === 'carousel' ? 'max-w-lg' : 'max-w-4xl');
 
   return createPortal(
     <AnimatePresence>

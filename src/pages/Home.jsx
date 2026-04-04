@@ -12,6 +12,7 @@ import {
   FloatingPanelTrigger,
   FloatingPanelContent
 } from '../components/ui/floating-panel';
+import SEO from '../components/SEO';
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -92,15 +93,119 @@ export default function Home() {
   };
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <main>
+      <SEO 
+        title="Головна | Дитячий одяг"
+        description="Найкращий вибір базового одягу для ваших малюків. Натуральні тканини, комфорт та якість, перевірена мамами. Швидка доставка по Україні."
+        image="/logo_olivka.png"
+      />
       {/* Головна секція (Hero) */}
-      <section className="hero">
-        <img src="/images/banner.png" alt="Hero Banner" className="hero-banner-img" />
+      <section className="hero" style={{ 
+        position: 'relative', 
+        overflow: 'hidden', 
+        height: 'auto',
+        minHeight: '400px',
+        backgroundColor: '#fdfbf7' 
+      }}>
+        {/* Layer 0: Background Scenery (Empty Banner) */}
+        <div style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
+          <motion.img 
+            src="/images/emptybanner.png" 
+            alt="Hero Background" 
+            style={{ 
+              width: '100%', 
+              height: 'auto', 
+              display: 'block',
+              minHeight: '300px',
+              objectFit: 'cover',
+              objectPosition: 'center'
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.5 }}
+          />
+
+          {/* Layer 1: Looping Clouds (Moving behind characters) */}
+          {/* Using Pure CSS for reliability and diverse timings (6 clouds) */}
+          <div className="cloud-layer cloud-1" style={{ top: '10%', left: 0, width: '260px', opacity: 0.5, zIndex: 1 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+          <div className="cloud-layer cloud-2" style={{ top: '35%', left: 0, width: '180px', opacity: 0.4, zIndex: 2 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+          <div className="cloud-layer cloud-3" style={{ top: '55%', left: 0, width: '310px', opacity: 0.35, zIndex: 3 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+          <div className="cloud-layer cloud-4" style={{ top: '15%', left: 0, width: '200px', opacity: 0.45, zIndex: 1 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+          <div className="cloud-layer cloud-5" style={{ top: '42%', left: 0, width: '240px', opacity: 0.3, zIndex: 2 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+          <div className="cloud-layer cloud-6" style={{ top: '28%', left: 0, width: '150px', opacity: 0.4, zIndex: 1 }}>
+            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          </div>
+
+
+
+
+
+
+
+          {/* Layer 2: Characters (Girl and Stork positioned) */}
+          {/* The Girl - Centered, Smaller, and Lower */}
+          <motion.img 
+            src="/images/girl.png" 
+            alt="Girl" 
+            style={{ 
+              position: 'absolute',
+              left: '50%',
+              x: '-50%',
+              bottom: '-5%', // Even lower
+              width: '23%', // Reduced by another 10%
+              zIndex: 10,
+              pointerEvents: 'none'
+            }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.2, delay: 0.3 }}
+          />
+
+          {/* The Stork - Back to the Right and Larger */}
+          <div
+            className="stork-float"
+            style={{
+              position: 'absolute',
+              right: '10%', // Returned correctly to the right
+              top: '12%',
+              width: '25%', // Increased by 40% (from 18%)
+              zIndex: 11,
+              pointerEvents: 'none'
+            }}
+          >
+            <motion.img 
+              src="/images/leleka.png" 
+              alt="Stork" 
+              style={{ width: '100%', display: 'block' }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, delay: 0.3 }}
+            />
+          </div>
+
+        </div>
+
+
+
+
+
+
+
         <div className="hero-content">
           <motion.h1
             initial={{ opacity: 0, y: 15 }}
@@ -233,6 +338,6 @@ export default function Home() {
         </div>
 
       </section>
-    </motion.main>
+    </main>
   );
 }
