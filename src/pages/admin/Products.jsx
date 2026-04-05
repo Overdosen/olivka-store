@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -51,23 +52,39 @@ export default function AdminProducts() {
     }
   }
 
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="space-y-8 pb-10">
-      <div className="flex justify-between items-center flex-wrap gap-4">
-        <div>
-          <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Керування товарами</h1>
-          <p className="text-stone-500 mt-2 font-medium">Керуйте своїм асортиментом, цінами та наявністю.</p>
+      <div className="flex justify-between items-end flex-wrap gap-6">
+        <div className="flex-1 min-w-[300px]">
+          <div className="flex items-center gap-6 mb-2">
+            <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight whitespace-nowrap">Керування товарами</h1>
+            <div className="relative flex-1 max-w-md">
+              <input
+                type="text"
+                placeholder="Пошук за назвою або артикулом..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white rounded-md border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm font-medium"
+              />
+            </div>
+          </div>
+          <p className="text-stone-500 font-medium">Керуйте своїм асортиментом, цінами та наявністю.</p>
         </div>
         <Link 
           to="/admin/products/new"
-          className="bg-stone-900 !text-white hover:bg-stone-800 px-5 py-2.5 rounded-xl flex items-center space-x-2 transition-all shadow-md shadow-stone-200 hover:shadow-lg hover:-translate-y-0.5 font-medium tracking-wide"
+          className="bg-stone-900 !text-white hover:bg-stone-800 px-5 py-2.5 rounded-md flex items-center space-x-2 transition-all shadow-md shadow-stone-200 hover:shadow-lg hover:-translate-y-0.5 font-medium tracking-wide h-fit"
         >
           <Plus className="w-5 h-5" />
           <span>Додати товар</span>
         </Link>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-stone-200/60 overflow-hidden">
+      <div className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm border border-stone-200/60 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -87,19 +104,19 @@ export default function AdminProducts() {
                     Завантаження товарів...
                   </td>
                 </tr>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-12 text-center text-stone-500">
                     <Package className="w-12 h-12 mx-auto text-stone-300 mb-3" />
-                    <p className="font-medium">У вас поки немає доданих товарів.</p>
-                    <p className="text-sm mt-1">Створіть свій перший товар, натиснувши кнопку вище.</p>
+                    <p className="font-medium">Товарів не знайдено.</p>
+                    <p className="text-sm mt-1">Спробуйте змінити запит пошуку або додати новий товар.</p>
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-stone-50/80 transition-colors group">
                     <td className="p-5">
-                      <div className="w-24 h-24 rounded-xl overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200/50 shadow-sm">
+                      <div className="w-24 h-24 rounded-md overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200/50 shadow-sm">
                         {product.image_url ? (
                           <img 
                             src={product.image_url?.startsWith('http') ? product.image_url : `/images/${product.image_url}`} 
@@ -130,14 +147,14 @@ export default function AdminProducts() {
                       <div className="flex items-center justify-end space-x-1 opacity-60 group-hover:opacity-100 transition-opacity">
                         <Link 
                           to={`/admin/products/${product.id}`}
-                          className="p-2.5 text-stone-500 hover:text-stone-900 hover:bg-white rounded-xl shadow-sm hover:shadow transition-all"
+                          className="p-2.5 text-stone-500 hover:text-stone-900 hover:bg-white rounded-md shadow-sm hover:shadow transition-all"
                           title="Редагувати"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
                         <button 
                           onClick={() => handleDelete(product.id)}
-                          className="p-2.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                          className="p-2.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
                           title="Видалити"
                         >
                           <Trash2 className="w-4 h-4" />

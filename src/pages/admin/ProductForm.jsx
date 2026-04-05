@@ -32,7 +32,8 @@ export default function ProductForm() {
     gender: '',
     age: [],
     material: [],
-    color: []
+    color: [],
+    features: []
   });
   
   const [sizeInput, setSizeInput] = useState('');
@@ -72,7 +73,8 @@ export default function ProductForm() {
         gender: data.gender || '',
         age: data.age || [],
         material: data.material || [],
-        color: data.color || []
+        color: data.color || [],
+        features: data.features || []
       });
       
       const fetchedImages = [];
@@ -246,7 +248,8 @@ export default function ProductForm() {
         gender: formData.gender,
         age: formData.age,
         material: formData.material,
-        color: formData.color
+        color: formData.color,
+        features: formData.features
       };
 
       if (!isEditing) {
@@ -304,7 +307,7 @@ export default function ProductForm() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-20">
       <div className="flex items-center space-x-6">
-        <Link to="/admin/products" className="p-3 !text-stone-400 hover:!text-stone-900 hover:bg-white rounded-2xl transition-all shadow-sm border border-stone-200/50">
+        <Link to="/admin/products" className="p-3 !text-stone-400 hover:!text-stone-900 hover:bg-white rounded-md transition-all shadow-sm border border-stone-200/50">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
@@ -317,7 +320,7 @@ export default function ProductForm() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-10 rounded-2xl shadow-sm border border-stone-200/60 space-y-10">
+      <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-10 rounded-md shadow-sm border border-stone-200/60 space-y-10">
         
         {/* Basic Info */}
         <div className="space-y-6">
@@ -329,7 +332,7 @@ export default function ProductForm() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
                 placeholder="Напр., В'язаний кардиган"
               />
             </div>
@@ -339,7 +342,7 @@ export default function ProductForm() {
                 type="text"
                 value={formData.sku}
                 onChange={(e) => setFormData({...formData, sku: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
                 placeholder="OLV-001"
               />
             </div>
@@ -355,7 +358,7 @@ export default function ProductForm() {
                 step="0.01"
                 value={formData.price}
                 onChange={(e) => setFormData({...formData, price: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
                 placeholder="0.00"
               />
             </div>
@@ -365,7 +368,7 @@ export default function ProductForm() {
                 required
                 value={formData.category_id}
                 onChange={(e) => setFormData({...formData, category_id: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium appearance-none"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium appearance-none"
               >
                 <option value="">Оберіть категорію...</option>
                 {categories.map((cat) => (
@@ -380,7 +383,7 @@ export default function ProductForm() {
                 min="0"
                 value={formData.stock}
                 onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
                 placeholder="0"
               />
             </div>
@@ -392,21 +395,75 @@ export default function ProductForm() {
               rows="5"
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar"
+              className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar"
               placeholder="Детальний опис товару..."
             />
           </div>
 
-          <div>
-            <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Заміри виробу (Markdown)</label>
-            <textarea
-              rows="5"
-              value={formData.measurements}
-              onChange={(e) => setFormData({...formData, measurements: e.target.value})}
-              className="w-full px-5 py-3.5 bg-stone-50/50 rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar font-mono text-sm"
-              placeholder="Заміри виробу..."
-            />
-            <p className="text-[10px] text-stone-400 mt-2 italic">Підтримує форматування: **жирний**, нові рядки.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Заміри виробу (Markdown)</label>
+              <textarea
+                rows={2}
+                value={formData.measurements}
+                onChange={(e) => setFormData({...formData, measurements: e.target.value})}
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar font-mono text-sm"
+                placeholder="Заміри виробу..."
+              />
+              <p className="text-[10px] text-stone-400 mt-2 italic">Підтримує форматування: **жирний**, нові рядки.</p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Матеріал</label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча', 'Інтерлок', 'Футер', 'Перфорація'].map((mat) => (
+                    <label key={mat} className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
+                        checked={formData.material.includes(mat)}
+                        onChange={(e) => {
+                          const newMats = e.target.checked 
+                            ? [...formData.material, mat]
+                            : formData.material.filter(m => m !== mat);
+                          setFormData({...formData, material: newMats});
+                        }}
+                      />
+                      <span className="text-sm font-medium text-stone-700">{mat}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Особливості моделі</label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                {[
+                  'З боді', 'З сорочкою', 'З шапочку', 'Без шапочки', 
+                  'Короткий рукав', 'Довгий рукав',
+                  'Пісочник', 'Ромпер',
+                  'Шапочка-вузлик', 'Чепчик',
+                  'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'
+                ].map((feature) => (
+                    <label key={feature} className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
+                        checked={formData.features.includes(feature)}
+                        onChange={(e) => {
+                          const newFeatures = e.target.checked 
+                            ? [...formData.features, feature]
+                            : formData.features.filter(f => f !== feature);
+                          setFormData({...formData, features: newFeatures});
+                        }}
+                      />
+                      <span className="text-sm font-medium text-stone-700">{feature}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -415,7 +472,7 @@ export default function ProductForm() {
         {/* Sizes */}
         <div>
           <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">Розміри (опціонально)</label>
-          <div className="flex flex-col space-y-4 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+          <div className="flex flex-col space-y-4 p-6 bg-stone-50/50 rounded-md border border-stone-100">
             <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
               <input
                 type="text"
@@ -425,7 +482,7 @@ export default function ProductForm() {
                   if (e.key === 'Enter') handleAddSize(e);
                 }}
                 className="flex-1 w-full sm:max-w-[200px] px-4 py-2 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800"
-                placeholder="Розмір (напр., 62)"
+                placeholder="Розмір (напр., 62 або 100*80 см)"
               />
               <input
                 type="number"
@@ -471,13 +528,13 @@ export default function ProductForm() {
         {/* Filters */}
         <div className="space-y-6">
           <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">Характеристики для фільтрів</label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-stone-50/50 rounded-md border border-stone-100">
             <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Стать</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({...formData, gender: e.target.value})}
-                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium appearance-none"
+                className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium appearance-none"
               >
                 <option value="">Не обрано</option>
                 <option value="Хлопчик">Хлопчик</option>
@@ -530,34 +587,13 @@ export default function ProductForm() {
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Матеріал</label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {['Інтерлок', 'Футер', 'Перфорація', 'Муслін', 'Бавовна'].map((mat) => (
-                  <label key={mat} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
-                    <input 
-                      type="checkbox" 
-                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
-                      checked={formData.material.includes(mat)}
-                      onChange={(e) => {
-                        const newMats = e.target.checked 
-                          ? [...formData.material, mat]
-                          : formData.material.filter(m => m !== mat);
-                        setFormData({...formData, material: newMats});
-                      }}
-                    />
-                    <span className="text-sm font-medium text-stone-700">{mat}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
         <hr className="border-stone-100" />
 
         {/* Toggles */}
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-8 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-8 p-6 bg-stone-50/50 rounded-md border border-stone-100">
           <label className="flex items-center space-x-3 cursor-pointer group">
             <div className="relative flex items-center justify-center w-6 h-6">
               <input
@@ -591,7 +627,7 @@ export default function ProductForm() {
           
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
             {images.map((img) => (
-              <div key={img.id} className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${img.isMain ? 'border-amber-400 shadow-md ring-4 ring-amber-100' : 'border-stone-200 hover:border-stone-400'}`}>
+              <div key={img.id} className={`group relative aspect-square rounded-md overflow-hidden border-2 transition-all ${img.isMain ? 'border-amber-400 shadow-md ring-4 ring-amber-100' : 'border-stone-200 hover:border-stone-400'}`}>
                 <img src={img.url} alt="Preview" className="w-full h-full object-cover" />
                 
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-stone-900/80 to-transparent p-2 pt-8 flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
@@ -622,7 +658,7 @@ export default function ProductForm() {
             ))}
             
             {/* Add New Image Tile - Allows Multiple */}
-            <div className="relative aspect-square rounded-xl border-2 border-dashed border-stone-300 flex items-center justify-center bg-stone-50/80 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer group">
+            <div className="relative aspect-square rounded-md border-2 border-dashed border-stone-300 flex items-center justify-center bg-stone-50/80 hover:bg-stone-100 hover:border-stone-400 transition-colors cursor-pointer group">
               <div className="text-center text-stone-400 group-hover:text-stone-600 transition-colors">
                 <Upload className="w-8 h-8 mx-auto mb-2 opacity-50 group-hover:opacity-80" />
                 <span className="text-sm font-medium">Додати фото</span>
@@ -651,15 +687,15 @@ export default function ProductForm() {
         {/* SEO Settings */}
         <div className="space-y-6">
           <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">SEO Налаштування (Пошукова оптимізація)</label>
-          <div className="grid grid-cols-1 gap-6 p-6 bg-stone-50/50 rounded-xl border border-stone-100">
+          <div className="grid grid-cols-1 gap-6 p-6 bg-stone-50/50 rounded-md border border-stone-100">
             <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Ключові слова (через кому)</label>
               <input
                 type="text"
                 value={formData.meta_keywords}
                 onChange={(e) => setFormData({...formData, meta_keywords: e.target.value})}
-                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium"
-                placeholder="напр., дитячий одяг, бавовна, боді для малюка, подарунок"
+                className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium"
+                placeholder="напр., дитячий одяг, боді для малюка, подарунок"
               />
               <p className="text-[10px] text-stone-400 mt-2 italic">Допомагає Google зрозуміти тематику товару. Пишіть слова, за якими клієнт може шукати такий товар.</p>
             </div>
@@ -669,7 +705,7 @@ export default function ProductForm() {
                 rows="3"
                 value={formData.meta_description}
                 onChange={(e) => setFormData({...formData, meta_description: e.target.value})}
-                className="w-full px-5 py-3.5 bg-white rounded-xl border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 resize-none"
+                className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 resize-none"
                 placeholder="Короткий привабливий текст для результатів пошуку..."
               />
               <p className="text-[10px] text-stone-400 mt-2 italic">Цей текст користувач бачить у Google під назвою сайту. Рекомендується до 160 символів.</p>
@@ -682,7 +718,7 @@ export default function ProductForm() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-4 rounded-xl font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center text-lg shadow-black/30"
+            className="px-8 py-4 rounded-md font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center text-lg shadow-black/30"
             style={{ backgroundColor: '#1c1917', color: '#ffffff' }}
           >
             {saving ? (

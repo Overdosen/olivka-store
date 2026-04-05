@@ -22,7 +22,7 @@ const COLOR_MAP = {
   'персиковий': '#FFDAB9'
 };
 
-export default function FilterBar({ products, filters, setFilters, onClear, options }) {
+export default function FilterBar({ products, filters, setFilters, onClear, options, categoryName }) {
   // Extract all available colors from products for dynamic filtering
   const availableColors = useMemo(() => {
     const colorMap = new Map();
@@ -60,7 +60,8 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       (filters.sizes && filters.sizes.length > 0) ||
       (filters.ages && filters.ages.length > 0) ||
       (filters.materials && filters.materials.length > 0) ||
-      (filters.colors && filters.colors.length > 0)
+      (filters.colors && filters.colors.length > 0) ||
+      (filters.features && filters.features.length > 0)
     );
   }, [filters]);
 
@@ -69,50 +70,60 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
   return (
     <div className="flex flex-col">
       {/* Gender Filter */}
-      <FilterDropdown
-        label=" Стать "
-        options={genderOptions}
-        selected={filters.gender}
-        onSelect={(val) => setFilters(prev => ({ ...prev, gender: val }))}
-        isSingleSelect={true}
-        className="rounded-t-sm"
-      />
+      {categoryName !== 'Текстиль (пелюшки, пледи)' && (
+        <FilterDropdown
+          label=" Стать "
+          options={genderOptions}
+          selected={filters.gender}
+          onSelect={(val) => setFilters(prev => ({ ...prev, gender: val }))}
+          isSingleSelect={true}
+          className="rounded-t-sm"
+        />
+      )}
 
       {/* Size Filter */}
       <FilterDropdown
         label=" Розмір  "
-        options={options.sizes}
+        options={categoryName === 'Текстиль (пелюшки, пледи)' 
+          ? ['100*80 см', '100*75 см', '75*50 см']
+          : options.sizes.filter(s => !s.includes('*'))
+        }
         selected={filters.sizes}
         onSelect={(val) => setFilters(prev => ({ ...prev, sizes: val }))}
-        className="rounded-none border-t-0"
+        className={`border-t-0 ${categoryName === 'Текстиль (пелюшки, пледи)' ? 'rounded-t-sm' : 'rounded-none'}`}
       />
 
       {/* Age Filter */}
-      <FilterDropdown
-        label=" Вік  "
-        options={options.ages}
-        selected={filters.ages}
-        onSelect={(val) => setFilters(prev => ({ ...prev, ages: val }))}
-        className="rounded-none border-t-0"
-      />
+      {categoryName !== 'Текстиль (пелюшки, пледи)' && (
+        <FilterDropdown
+          label=" Вік   "
+          options={options.ages}
+          selected={filters.ages}
+          onSelect={(val) => setFilters(prev => ({ ...prev, ages: val }))}
+          className="rounded-none border-t-0"
+        />
+      )}
 
       {/* Material Filter */}
       <FilterDropdown
-        label=" Матеріали  "
-        options={options.materials}
+        label="Матеріал"
+        options={categoryName === 'Текстиль (пелюшки, пледи)'
+          ? ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча']
+          : options.materials.filter(m => !['Бавовна', 'Фланель', 'Непромокаюча'].includes(m))
+        }
         selected={filters.materials}
         onSelect={(val) => setFilters(prev => ({ ...prev, materials: val }))}
-        className={`border-t-0 ${availableColors.length > 0 ? 'rounded-none' : 'rounded-b-sm'}`}
+        className={`border-t-0 ${(availableColors.length > 0 || ['Комплекти', 'Боді', 'Пісочники, ромпери', 'Чепчики, шапочки', 'Костюми, сукні'].includes(categoryName)) ? 'rounded-none' : 'rounded-b-sm'}`}
       />
 
       {/* Colors Filter */}
       {availableColors.length > 0 && (
         <FilterDropdown
-          label=" Кольори  "
+          label="Кольори"
           options={availableColors}
           selected={filters.colors}
           onSelect={(val) => setFilters(prev => ({ ...prev, colors: val }))}
-          className="rounded-b-sm border-t-0"
+          className={`border-t-0 ${['Комплекти', 'Боді', 'Пісочники, ромпери', 'Чепчики, шапочки', 'Костюми, сукні'].includes(categoryName) ? 'rounded-none' : 'rounded-b-sm'}`}
           renderOption={(color, active) => (
             <div className="flex items-center space-x-5 w-full p-2">
               <div className="relative group/color shrink-0">
@@ -131,6 +142,23 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
               </span>
             </div>
           )}
+        />
+      )}
+
+      {/* Features Filter */}
+      {['Комплекти', 'Боді', 'Пісочники, ромпери', 'Чепчики, шапочки', 'Костюми, сукні'].includes(categoryName) && (
+        <FilterDropdown
+          label="Особливості моделі"
+          options={(() => {
+            if (categoryName === 'Боді') return options.features.filter(f => f.includes('рукав'));
+            if (categoryName === 'Пісочники, ромпери') return options.features.filter(f => ['Пісочник', 'Ромпер'].includes(f));
+            if (categoryName === 'Чепчики, шапочки') return options.features.filter(f => ['Шапочка-вузлик', 'Чепчик'].includes(f));
+            if (categoryName === 'Костюми, сукні') return options.features.filter(f => ['Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'].includes(f));
+            return options.features.filter(f => ['З боді', 'З сорочкою', 'З шапочкою', 'Без шапочки'].includes(f));
+          })()}
+          selected={filters.features}
+          onSelect={(val) => setFilters(prev => ({ ...prev, features: val }))}
+          className="rounded-b-sm border-t-0"
         />
       )}
 

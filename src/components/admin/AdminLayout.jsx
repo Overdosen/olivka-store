@@ -33,7 +33,7 @@ export default function AdminLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-4 p-3.5 rounded-xl transition-all duration-300 ${
+                className={`flex items-center space-x-4 p-3.5 rounded-md transition-all duration-300 ${
                   isActive 
                     ? '!bg-stone-900 !text-white shadow-md shadow-stone-200' 
                     : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900'
@@ -49,7 +49,7 @@ export default function AdminLayout() {
         <div className="p-5 border-t border-stone-200/60">
           <button 
             onClick={handleLogout}
-            className="group flex items-center justify-center space-x-2 text-stone-500 hover:bg-red-50 hover:text-red-600 p-3.5 rounded-xl transition-all duration-300 w-full font-medium"
+            className="group flex items-center justify-center space-x-2 text-stone-500 hover:bg-red-50 hover:text-red-600 p-3.5 rounded-md transition-all duration-300 w-full font-medium"
           >
             <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
             <span className="text-sm tracking-wide">Вийти</span>

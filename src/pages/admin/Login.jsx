@@ -33,7 +33,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden p-8 space-y-8">
+      <div className="max-w-md w-full bg-white rounded-md shadow-xl overflow-hidden p-8 space-y-8">
         
         <div className="text-center">
           <h2 className="text-3xl font-cormorant font-bold text-stone-800">Olivka Store</h2>
@@ -47,7 +47,7 @@ export default function Login() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
               placeholder="admin@olivka.store"
               required
             />
@@ -59,7 +59,7 @@ export default function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
               placeholder="••••••••"
               required
             />
@@ -68,7 +68,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-stone-800 hover:bg-stone-900 text-white font-medium py-3 px-4 rounded-lg transition-colors flex justify-center items-center space-x-2 disabled:opacity-70"
+            className="w-full bg-stone-800 hover:bg-stone-900 text-white font-medium py-3 px-4 rounded transition-colors flex justify-center items-center space-x-2 disabled:opacity-70"
           >
             {loading ? (
               <span className="animate-pulse">Перевірка...</span>

@@ -21,15 +21,23 @@ export default function Category() {
     sizes: [],
     ages: [],
     materials: [],
-    colors: []
+    colors: [],
+    features: []
   });
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   // Options
   const filterOptions = {
-    sizes: ['56', '56-62', '62', '62-68', '74', '80', '86', '92'],
+    sizes: ['56', '56-62', '62', '62-68', '74', '80', '86', '92', '100*80 см', '100*75 см', '75*50 см'],
     ages: ['0-1 місяць', '0-3 місяці', '1-3 місяці', '3-6 місяців', '6-9 місяців', '9-12 місяців', '12-18 місяців', '2 роки'],
-    materials: ['Інтерлок', 'Футер', 'Перфорація', 'Муслін', 'Бавовна']
+    materials: ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча', 'Інтерлок', 'Футер', 'Перфорація'],
+    features: [
+      'З боді', 'З сорочкою', 'З шапочкою', 'Без шапочки', 
+      'Короткий рукав', 'Довгий рукав',
+      'Пісочник', 'Ромпер',
+      'Шапочка-вузлик', 'Чепчик',
+      'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'
+    ]
   };
 
   const clearFilters = () => {
@@ -38,7 +46,8 @@ export default function Category() {
       sizes: [],
       ages: [],
       materials: [],
-      colors: []
+      colors: [],
+      features: []
     });
     setIsMobileFiltersOpen(false);
   };
@@ -92,6 +101,9 @@ export default function Category() {
     if (filters.colors.length > 0) {
       if (!product.color || !product.color.some(c => filters.colors.includes(c))) return false;
     }
+    if (filters.features && filters.features.length > 0) {
+      if (!product.features || !product.features.some(f => filters.features.includes(f))) return false;
+    }
     return true;
   });
 
@@ -127,7 +139,7 @@ export default function Category() {
       
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 mb-2 lg:mb-12 -translate-y-10">
         {/* Placeholder to compensate for sidebar width on desktop */}
-        <div className="hidden lg:block w-[212px] shrink-0"></div>
+        <div className="hidden lg:block w-[261px] shrink-0"></div>
         
         <div className="flex-1 text-center">
           <h1 className="section-title !mb-4">{category?.name}</h1>
@@ -145,13 +157,14 @@ export default function Category() {
 
       <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-[212px] shrink-0 sticky top-24 self-start">
+        <aside className="hidden lg:block w-[261px] shrink-0 sticky top-24 self-start">
           <FilterBar
             products={products}
             filters={filters}
             setFilters={setFilters}
             onClear={clearFilters}
             options={filterOptions}
+            categoryName={category?.name}
           />
         </aside>
 
@@ -226,11 +239,14 @@ export default function Category() {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 z-[70] w-[85%] max-w-sm bg-stone-50 p-6 overflow-y-auto lg:hidden"
+              className="fixed inset-y-0 left-0 z-[70] w-[250px] bg-stone-50 p-6 overflow-y-auto lg:hidden"
             >
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-bold text-stone-800 font-serif lowercase italic">Фільтри</h2>
-                <button onClick={() => setIsMobileFiltersOpen(false)} className="p-2 border rounded-full text-stone-500 bg-white">
+              <div className="relative flex items-center justify-center mb-10">
+                <h2 className="font-bold font-sans text-[#524f25]" style={{ fontSize: '1.6rem' }}>Фільтри</h2>
+                <button 
+                  onClick={() => setIsMobileFiltersOpen(false)} 
+                  className="absolute right-0 p-2 border border-stone-200 rounded-full text-stone-500 bg-white shadow-sm"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -242,6 +258,7 @@ export default function Category() {
                   setFilters={setFilters}
                   onClear={clearFilters}
                   options={filterOptions}
+                  categoryName={category?.name}
                 />
               </div>
 
