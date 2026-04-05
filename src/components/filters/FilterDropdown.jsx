@@ -28,10 +28,11 @@ export default function FilterDropdown({ label, options, selected, onChange }) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between bg-white border border-stone-200 px-4 py-3 rounded-md shadow-sm hover:border-stone-300 transition-colors"
+        className="w-full flex items-center justify-between border border-stone-200 px-4 py-3 rounded-md shadow-sm hover:border-stone-300 transition-colors"
+        style={{ backgroundColor: '#eee6d8' }}
       >
         <span className="text-stone-700 font-medium">
-          {label} {selected.length > 0 && <span className="ml-1 text-xs bg-stone-100 px-2 py-0.5 rounded-full text-stone-600 font-bold">{selected.length}</span>}
+          &nbsp;{label} {selected.length > 0 && <span className="ml-1 text-xs bg-stone-100 px-2 py-0.5 rounded-full text-stone-600 font-bold">{selected.length}</span>}
         </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
@@ -44,11 +45,11 @@ export default function FilterDropdown({ label, options, selected, onChange }) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -10, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: -10, x: '-50%' }}
             transition={{ duration: 0.2 }}
-            className="absolute z-20 w-full mt-2 bg-white border border-stone-200 rounded-md shadow-lg max-h-60 overflow-y-auto custom-scrollbar"
+            className="absolute z-20 min-w-full w-max mt-2 bg-white border border-stone-200 rounded-md shadow-lg max-h-60 overflow-y-auto custom-scrollbar left-1/2"
           >
             <div className="p-2 space-y-1">
               {options.map((option) => {
@@ -68,7 +69,7 @@ export default function FilterDropdown({ label, options, selected, onChange }) {
                       onChange={() => toggleOption(option)}
                     />
                     <span className={`text-sm font-medium transition-colors ${isSelected ? 'text-stone-900' : 'text-stone-600 group-hover:text-stone-900'}`}>
-                      {option}
+                      &nbsp;{option}
                     </span>
                   </label>
                 );

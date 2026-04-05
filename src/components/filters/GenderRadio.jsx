@@ -53,34 +53,35 @@ export default function GenderRadio({ value, onChange }) {
           overflow: hidden;
         }
 
-        /* ----- BOY SCHEME (Beige/Brown) ----- */
+        /* ----- BOY SCHEME (Light Blue) ----- */
         .radio-inputs .radio input[data-scheme="boy"]:checked + .name {
-          background: linear-gradient(145deg, #a88d77, #8a7360);
+          background: linear-gradient(145deg, #a3c9e6, #84aecd);
           color: white;
           font-weight: 600;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-          box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.1), 3px 3px 8px rgba(152, 123, 102, 0.3);
+          box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), inset -2px -2px 5px rgba(255, 255, 255, 0.1), 3px 3px 8px rgba(132, 174, 205, 0.3);
           transform: translateY(2px);
           animation: select 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .radio-inputs .radio input[data-scheme="boy"]:checked + .name::before {
-          background: #b59b86; box-shadow: 0 0 6px #b59b86, 10px -10px 0 #b59b86, -10px -10px 0 #b59b86;
+          background: #b5d3e6; box-shadow: 0 0 6px #b5d3e6, 10px -10px 0 #b5d3e6, -10px -10px 0 #b5d3e6;
           animation: multi-particles-top 0.8s ease-out forwards;
         }
         .radio-inputs .radio input[data-scheme="boy"]:checked + .name::after {
-          box-shadow: 0 0 8px #c2a893, 10px 10px 0 #c2a893, -10px 10px 0 #c2a893;
+          box-shadow: 0 0 8px #c2dceb, 10px 10px 0 #c2dceb, -10px 10px 0 #c2dceb;
           animation: multi-particles-bottom 0.8s ease-out forwards;
-          background: radial-gradient(circle at 50% 50%, rgba(152, 123, 102, 0.3) 0%, transparent 50%);
+          background: radial-gradient(circle at 50% 50%, rgba(132, 174, 205, 0.3) 0%, transparent 50%);
           animation: sparkle-bg-boy 1s ease-out forwards;
         }
         .radio-inputs .radio input[data-scheme="boy"]:checked + .name::after {
-          background: linear-gradient(45deg, rgba(168, 141, 119, 0.5), rgba(138, 115, 96, 0.5));
+          background: linear-gradient(45deg, rgba(163, 201, 230, 0.5), rgba(132, 174, 205, 0.5));
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor; mask-composite: exclude;
           animation: border-glow-boy 1.5s ease-in-out infinite alternate;
         }
 
         /* ----- GIRL SCHEME (Powder Pink) ----- */
+
         .radio-inputs .radio input[data-scheme="girl"]:checked + .name {
           background: linear-gradient(145deg, #d4a3c1, #b588a3);
           color: white;
@@ -214,13 +215,20 @@ export default function GenderRadio({ value, onChange }) {
 
       <div className="radio-inputs">
         {options.map((opt) => (
-          <label className="radio" key={opt.id}>
+          <label 
+            className="radio" 
+            key={opt.id}
+            onClick={(e) => {
+              e.preventDefault();
+              onChange(value === opt.id ? '' : opt.id);
+            }}
+          >
             <input 
               type="radio" 
               name="gender" 
               data-scheme={opt.scheme} 
               checked={value === opt.id}
-              onChange={() => onChange(opt.id)}
+              readOnly
             />
             <span className="name">
               <span className="name-inner">{opt.label}</span>

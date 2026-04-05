@@ -104,11 +104,24 @@ export default function Home() {
         position: 'relative', 
         overflow: 'hidden', 
         height: 'auto',
-        minHeight: '400px',
         backgroundColor: '#fdfbf7' 
       }}>
-        {/* Layer 0: Background Scenery (Empty Banner) */}
-        <div style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
+        
+        {/* Mobile Static Banner (Shown only on mobile) */}
+        <div className="mobile-only" style={{ width: '100%' }}>
+          <img 
+            src="/images/bannermobile.png" 
+            alt="Olivka Store Mobile Banner" 
+            style={{ 
+              width: '100%', 
+              height: 'auto', 
+              display: 'block'
+            }} 
+          />
+        </div>
+
+        {/* Desktop Animated Banner (Hidden on mobile) */}
+        <div className="desktop-only" style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
           <motion.img 
             src="/images/emptybanner.png" 
             alt="Hero Background" 
@@ -150,12 +163,6 @@ export default function Home() {
           <div className="cloud-layer cloud-6" style={{ top: '28%', left: 0, width: '150px', opacity: 0.4, zIndex: 1 }}>
             <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
           </div>
-
-
-
-
-
-
 
           {/* Layer 2: Characters (Girl and Stork positioned) */}
           {/* The Girl - Centered, Smaller, and Lower */}

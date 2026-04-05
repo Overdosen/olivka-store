@@ -90,6 +90,18 @@ button {
   .sm-hidden {
     display: none;
   }
+  .desktop-only {
+    display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+@media (min-width: 640px) {
+  .mobile-only {
+    display: none !important;
+  }
 }
 
 /* Buttons */
