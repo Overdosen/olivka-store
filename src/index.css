@@ -78,10 +78,16 @@ button {
 }
 
 /* Utilities */
-.container {
+.container, .container-wide {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+@media (min-width: 1440px) {
+  .container-wide {
+    max-width: 1740px;
+  }
 }
 
 .text-center { text-align: center; }
@@ -340,7 +346,7 @@ button {
 .products-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 @media (min-width: 640px) {
