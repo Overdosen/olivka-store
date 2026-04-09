@@ -38,6 +38,9 @@
 
 html {
   overflow-y: scroll; /* Prevents layout shift when scrollbar appears/disappears */
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 body {
@@ -46,6 +49,15 @@ body {
   color: #524f25;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.no-scroll {
+  overflow: hidden !important;
+  height: 100vh;
+  position: fixed;
+  width: 100%;
 }
 
 strong, b {
@@ -746,5 +758,51 @@ html:has(body.no-scroll) {
   }
   .d-md-none {
     display: none;
+  }
+}
+
+/* Checkout Styles */
+.checkout-container {
+  padding-top: 2.5rem;
+  max-width: 1000px;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.checkout-form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.checkout-summary-section {
+  display: none;
+}
+
+.mobile-submit-container {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .checkout-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .desktop-summary-column {
+    display: none;
+  }
+  .checkout-summary-section {
+    display: block;
+  }
+  .mobile-submit-container {
+    display: block;
+  }
+  .checkout-container {
+    padding-top: 1rem;
   }
 }

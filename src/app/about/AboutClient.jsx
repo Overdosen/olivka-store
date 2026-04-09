@@ -20,8 +20,8 @@ const sections = [
     desc: "Умови надання послуг, права та обов'язки сторін",
     color: '#f5f2ea',
     accent: '#c9c3a0',
-    modalType: 'text_file',
-    modalSrc: '/docs/offer.txt'
+    modalType: 'pdf',
+    modalSrc: '/docs/oferta.pdf'
   },
   {
     id: 'consumer',

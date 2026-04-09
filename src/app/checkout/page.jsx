@@ -121,6 +121,21 @@ export default function CheckoutPage() {
 
       if (error) throw error;
 
+      // --- n8n Webhook ---
+      const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+      if (webhookUrl) {
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'new_order',
+            source: 'olivka-store-web',
+            data: data, // Повна інформація з Supabase (включаючи товари, ФІО, суму тощо)
+            timestamp: new Date().toISOString()
+          })
+        }).catch(err => console.error('n8n Webhook Error:', err));
+      }
+
       clearCart();
       const shortId = data.id.slice(0, 8).toUpperCase();
       toast.success(`✅ Замовлення #${shortId} прийнято!`, { duration: 5000 });
@@ -163,7 +178,8 @@ export default function CheckoutPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        style={{ paddingBottom: '6rem', fontFamily: 'var(--font-sans)' }}
+        transition={{ duration: 0.4 }}
+        style={{ paddingBottom: '6rem', fontFamily: 'var(--font-sans)', overflowX: 'hidden' }}
       >
         {/* Шапка */}
         <div style={{
@@ -180,135 +196,18 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
-        <div className="container" style={{ paddingTop: '2.5rem', maxWidth: '1000px' }}>
+        <div className="container checkout-container">
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+            <div className="checkout-grid">
 
-              {/* ── Ліва колонка: форма ── */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-                {/* Контактні дані */}
-                <CheckoutCard icon={<User size={18} />} title="Контактні дані">
-                  <div style={{ display: 'grid', gap: '0.875rem' }}>
-                    <CheckoutInput
-                      label="ПІБ"
-                      value={fullName}
-                      onChange={e => setFullName(e.target.value)}
-                      placeholder="Іваненко Іван Іванович"
-                      required
-                    />
-                    <CheckoutInput
-                      label="Телефон"
-                      value={phone}
-                      onChange={handlePhoneChange}
-                      onFocus={handlePhoneFocus}
-                      placeholder="+38 (0__) ___-__-__"
-                      type="tel"
-                      required
-                      ref={phoneRef}
-                    />
-                  </div>
-                </CheckoutCard>
-
-                {/* Спосіб доставки */}
-                <CheckoutCard icon={<Truck size={18} />} title="Спосіб доставки">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {DELIVERY_OPTIONS.map(opt => (
-                      <label key={opt.id} style={{
-                        display: 'flex', alignItems: 'center', gap: '1rem',
-                        padding: '0.875rem 1rem',
-                        border: `1.5px solid ${delivery === opt.id ? '#524f25' : 'rgba(82,79,37,0.12)'}`,
-                        borderRadius: '12px', cursor: 'pointer',
-                        background: delivery === opt.id ? 'rgba(82,79,37,0.04)' : 'transparent',
-                        transition: 'all 0.2s',
-                      }}>
-                        <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id}
-                          onChange={() => setDelivery(opt.id)} style={{ accentColor: '#524f25' }} />
-                        <span style={{ fontSize: '1.25rem' }}>{opt.icon}</span>
-                        <div>
-                          <p style={{ margin: 0, fontWeight: 500, color: '#524f25', fontSize: '0.9rem' }}>{opt.label}</p>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)' }}>{opt.desc}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </CheckoutCard>
-
-                {/* Адреса — залежно від способу доставки */}
-                {delivery === 'nova_poshta' && (
-                  <CheckoutCard icon={<MapPin size={18} />} title="Відділення / Поштомат">
-                    <NovaPoshtaSelector
-                      value={address}
-                      onChange={setAddress}
-                    />
-                  </CheckoutCard>
-                )}
-
-                {delivery === 'ukrposhta' && (
-                  <CheckoutCard icon={<MapPin size={18} />} title="Відділення Укрпошти">
-                    <UkrPoshtaSelector
-                      value={address}
-                      onChange={setAddress}
-                    />
-                  </CheckoutCard>
-                )}
-
-                {/* Спосіб оплати */}
-                <CheckoutCard icon={<span style={{ fontSize: '1rem' }}>💳</span>} title="Спосіб оплати">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {PAYMENT_OPTIONS.map(opt => (
-                      <label key={opt.id} style={{
-                        display: 'flex', alignItems: 'center', gap: '1rem',
-                        padding: '0.875rem 1rem',
-                        border: `1.5px solid ${payment === opt.id ? '#524f25' : 'rgba(82,79,37,0.12)'}`,
-                        borderRadius: '12px',
-                        cursor: opt.disabled ? 'not-allowed' : 'pointer',
-                        opacity: opt.disabled ? 0.5 : 1,
-                        background: payment === opt.id ? 'rgba(82,79,37,0.04)' : 'transparent',
-                        transition: 'all 0.2s',
-                      }}>
-                        <input type="radio" name="payment" value={opt.id} checked={payment === opt.id}
-                          disabled={opt.disabled}
-                          onChange={() => !opt.disabled && setPayment(opt.id)}
-                          style={{ accentColor: '#524f25' }} />
-                        <span style={{ fontSize: '1.25rem' }}>{opt.icon}</span>
-                        <div>
-                          <p style={{ margin: 0, fontWeight: 500, color: '#524f25', fontSize: '0.9rem' }}>{opt.label}</p>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)' }}>{opt.desc}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </CheckoutCard>
-
-                {/* Коментар */}
-                <CheckoutCard icon={<FileText size={18} />} title="Коментар до замовлення">
-                  <textarea
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="Необов'язково. Будь-які побажання до замовлення..."
-                    rows={3}
-                    style={{
-                      width: '100%', resize: 'vertical',
-                      border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px',
-                      padding: '0.75rem 1rem', fontFamily: 'var(--font-sans)',
-                      fontSize: '0.9rem', color: '#524f25',
-                      background: 'rgba(255,255,255,0.7)', outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                    onFocus={e => e.target.style.borderColor = '#524f25'}
-                    onBlur={e => e.target.style.borderColor = 'rgba(82,79,37,0.15)'}
-                  />
-                </CheckoutCard>
-              </div>
-
-              {/* ── Права колонка: підсумок ── */}
-              <div style={{ position: 'sticky', top: '2rem' }}>
+              {/* 1. Ваше замовлення (Summary) */}
+              <div className="checkout-summary-section">
                 <div style={{
                   background: 'white', borderRadius: '20px',
                   border: '1px solid rgba(82,79,37,0.07)',
                   boxShadow: '0 4px 20px rgba(82,79,37,0.05)',
                   overflow: 'hidden',
+                  marginBottom: '1.5rem'
                 }}>
                   <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(82,79,37,0.06)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#524f25' }}>
@@ -344,25 +243,219 @@ export default function CheckoutPage() {
                     ))}
                   </div>
 
-                  <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid rgba(82,79,37,0.08)', background: '#faf9f6' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '1.1rem', fontWeight: 600, color: '#524f25' }}>
+                  <div style={{ padding: '1rem 1.5rem 1.25rem', borderTop: '1px solid rgba(82,79,37,0.08)', background: '#faf9f6' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 600, color: '#524f25' }}>
                       <span>Разом</span>
                       <span>{total} грн</span>
                     </div>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="btn btn-primary"
-                      style={{
-                        width: '100%', padding: '1rem',
-                        fontSize: '0.9rem', letterSpacing: '0.08em',
-                        opacity: submitting ? 0.6 : 1,
-                        cursor: submitting ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                      }}
-                    >
-                      {submitting ? 'Оформлюємо...' : (<>Підтвердити замовлення <ChevronRight size={16} /></>)}
-                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Основні дані (Ліва частина в десктопі) ── */}
+              <div className="checkout-form-sections">
+
+                {/* 2. Контактні дані */}
+                <CheckoutCard icon={<User size={18} />} title="Контактні дані">
+                  <div style={{ display: 'grid', gap: '0.875rem' }}>
+                    <CheckoutInput
+                      label="ПІБ"
+                      value={fullName}
+                      onChange={e => setFullName(e.target.value)}
+                      placeholder="Іваненко Іван Іванович"
+                      required
+                    />
+                    <CheckoutInput
+                      label="Телефон"
+                      value={phone}
+                      onChange={handlePhoneChange}
+                      onFocus={handlePhoneFocus}
+                      placeholder="+38 (0__) ___-__-__"
+                      type="tel"
+                      required
+                      ref={phoneRef}
+                    />
+                  </div>
+                </CheckoutCard>
+
+                {/* 3. Спосіб доставки */}
+                <CheckoutCard icon={<Truck size={18} />} title="Спосіб доставки">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {DELIVERY_OPTIONS.map(opt => (
+                      <label key={opt.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        padding: '0.875rem 1rem',
+                        border: `1.5px solid ${delivery === opt.id ? '#524f25' : 'rgba(82,79,37,0.12)'}`,
+                        borderRadius: '12px', cursor: 'pointer',
+                        background: delivery === opt.id ? 'rgba(82,79,37,0.04)' : 'transparent',
+                        transition: 'all 0.2s',
+                      }}>
+                        <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id}
+                          onChange={() => setDelivery(opt.id)} style={{ accentColor: '#524f25' }} />
+                        <span style={{ fontSize: '1.25rem' }}>{opt.icon}</span>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: 500, color: '#524f25', fontSize: '0.9rem' }}>{opt.label}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)' }}>{opt.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </CheckoutCard>
+
+                {/* 4. Відділення — залежно від способу доставки */}
+                {delivery === 'nova_poshta' && (
+                  <CheckoutCard icon={<MapPin size={18} />} title="Відділення / Поштомат">
+                    <NovaPoshtaSelector
+                      value={address}
+                      onChange={setAddress}
+                    />
+                  </CheckoutCard>
+                )}
+
+                {delivery === 'ukrposhta' && (
+                  <CheckoutCard icon={<MapPin size={18} />} title="Відділення Укрпошти">
+                    <UkrPoshtaSelector
+                      value={address}
+                      onChange={setAddress}
+                    />
+                  </CheckoutCard>
+                )}
+
+                {/* 5. Спосіб оплати */}
+                <CheckoutCard icon={<span style={{ fontSize: '1rem' }}>💳</span>} title="Спосіб оплати">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {PAYMENT_OPTIONS.map(opt => (
+                      <label key={opt.id} style={{
+                        display: 'flex', alignItems: 'center', gap: '1rem',
+                        padding: '0.875rem 1rem',
+                        border: `1.5px solid ${payment === opt.id ? '#524f25' : 'rgba(82,79,37,0.12)'}`,
+                        borderRadius: '12px',
+                        cursor: opt.disabled ? 'not-allowed' : 'pointer',
+                        opacity: opt.disabled ? 0.5 : 1,
+                        background: payment === opt.id ? 'rgba(82,79,37,0.04)' : 'transparent',
+                        transition: 'all 0.2s',
+                      }}>
+                        <input type="radio" name="payment" value={opt.id} checked={payment === opt.id}
+                          disabled={opt.disabled}
+                          onChange={() => !opt.disabled && setPayment(opt.id)}
+                          style={{ accentColor: '#524f25' }} />
+                        <span style={{ fontSize: '1.25rem' }}>{opt.icon}</span>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: 500, color: '#524f25', fontSize: '0.9rem' }}>{opt.label}</p>
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)' }}>{opt.desc}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </CheckoutCard>
+
+                {/* 6. Кнопка "Підтвердити замовлення" (мобілка) */}
+                <div className="mobile-submit-container" style={{ margin: '1rem 0' }}>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="btn btn-primary"
+                    style={{
+                      width: '100%', padding: '1.25rem',
+                      fontSize: '1rem', letterSpacing: '0.08em',
+                      opacity: submitting ? 0.6 : 1,
+                      cursor: submitting ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                      borderRadius: '16px',
+                      boxShadow: '0 10px 25px rgba(82,79,37,0.2)'
+                    }}
+                  >
+                    {submitting ? 'Оформлюємо...' : (<>Підтвердити замовлення <ChevronRight size={18} /></>)}
+                  </button>
+                </div>
+
+                {/* 7. Коментар */}
+                <CheckoutCard icon={<FileText size={18} />} title="Коментар до замовлення">
+                  <textarea
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    placeholder="Необов'язково. Будь-які побажання до замовлення..."
+                    rows={3}
+                    style={{
+                      width: '100%', resize: 'vertical',
+                      border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px',
+                      padding: '0.75rem 1rem', fontFamily: 'var(--font-sans)',
+                      fontSize: '0.9rem', color: '#524f25',
+                      background: 'rgba(255,255,255,0.7)', outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#524f25'}
+                    onBlur={e => e.target.style.borderColor = 'rgba(82,79,37,0.15)'}
+                  />
+                </CheckoutCard>
+
+              </div>
+
+              {/* Права колонка (ДЕКСТОП ТІЛЬКИ) */}
+              <div className="desktop-summary-column">
+                <div style={{ position: 'sticky', top: '2rem' }}>
+                  {/* Перенесена кнопка підтвердження для десктопа всередині підсумку */}
+                  <div style={{
+                    background: 'white', borderRadius: '20px',
+                    border: '1px solid rgba(82,79,37,0.07)',
+                    boxShadow: '0 4px 20px rgba(82,79,37,0.05)',
+                    overflow: 'hidden',
+                  }}>
+                     {/* Копія підсумку для десктопа */}
+                      <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(82,79,37,0.06)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#524f25' }}>
+                          <Package size={18} />
+                          <span style={{ fontSize: '0.8rem', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 500 }}>
+                            Підсумок замовлення
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Список товарів (Десктоп) */}
+                      <div style={{ padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.875rem', maxHeight: '40vh', overflowY: 'auto' }} className="custom-scrollbar-minimal">
+                        {cartItems.map((item, idx) => (
+                          <div key={`${item.id}-${item.size}-${idx}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                            {(item.image_url || item.image) && (
+                              <img
+                                src={item.image_url || item.image}
+                                alt={item.name}
+                                style={{ width: '40px', height: '50px', objectFit: 'cover', borderRadius: '6px', background: '#f5f2e9', flexShrink: 0 }}
+                              />
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 500, color: '#524f25', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.name}
+                              </p>
+                              <p style={{ margin: '0.1rem 0 0', fontSize: '0.7rem', color: 'rgba(82,79,37,0.5)' }}>
+                                {item.quantity} шт. {item.size && `· ${item.size}`}
+                              </p>
+                            </div>
+                            <p style={{ margin: 0, fontWeight: 600, color: '#524f25', flexShrink: 0, fontSize: '0.85rem' }}>
+                              {item.price * item.quantity}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ padding: '1rem 1.5rem 1.5rem', background: '#faf9f6' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 600, color: '#524f25', marginBottom: '1.5rem' }}>
+                          <span>Разом</span>
+                          <span>{total} грн</span>
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={submitting}
+                          className="btn btn-primary"
+                          style={{
+                            width: '100%', padding: '1rem',
+                            fontSize: '0.9rem', letterSpacing: '0.08em',
+                            opacity: submitting ? 0.6 : 1,
+                            cursor: submitting ? 'not-allowed' : 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                          }}
+                        >
+                          {submitting ? 'Оформлюємо...' : (<>Підтвердити замовлення <ChevronRight size={16} /></>)}
+                        </button>
+                      </div>
                   </div>
                 </div>
               </div>
