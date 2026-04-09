@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom';
 import { X, User, Lock, Mail, Phone, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
+import { formatUaMasked, isPhoneFull } from '../lib/utils';
 
 /**
  * AuthModal — модальне вікно реєстрації та входу
  * Закривається при кліку поза вікном.
  */
-export default function AuthModal({ isOpen, onClose }) {
+export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
   const { signUp, signIn } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState(initialMode || 'login'); // 'login' | 'register'
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,43 +27,32 @@ export default function AuthModal({ isOpen, onClose }) {
   // Скидаємо при відкритті
   useEffect(() => {
     if (isOpen) {
-      setError(''); setSuccess(''); setLoading(false); setMode('login');
-      setFirstName(''); setLastName(''); setEmail(''); setPassword(''); setPhoneUa('');
+      setError(''); setSuccess(''); setLoading(false); setMode(initialMode || 'login');
+      setFirstName(''); setLastName(''); setEmail(''); setPassword(''); 
+      setPhoneUa(isInternational ? '' : formatUaMasked(''));
       setIsInternational(false);
     }
-  }, [isOpen]);
+  }, [isOpen, initialMode]);
 
   // ── Форматування UA-номера ──────────────────────────────────────────────────
-  function formatUaPhone(raw) {
-    let digits = raw.replace(/[^\d]/g, '');
-    if (digits.startsWith('380')) digits = digits.slice(3);
-    if (digits.startsWith('0')) digits = digits.slice(1);
-    digits = digits.slice(0, 9);
-    let out = '+380';
-    if (digits.length > 0) out += ' ' + digits.slice(0, 3);
-    if (digits.length > 3) out += ' ' + digits.slice(3, 6);
-    if (digits.length > 6) out += ' ' + digits.slice(6, 9);
-    return out;
-  }
-
   function handlePhoneChange(e) {
     if (isInternational) {
       const val = e.target.value;
-      // Дозволяємо лише +, цифри, пробіли, дужки, дефіси
       if (/^[\d+()\-\s]*$/.test(val)) {
         setPhoneUa(val.startsWith('+') ? val : '+' + val.replace(/\+/g, ''));
       }
     } else {
-      setPhoneUa(formatUaPhone(e.target.value));
+      setPhoneUa(formatUaMasked(e.target.value));
+    }
+  }
+
+  function handlePhoneFocus() {
+    if (!isInternational && (!phoneUa || phoneUa === '')) {
+      setPhoneUa(formatUaMasked(''));
     }
   }
 
   // ── Валідація формату UA-телефону ──────────────────────────────────────────
-  function validatePhone(phone) {
-    if (!phone || phone === '+380') return true; // порожній — дозволено (необов'язково)
-    const digits = phone.replace(/[^\d]/g, '');
-    return digits.length === 12; // 380 + 9 цифр
-  }
 
   // ── Вхід ───────────────────────────────────────────────────────────────────
   async function handleSignIn(e) {
@@ -71,6 +61,7 @@ export default function AuthModal({ isOpen, onClose }) {
     try {
       await signIn({ email, password });
       onClose();
+      onSuccess?.();
     } catch (err) {
       setError(parseError(err.message));
     } finally {
@@ -87,23 +78,35 @@ export default function AuthModal({ isOpen, onClose }) {
     if (!lastName.trim()) return setError('Введіть прізвище');
     if (password.length < 6) return setError('Пароль — мінімум 6 символів');
 
-    // Валідація телефону
-    if (!isInternational && phoneUa && phoneUa !== '+380' && !validatePhone(phoneUa)) {
-      return setError('Невірний формат номера. Має бути +380 XXX XXX XXX (9 цифр після коду)');
+    // Валідація телефону (обов'язково)
+    if (!isInternational) {
+       if (!isPhoneFull(phoneUa)) {
+         return setError('Будь ласка, введіть повний номер телефону: +38 (0__) ___-__-__');
+       }
+    } else {
+       if (!phoneUa || phoneUa.length < 5) {
+         return setError('Введіть міжнародний номер телефону');
+       }
     }
 
     setLoading(true);
     try {
-      const finalPhone = phoneUa && (isInternational || phoneUa !== '+380') ? phoneUa : null;
+      const finalPhone = phoneUa; // Тепер ми завжди маємо телефон
       await signUp({ email, password, firstName, lastName, phoneUa: finalPhone, isInternational });
       setSuccess('👋 Вітаємо! Реєстрація успішна. Ви автоматично увійшли в акаунт.');
-      setTimeout(() => onClose(), 2000);
+      setTimeout(() => { onClose(); onSuccess?.(); }, 1500);
     } catch (err) {
       setError(parseError(err.message));
     } finally {
       setLoading(false);
     }
   }
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   function parseError(msg) {
     const message = msg?.toString() || '';
@@ -117,6 +120,8 @@ export default function AuthModal({ isOpen, onClose }) {
       return 'Пароль — мінімум 6 символів';
     return message;
   }
+
+  if (!mounted || typeof document === 'undefined') return null;
 
   return createPortal(
     <AnimatePresence>
@@ -269,8 +274,12 @@ export default function AuthModal({ isOpen, onClose }) {
                   <AuthInput icon={<Lock size={16} />} type="password" placeholder="Пароль (мін. 6 символів)"
                     value={password} onChange={e => setPassword(e.target.value)} required />
                   <AuthInput icon={<Phone size={16} />} type="tel"
-                    placeholder={isInternational ? "+XXX XXXXXXXX" : "+380 XXX XXX XXX"}
-                    value={phoneUa} onChange={handlePhoneChange} />
+                    placeholder={isInternational ? "+XXX XXXXXXXX" : "+38 (0__) ___-__-__"}
+                    value={phoneUa} 
+                    onChange={handlePhoneChange}
+                    onFocus={handlePhoneFocus}
+                    required
+                  />
 
                   {/* Switch International */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 0.5rem' }}>
@@ -288,8 +297,9 @@ export default function AuthModal({ isOpen, onClose }) {
                         className="sr-only peer"
                         checked={isInternational}
                         onChange={(e) => {
-                          setIsInternational(e.target.checked);
-                          setPhoneUa(e.target.checked ? '+' : '+380');
+                          const checked = e.target.checked;
+                          setIsInternational(checked);
+                          setPhoneUa(checked ? '+' : formatUaMasked(''));
                         }}
                       />
 

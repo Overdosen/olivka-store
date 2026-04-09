@@ -1,10 +1,15 @@
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X, Trash2, Plus, Minus } from 'lucide-react';
+import { useRef } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cartItems, removeFromCart } = useCart();
+  const { isCartOpen, setIsCartOpen, cartItems, removeFromCart, updateQuantity } = useCart();
+  const router = useRouter();
+  const lastToastTime = useRef(0);
 
   const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -34,7 +39,7 @@ export default function CartDrawer() {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'tween', duration: 0.3, ease: 'easeInOut' }}
+            transition={{ type: 'tween', duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             style={{
               position: 'fixed',
               top: 0,
@@ -44,7 +49,7 @@ export default function CartDrawer() {
               maxWidth: '430px',
               backgroundColor: 'white',
               zIndex: 100,
-              boxShadow: '-4px 0 20px rgba(0,0,0,0.05)',
+              boxShadow: '-4px 0 30px rgba(0,0,0,0.1)',
               display: 'flex',
               flexDirection: 'column',
               fontFamily: 'var(--font-sans)',
@@ -60,12 +65,12 @@ export default function CartDrawer() {
                 alignItems: 'center',
               }}
             >
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', margin: 0 }}>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', margin: 0, fontWeight: 400, color: '#524f25' }}>
                 Кошик
               </h2>
               <button
                 onClick={() => setIsCartOpen(false)}
-                style={{ color: 'var(--color-stone-500)', transition: 'color 0.2s' }}
+                style={{ color: 'var(--color-stone-500)', transition: 'color 0.2s', padding: '0.5rem' }}
                 onMouseOver={(e) => (e.currentTarget.style.color = '#000')}
                 onMouseOut={(e) => (e.currentTarget.style.color = 'var(--color-stone-500)')}
               >
@@ -76,52 +81,105 @@ export default function CartDrawer() {
             {/* Content  */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
               {cartItems.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--color-stone-500)', marginTop: '3rem' }}>
+                <div style={{ textAlign: 'center', color: 'var(--color-stone-500)', marginTop: '4rem' }}>
                   <ShoppingBagEmptyIcon />
-                  <p style={{ marginTop: '1rem', fontSize: '1.125rem' }}>Кошик поки що порожній</p>
+                  <p style={{ marginTop: '1.5rem', fontSize: '1.125rem', color: '#524f25' }}>Упс! Кошик наразі порожній</p>
                   <button
                     onClick={() => setIsCartOpen(false)}
                     className="btn btn-primary"
-                    style={{ marginTop: '2rem' }}
+                    style={{ marginTop: '2rem', padding: '1rem 2rem' }}
                   >
-                    Повернутися до покупок
+                    Повернутися до каталогу
                   </button>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {cartItems.map((item, idx) => (
-                    <div key={`${item.id}-${item.size}-${idx}`} style={{ display: 'flex', gap: '1rem' }}>
-                      <Link to={`/product/${item.id}`} onClick={() => setIsCartOpen(false)}>
+                    <div key={`${item.id}-${item.size}-${idx}`} 
+                         style={{ 
+                           display: 'flex', 
+                           gap: '1rem', 
+                           padding: '1rem', 
+                           backgroundColor: 'var(--color-stone-50)',
+                           borderRadius: '1rem'
+                         }}>
+                      <Link href={`/product/${item.id}`} onClick={() => setIsCartOpen(false)}>
                         <img
                           src={item.image}
                           alt={item.name}
                           style={{
-                            width: '80px',
-                            height: '100px',
+                            width: '90px',
+                            height: '110px',
                             objectFit: 'cover',
-                            borderRadius: '8px',
-                            backgroundColor: 'var(--color-stone-100)',
+                            borderRadius: '0.75rem',
+                            backgroundColor: 'white',
                           }}
                         />
                       </Link>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>{item.name}</h4>
-                        <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-stone-500)' }}>
-                          Розмір: {item.size}
-                        </p>
-                        <p style={{ margin: '0.5rem 0 0 0', fontWeight: '500' }}>
-                          {item.price} грн{' '}
-                          <span style={{ color: 'var(--color-stone-400)', fontWeight: 400 }}>
-                            x {item.quantity}
-                          </span>
-                        </p>
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1rem', color: '#524f25', fontWeight: 600 }}>{item.name}</h4>
+                            <button
+                              onClick={() => removeFromCart(item.id, item.size)}
+                              style={{ color: 'var(--color-stone-400)', transition: 'color 0.2s' }}
+                              onMouseOver={(e) => (e.currentTarget.style.color = '#ef4444')}
+                              onMouseOut={(e) => (e.currentTarget.style.color = 'var(--color-stone-400)')}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-stone-500)' }}>
+                            Розмір: {item.size}
+                          </p>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.75rem',
+                            backgroundColor: 'white',
+                            borderRadius: '99px',
+                            padding: '0.25rem 0.5rem',
+                            border: '1px solid var(--color-stone-200)'
+                          }}>
+                            <button 
+                              onClick={() => updateQuantity(item.id, item.size, -1)}
+                              style={{ display: 'flex', alignItems: 'center', color: '#524f25' }}
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span style={{ fontSize: '0.875rem', minWidth: '1.5rem', textAlign: 'center', fontWeight: 500 }}>
+                              {item.quantity}
+                            </span>
+                             <button 
+                               onClick={() => {
+                                 if (item.stock != null && item.quantity >= item.stock) {
+                                   const now = Date.now();
+                                   if (now - lastToastTime.current > 3000) {
+                                     toast.error('Більше немає в наявності');
+                                     lastToastTime.current = now;
+                                   }
+                                 } else {
+                                   updateQuantity(item.id, item.size, 1);
+                                 }
+                               }}
+                               style={{ 
+                                 display: 'flex', 
+                                 alignItems: 'center',
+                                 color: (item.stock != null && item.quantity >= item.stock) ? 'rgba(82,79,37,0.4)' : '#524f25',
+                                 cursor: 'pointer',
+                               }}
+                             >
+                               <Plus size={14} />
+                             </button>
+                          </div>
+                          <p style={{ margin: 0, fontWeight: '600', color: '#524f25' }}>
+                            {item.price * item.quantity} грн
+                          </p>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeFromCart(item.id, item.size)}
-                        style={{ alignSelf: 'flex-start', color: 'var(--color-stone-400)' }}
-                      >
-                        <Trash2 size={20} />
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -149,12 +207,14 @@ export default function CartDrawer() {
                   <span>Разом</span>
                   <span>{total} грн</span>
                 </div>
-                <button
+                <Link
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
                   className="btn btn-primary"
-                  style={{ width: '100%', padding: '1rem', fontSize: '1rem' }}
+                  style={{ width: '100%', padding: '1rem', fontSize: '1rem', textAlign: 'center', textDecoration: 'none', display: 'block' }}
                 >
                   Оформити замовлення
-                </button>
+                </Link>
               </div>
             )}
           </motion.div>

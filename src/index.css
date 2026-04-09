@@ -364,6 +364,9 @@ button {
 .product-card {
   display: block;
   transition: transform 0.3s ease;
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: white;
 }
 
 .product-card:hover {
@@ -373,22 +376,25 @@ button {
 .product-image-wrapper {
   position: relative;
   overflow: hidden;
-  border-radius: 0.5rem;
-  margin-bottom: 1rem;
+  border-radius: 1rem;
+  margin-bottom: 0.5rem;
   background-color: var(--color-stone-50);
-  aspect-ratio: 4 / 5; /* Повертаємо улюблений розмір 4:5 */
+  aspect-ratio: 4 / 5;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Fix for overflow: hidden with border-radius in some browsers */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
+  isolation: isolate;
 }
 
 .product-image {
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  object-fit: contain; /* Строго в рамках плитки */
-  transition: transform 0.5s ease;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Прискорено з 0.75с */
+  border-radius: 1rem;
 }
 
 /* Hero Cloud Animations */
@@ -426,19 +432,35 @@ button {
 
 .product-info {
   text-align: center;
+  padding: 0 1rem 0.6rem 1rem; /* Урізано в 2 рази */
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* Повернуто комфортний інтервал */
 }
 
 .product-title {
-  font-family: var(--font-sans);
+  font-family: var(--font-serif);
   font-weight: 500;
   font-size: 1rem;
-  margin-bottom: 0.25rem;
   color: #524f25;
+  line-height: 1.2;
+  min-height: 2.5rem; /* Повернуто стабільну висоту */
+  text-align: center;
+}
+
+.product-title span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .product-price {
   color: #524f25;
-  font-size: 0.875rem;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 1rem; /* text-base */
 }
 
 /* Carousel */
@@ -480,16 +502,17 @@ button {
   padding: 0 0.5rem;
 }
 @media (min-width: 640px) {
-  .popular-card { flex: 0 0 calc(100% / 2); }
+  .popular-card { flex: 0 0 calc(100% / 2.3); } /* Трохи ширше ніж половина */
 }
 @media (min-width: 1024px) {
-  .popular-card { flex: 0 0 calc(100% / 4); }
+  .popular-card { flex: 0 0 calc(100% / 3); } /* 3 плитки замість 4 для більшої ширини */
 }
 
 .popular-card-inner {
   background: white;
   border-radius: 1rem;
-  padding: 0.75rem;
+  overflow: hidden;
+  padding: 0.75rem 0.75rem 0.6rem 0.75rem; /* Урізано в 2 рази */
   box-shadow: 0 6px 15px rgba(82, 79, 37, 0.04);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: block;
@@ -690,13 +713,27 @@ button {
 }
 
 .mobile-menu {
-  position: absolute;
-  top: 100%;
+  position: fixed;
+  top: 80px; /* Adjust based on header height */
   left: 0;
   right: 0;
+  bottom: 0;
   background: white;
-  border-bottom: 1px solid var(--color-stone-200);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+  z-index: 9999; /* Ensure it's above everything */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-top: 1px solid var(--color-stone-100);
+}
+
+.no-scroll {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* Apply to html as well when body has no-scroll */
+html:has(body.no-scroll) {
+  overflow: hidden;
+  height: 100%;
 }
 
 .desktop-nav {

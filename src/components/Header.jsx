@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import bearImg from '../assets/teddy_bear.png';
 import TextBorderAnimation from './TextBorderAnimation';
@@ -12,14 +13,26 @@ import AuthModal from './AuthModal';
 export default function Header() {
   const { cartCount, setIsCartOpen } = useCart();
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.classList.add('no-scroll');
+    } else {
+      document.body.classList.remove('no-scroll');
+    }
+    return () => document.body.classList.remove('no-scroll');
+  }, [isMobileMenuOpen]);
+
   function handleUserClick() {
-    if (user) navigate('/account');
+    if (user) router.push('/account');
     else setIsAuthOpen(true);
   }
+
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -32,133 +45,148 @@ export default function Header() {
       if (error) {
         console.error('Помилка при завантаженні категорій:', error);
       } else if (data) {
-        setCategories(data);
+        const hasFullset = data.some(cat => cat.id === 'fullset' || cat.name === 'Готові рішення');
+        if (!hasFullset) {
+          setCategories([...data, { id: 'fullset', name: 'Готові рішення' }]);
+        } else {
+          setCategories(data);
+        }
       }
     }
     fetchCategories();
   }, []);
 
   return (
-    <header className="header">
-      <div className="header-inner" style={{ maxWidth: '1600px', margin: '0 auto', padding: '0 2rem 0 1rem', display: 'grid', gridTemplateColumns: 'minmax(150px, 1fr) auto minmax(150px, 1fr)', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
-          
-          <Link to="/" className="logo">
-            <img src={bearImg} alt="Olivka Bear Logo" className="logo-bear" />
-            store.olivka
-          </Link>
-        </div>
-
-        {/* Десктопна навігація */}
-        <nav className="nav desktop-nav">
-          <Link to="/" className="nav-link">
-            <TextBorderAnimation text="Головна" />
-          </Link>
-          
-          <div className="dropdown-container">
-            <Link to="/catalog" className="nav-link dropdown-trigger">
-              <TextBorderAnimation text="Каталог" />
+    <>
+      <header className={`header ${isMobileMenuOpen ? 'menu-open' : ''}`} style={{ touchAction: isMobileMenuOpen ? 'none' : 'auto' }}>
+        <div className="header-inner md-grid-header" style={{ maxWidth: '1600px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+            
+            <Link href="/" className="logo">
+              <img src={bearImg.src || bearImg} alt="Olivka Bear Logo" className="logo-bear" />
+              store.olivka
             </Link>
-            <div className="dropdown-menu">
+          </div>
+
+          {/* Десктопна навігація */}
+          <nav className="nav desktop-nav">
+            <Link href="/" className="nav-link">
+              <TextBorderAnimation text="Головна" />
+            </Link>
+            
+            <div className="dropdown-container">
+              <Link href="/catalog" className="nav-link dropdown-trigger">
+                <TextBorderAnimation text="Каталог" />
+              </Link>
+              <div className="dropdown-menu">
+                {categories.map(cat => (
+                  <Link key={cat.id} href={`/category/${cat.id}`} className="dropdown-item">
+                    {cat.name}
+                  </Link>
+                ))}
+                <Link href="/catalog" className="dropdown-item" style={{ borderTop: '1px solid var(--color-stone-100)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                  Всі товари
+                </Link>
+              </div>
+            </div>
+            
+            <Link href="/about" className="nav-link">
+              <TextBorderAnimation text="Про нас" />
+            </Link>
+          </nav>
+
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', paddingRight: '0.5rem', justifySelf: 'end' }}>
+            <button
+              className="btn btn-icon"
+              onClick={handleUserClick}
+              title={user ? 'Особистий кабінет' : 'Увійти / Зареєструватись'}
+              style={{ position: 'relative' }}
+            >
+              {user ? (
+                <span style={{
+                  width: '32px', height: '32px', borderRadius: '50%',
+                  background: '#524f25', color: 'white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--font-serif)', fontSize: '0.95rem',
+                  fontWeight: 500, lineHeight: 1,
+                }}>
+                  {((profile?.full_name || user?.email || '?')[0] || '?').toUpperCase()}
+                </span>
+              ) : (
+                <User size={24} color="var(--color-stone-600)" />
+              )}
+            </button>
+            
+            <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
+              <ShoppingBag size={24} color="var(--color-stone-600)" />
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span
+                    key={cartCount}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1, rotate: [0, -10, 10, -10, 10, 0] }}
+                    exit={{ scale: 0 }}
+                    transition={{ 
+                      scale: { type: 'spring', stiffness: 500, damping: 15 },
+                      rotate: { duration: 0.5, ease: "easeInOut" }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      right: '6px',
+                      backgroundColor: 'var(--color-olive-600)',
+                      color: 'white',
+                      fontSize: '10px',
+                      fontWeight: 'bold',
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Мобільне меню - тепер поза тегом header */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mobile-menu"
+          >
+            <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '2rem 1.5rem 100px' }}>
+              <Link href="/" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Головна</Link>
+              <Link href="/catalog" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Каталог</Link>
+              <Link href="/about" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Про нас</Link>
+              
+              <div style={{ fontWeight: 600, color: 'var(--color-stone-400)', marginTop: '1rem', fontSize: '0.9rem', textTransform: 'uppercase' }}>Категорії:</div>
               {categories.map(cat => (
-                <Link key={cat.id} to={`/category/${cat.id}`} className="dropdown-item">
-                  {cat.name}
+                <Link key={cat.id} href={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '1rem' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  - {cat.name}
                 </Link>
               ))}
-              <Link to="/catalog" className="dropdown-item" style={{ borderTop: '1px solid var(--color-stone-100)', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
-                Всі товари
+              <Link href="/catalog" className="nav-link" style={{ paddingLeft: '1rem' }} onClick={() => setIsMobileMenuOpen(false)}>
+                - Всі товари
               </Link>
             </div>
-          </div>
-          
-          <Link to="/about" className="nav-link">
-            <TextBorderAnimation text="Про нас" />
-          </Link>
-        </nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', justifySelf: 'end' }}>
-          {/* Кнопка акаунту */}
-          <button
-            className="btn btn-icon"
-            onClick={handleUserClick}
-            title={user ? 'Особистий кабінет' : 'Увійти / Зареєструватись'}
-            style={{ position: 'relative' }}
-          >
-            {user ? (
-              /* Аватар з першою літерою імені або пошти */
-              <span style={{
-                width: '32px', height: '32px', borderRadius: '50%',
-                background: '#524f25', color: 'white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontFamily: 'var(--font-serif)', fontSize: '0.95rem',
-                fontWeight: 500, lineHeight: 1,
-              }}>
-                {((profile?.full_name || user?.email || '?')[0] || '?').toUpperCase()}
-              </span>
-            ) : (
-              <User size={24} color="var(--color-stone-600)" />
-            )}
-          </button>
-          
-          <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
-            <ShoppingBag size={24} color="var(--color-stone-600)" />
-            <AnimatePresence>
-              {cartCount > 0 && (
-                <motion.span
-                  key={cartCount}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1, rotate: [0, -10, 10, -10, 10, 0] }}
-                  exit={{ scale: 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 15 }}
-                  style={{
-                    position: 'absolute',
-                    top: '-5px',
-                    right: '-5px',
-                    backgroundColor: 'var(--color-olive-600)',
-                    color: 'white',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {cartCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-        </div>
-      </div>
-
-      {/* Мобільне меню */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu" onClick={() => setIsMobileMenuOpen(false)}>
-          <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem 0' }}>
-            <Link to="/" className="nav-link">Головна</Link>
-            <Link to="/catalog" className="nav-link">Каталог</Link>
-            <div style={{ fontWeight: 500, color: 'var(--color-stone-800)', marginTop: '0.5rem', paddingLeft: '1rem' }}>Категорії:</div>
-            {categories.map(cat => (
-              <Link key={cat.id} to={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '2rem' }}>
-                - {cat.name}
-              </Link>
-            ))}
-            <Link to="/catalog" className="nav-link" style={{ paddingLeft: '2rem' }}>
-              - Всі товари
-            </Link>
-            <Link to="/about" className="nav-link" style={{ marginTop: '0.5rem' }}>Про нас</Link>
-          </div>
-        </div>
-      )}
-
-      {/* Модальне вікно авторизації */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-    </header>
+    </>
   );
 }

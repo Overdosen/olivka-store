@@ -10,6 +10,7 @@ const IconInstagram = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" h
 const IconMail = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>;
 const IconExternalLink = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>;
 const IconLoader = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>;
+const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
 
 export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -94,7 +95,15 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
     });
   };
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const maxWidthClass = maxWidth || (type === 'carousel' ? 'max-w-lg' : 'max-w-4xl');
+
+  if (!mounted || typeof document === 'undefined') return null;
 
   return createPortal(
     <AnimatePresence>
@@ -123,19 +132,57 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
             style={{ maxHeight: '95vh' }}
           >
             {/* Header */}
-            <div className="px-8 py-6 bg-[#faf5ee] sticky top-0 z-20 flex justify-center items-center shrink-0 border-b border-[#524f25]/10">
-              <h2 className="text-xl md:text-2xl font-serif text-[#524f25] text-center flex items-center gap-4">
-                {(type === 'pdf' || type === 'text_file') && <IconFileText />}
-                {title}
+            <div className="px-4 md:px-8 py-4 md:py-6 bg-[#faf5ee] relative z-20 flex items-center shrink-0 border-b border-[#524f25]/10">
+              {/* Left spacer for symmetry */}
+              <div className="w-10 h-10 shrink-0" />
+              
+              <h2 className="flex-1 text-center text-lg md:text-2xl font-serif text-[#524f25] flex items-center justify-center gap-2 px-2">
+                {(type === 'pdf' || type === 'text_file') && (
+                  <span className="shrink-0 scale-75 md:scale-100"><IconFileText /></span>
+                )}
+                <span className="truncate">{title}</span>
               </h2>
+
+              <button 
+                onClick={onClose}
+                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full hover:bg-[#524f25]/5 text-[#524f25]/40 hover:text-[#524f25] transition-all active:scale-90"
+                aria-label="Закрити"
+              >
+                <IconX />
+              </button>
             </div>
 
             {/* Body */}
             <div className="flex-1 overflow-y-auto bg-white/40 custom-scrollbar-minimal">
               {type === 'pdf' && (
-                <div className="p-4 md:p-8 flex justify-center">
-                  <div className="h-[65vh] md:h-[75vh] w-full bg-white rounded overflow-hidden">
+                <div className="p-4 md:p-8 flex flex-col items-center justify-center">
+                  {/* Desktop View: Keep iframe */}
+                  <div className="hidden md:block h-[65vh] md:h-[75vh] w-full bg-white rounded overflow-hidden">
                     <iframe src={`${src}#toolbar=0`} className="w-full h-full border-none" title={title} />
+                  </div>
+
+                  {/* Mobile View: High-quality Call-to-Action */}
+                  <div className="md:hidden flex flex-col items-center justify-center py-12 px-6 text-center w-full">
+                    <div className="w-24 h-24 mb-6 bg-[#524f25]/5 rounded-3xl flex items-center justify-center text-[#524f25] rotate-3">
+                      <div className="scale-[2]">
+                        <IconFileText />
+                      </div>
+                    </div>
+                    
+                    <h3 className="text-xl font-serif text-[#524f25] mb-4">Повний перегляд документа</h3>
+                    
+                    <p className="text-[#524f25]/60 mb-10 text-sm leading-relaxed max-w-[260px]">
+                      Мобільні системи мають обмеження для перегляду PDF у вікнах. Будь ласка, відкрийте документ у повному форматі для зручного читання всіх сторінок.
+                    </p>
+
+                    <a 
+                      href={src} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-5 px-8 rounded-2xl bg-white border-[1.5px] border-[#524f25] text-[#524f25] font-bold text-xs tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all shadow-[0_10px_20px_rgba(82,79,37,0.05)] active:scale-95"
+                    >
+                      ВІДКРИТИ PDF <IconExternalLink />
+                    </a>
                   </div>
                 </div>
               )}
@@ -190,10 +237,10 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
             </div>
 
             {/* Footer */}
-            <div className="p-6 md:p-8 shrink-0 bg-[#faf5ee] border-t border-[#524f25]/5 flex justify-center items-center sticky bottom-0 z-20">
+            <div className="p-4 md:p-8 shrink-0 bg-[#faf5ee] border-t border-[#524f25]/5 flex justify-center items-center relative z-20">
               <button
                 onClick={onClose}
-                className="w-full md:w-auto md:min-w-[300px] py-5 px-12 rounded-xl bg-[#524f25] text-white text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#3d3b1c] transition-all shadow-xl active:scale-95"
+                className="w-full md:w-auto md:min-w-[300px] py-4 md:py-5 px-12 rounded-xl bg-[#524f25] text-white text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#3d3b1c] transition-all shadow-xl active:scale-95"
               >
                 ЗАКРИТИ
               </button>

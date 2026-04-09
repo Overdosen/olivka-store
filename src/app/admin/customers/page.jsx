@@ -1,0 +1,377 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, X, ChevronDown, Users, ShoppingBag } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
+
+const STATUS_MAP = {
+  new:       { label: 'Нове',         color: '#b5880b', bg: '#fef9e7' },
+  confirmed: { label: 'Підтверджено', color: '#1565c0', bg: '#e3f2fd' },
+  shipped:   { label: 'Відправлено',  color: '#e65100', bg: '#fff3e0' },
+  delivered: { label: 'Доставлено',   color: '#2e7d32', bg: '#e8f5e9' },
+  cancelled: { label: 'Скасовано',    color: '#c62828', bg: '#ffebee' },
+};
+
+const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([id, v]) => ({ id, ...v }));
+
+export default function CustomersPage() {
+  const [clients, setClients] = useState([]);
+  const [orders, setOrders] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedClient, setSelectedClient] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    const { data: allOrders } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Групуємо замовлення по user_id
+    const ordersMap = {};
+    (allOrders || []).forEach(o => {
+      if (!ordersMap[o.user_id]) ordersMap[o.user_id] = [];
+      ordersMap[o.user_id].push(o);
+    });
+
+    setClients(profiles || []);
+    setOrders(ordersMap);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const filteredClients = clients.filter(c => {
+    const q = search.toLowerCase();
+    return (
+      (c.full_name || '').toLowerCase().includes(q) ||
+      (c.email || '').toLowerCase().includes(q) ||
+      (c.phone_ua || '').toLowerCase().includes(q)
+    );
+  });
+
+  async function updateOrderStatus(orderId, newStatus) {
+    await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
+    // Оновлюємо локально
+    setOrders(prev => {
+      const updated = { ...prev };
+      for (const uid in updated) {
+        updated[uid] = updated[uid].map(o =>
+          o.id === orderId ? { ...o, status: newStatus } : o
+        );
+      }
+      return updated;
+    });
+    // Оновлюємо вибраного клієнта
+    if (selectedClient) {
+      setSelectedClient(c => ({
+        ...c,
+        _orders: (c._orders || []).map(o =>
+          o.id === orderId ? { ...o, status: newStatus } : o
+        ),
+      }));
+    }
+  }
+
+  function openClient(client) {
+    setSelectedClient({ ...client, _orders: orders[client.id] || [] });
+  }
+
+  return (
+    <div className="space-y-8 pb-10">
+      {/* Заголовок */}
+      <div>
+        <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Клієнти</h1>
+        <p className="text-stone-500 mt-2 font-medium">Перегляд клієнтської бази та замовлень.</p>
+      </div>
+
+      {/* Статистика */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard label="Всього клієнтів" value={clients.length} />
+        <StatCard
+          label="Нових цього тижня"
+          value={clients.filter(c => {
+            const d = new Date(c.created_at);
+            const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+            return d >= weekAgo;
+          }).length}
+        />
+        <StatCard
+          label="Всього замовлень"
+          value={Object.values(orders).reduce((s, arr) => s + arr.length, 0)}
+        />
+      </div>
+
+      {/* Пошук */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Пошук за іменем, email або телефоном..."
+          className="w-full pl-11 pr-4 py-3 bg-white border border-stone-200 rounded-md text-stone-700 text-sm focus:outline-none focus:border-stone-400 transition"
+        />
+        {search && (
+          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
+            <X size={16} />
+          </button>
+        )}
+      </div>
+
+      {/* Таблиця */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm border border-stone-200/60 overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-stone-400 text-sm">Завантаження...</div>
+        ) : filteredClients.length === 0 ? (
+          <div className="p-12 text-center text-stone-400 text-sm">Клієнтів не знайдено</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-stone-100">
+                {['Клієнт', 'Email', 'Телефон', 'Дата реєстрації', 'Замовлень', 'Сума'].map(h => (
+                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-stone-400 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClients.map((client, i) => {
+                const co = orders[client.id] || [];
+                const total = co.reduce((s, o) => s + (o.total || 0), 0);
+                return (
+                  <motion.tr
+                    key={client.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => openClient(client)}
+                    className="border-b border-stone-50 hover:bg-stone-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 font-semibold text-sm flex-shrink-0">
+                          {(client.full_name || client.email || '?')[0].toUpperCase()}
+                        </div>
+                        <span className="font-medium text-stone-800">{client.full_name || '—'}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-stone-500">{client.email}</td>
+                    <td className="px-5 py-4 text-stone-500">{client.phone_ua || co[0]?.phone || '—'}</td>
+                    <td className="px-5 py-4 text-stone-400 text-xs">
+                      {new Date(client.created_at).toLocaleDateString('uk-UA')}
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-xs font-semibold">
+                        <ShoppingBag size={11} /> {co.length}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-stone-700">{total > 0 ? `${total} грн` : '—'}</td>
+                  </motion.tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Модальне вікно клієнта */}
+      <AnimatePresence>
+        {selectedClient && (
+          <ClientModal
+            client={selectedClient}
+            onClose={() => setSelectedClient(null)}
+            onUpdateStatus={updateOrderStatus}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── StatCard ─────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value }) {
+  return (
+    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow">
+      <p className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
+      <p className="text-4xl font-cormorant font-bold text-stone-800">{value}</p>
+    </div>
+  );
+}
+
+// ─── ClientModal ──────────────────────────────────────────────────────────────
+
+function ClientModal({ client, onClose, onUpdateStatus }) {
+  const clientOrders = client._orders || [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(28,25,23,0.45)', backdropFilter: 'blur(4px)' }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.97 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        onClick={e => e.stopPropagation()}
+        className="bg-[#faf9f6] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl"
+      >
+        {/* Шапка */}
+        <div className="flex items-center justify-between p-6 border-b border-stone-200/60">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-stone-800 text-white flex items-center justify-center font-semibold">
+              {(client.full_name || client.email || '?')[0].toUpperCase()}
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-stone-800">{client.full_name || 'Без імені'}</h3>
+              <p className="text-sm text-stone-400">{client.email}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 transition p-1">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Контакти */}
+        <div className="p-6 grid grid-cols-2 gap-4 border-b border-stone-100">
+          <InfoItem label="Телефон" value={client.phone_ua || clientOrders[0]?.phone || '—'} />
+          <InfoItem label="Дата реєстрації" value={new Date(client.created_at).toLocaleDateString('uk-UA')} />
+        </div>
+
+        {/* Замовлення */}
+        <div className="p-6">
+          <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-400 mb-4">
+            Замовлення ({clientOrders.length})
+          </h4>
+          {clientOrders.length === 0 ? (
+            <p className="text-stone-400 text-sm text-center py-4">Замовлень немає</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {clientOrders.map(order => (
+                <OrderRow key={order.id} order={order} onUpdateStatus={onUpdateStatus} />
+              ))}
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ─── OrderRow ─────────────────────────────────────────────────────────────────
+
+function OrderRow({ order, onUpdateStatus }) {
+  const [expanded, setExpanded] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const status = STATUS_MAP[order.status] || STATUS_MAP.new;
+  const items = Array.isArray(order.items) ? order.items : [];
+  const dateObj = new Date(order.created_at);
+  const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+  const time = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+  async function handleStatusChange(e) {
+    setUpdating(true);
+    await onUpdateStatus(order.id, e.target.value);
+    setUpdating(false);
+  }
+
+  return (
+    <div className="border border-stone-200 rounded-xl overflow-hidden">
+      <div className="flex items-center gap-3 p-3.5 bg-white">
+        <button onClick={() => setExpanded(v => !v)} className="flex-1 flex items-center gap-3 text-left">
+          <ChevronDown size={15} className={`text-stone-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+          <div>
+            <span className="text-xs font-mono font-semibold text-stone-600">#{order.id.slice(0,8).toUpperCase()}</span>
+            <span className="ml-2 text-xs text-stone-400">{date} о {time}</span>
+          </div>
+          <span className="ml-auto font-semibold text-stone-700 text-sm">{order.total} грн</span>
+        </button>
+
+        {/* Dropdown статусу */}
+        <select
+          value={order.status}
+          onChange={handleStatusChange}
+          disabled={updating}
+          style={{ color: status.color, background: status.bg }}
+          className="text-xs font-semibold px-2.5 py-1.5 rounded-full border-0 cursor-pointer outline-none focus:ring-2 focus:ring-stone-300 transition"
+        >
+          {STATUS_OPTIONS.map(s => (
+            <option key={s.id} value={s.id}>{s.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
+            transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
+          >
+            <div className="px-4 pb-4 pt-2 border-t border-stone-100 bg-stone-50 text-sm">
+              {items.map((item, i) => (
+                <div key={i} className="flex justify-between py-1.5 text-stone-600 border-b border-stone-100 last:border-0">
+                  <span>{item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}</span>
+                  <span className="text-stone-500">{item.price * item.qty} грн</span>
+                </div>
+              ))}
+              <div className="mt-3 pt-3 border-t border-stone-200/60 flex flex-col gap-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  {order.full_name && (
+                    <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
+                      👤 {order.full_name}
+                    </p>
+                  )}
+                  {order.phone && (
+                    <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
+                      📞 {order.phone}
+                    </p>
+                  )}
+                  {order.address && (
+                    <p className="text-xs text-stone-400 flex items-center gap-1">
+                      📍 {order.address}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                  <p className="text-xs text-stone-500 flex items-center gap-1">
+                    💳 {order.payment_method === 'cash_on_delivery' ? 'Накладений платіж' : order.payment_method} 
+                    <span className="ml-1 px-1.5 py-0.5 rounded bg-stone-100 text-[10px] text-stone-400 uppercase font-bold">Очікує оплати</span>
+                  </p>
+                  {order.notes && (
+                    <p className="text-xs text-stone-600 bg-amber-50 px-2 py-1.5 rounded-md border border-amber-100/50 flex items-start gap-1.5 w-full mt-1 italic">
+                      <span className="text-amber-500 shrink-0">💬</span>
+                      "{order.notes}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function InfoItem({ label, value }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
+      <p className="text-sm text-stone-700">{value}</p>
+    </div>
+  );
+}

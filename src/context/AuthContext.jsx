@@ -48,19 +48,40 @@ export function AuthProvider({ children }) {
     };
 
     // Отримуємо початкову сесію
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        // Застарілий токен — очищаємо
+        console.warn('[AuthContext] getSession error, clearing session:', error.message);
+        supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
       syncAuth(session);
     });
 
     // Підписуємось на зміни
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // При SIGNED_OUT відразу ставимо loading false
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
         setLoading(false);
-      } else {
+      } else if (event === 'TOKEN_REFRESHED') {
         syncAuth(session);
+      } else if (event === 'USER_UPDATED') {
+        syncAuth(session);
+      } else if (event === 'SIGNED_IN') {
+        syncAuth(session);
+      } else {
+        // Невідомий event або помилка refresh — перевіряємо сесію
+        if (!session) {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
+        } else {
+          syncAuth(session);
+        }
       }
     });
 

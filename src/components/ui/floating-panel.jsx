@@ -88,6 +88,14 @@ export const FloatingPanelContent = ({ children, title }) => {
     </AnimatePresence>
   );
 
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || typeof document === 'undefined') return null;
+
   return ReactDOM.createPortal(overlay, document.body);
 };
 

@@ -47,17 +47,17 @@ export default function FilterDropdown({
   const selectedCount = !isSingleSelect && Array.isArray(selected) ? selected.length : 0;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" style={{ marginBottom: '14px' }} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between border px-2 py-3 shadow-sm transition-all duration-200 ${isOpen ? 'border-stone-400 z-10' : 'border-stone-200 hover:border-stone-300'} ${className}`}
+        className={`w-full flex items-center justify-between border px-2 py-5 shadow-sm transition-all duration-200 ${isOpen ? 'border-stone-400 z-10' : 'border-stone-200 hover:border-stone-300'} ${className}`}
         style={{ backgroundColor: '#faf9f6' }}
       >
         <span className="font-medium pr-2" style={{ fontSize: '1.3rem', color: '#524f25' }}>
           {isSingleSelect && selected ? (
-            <span style={{ color: '#524f25', whiteSpace: 'nowrap' }}>&nbsp;{selected}</span>
+            <span style={{ color: '#524f25', whiteSpace: 'pre-wrap' }}>&nbsp;{selected}</span>
           ) : (
-            <span style={{ color: '#524f25', whiteSpace: 'nowrap' }}>{label}</span>
+            <span style={{ color: '#524f25', whiteSpace: 'pre-wrap' }}>{label}</span>
           )}
           {selectedCount > 0 && (
             <span className="ml-2 px-2 py-1 bg-stone-900 text-white text-[12px] font-bold rounded-sm">

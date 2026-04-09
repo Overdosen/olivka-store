@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+.env*.local
+.next/
+_backup_store_olivka_/
+scratch/
+.agents/
