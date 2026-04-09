@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
   const logoUrl = `${baseUrl}/favicon.svg`;
 
   return {
-    title: fullTitle,
+    title: categoryName,
     description: description,
     alternates: {
       canonical: `${baseUrl}/category/${catId || ''}`,

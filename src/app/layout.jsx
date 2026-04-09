@@ -4,8 +4,11 @@ import ClientProviders from './ClientProviders';
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store'),
-  title: 'olivka_store | Ніжний дитячий одяг',
-  description: 'Естетичний та комфортний одяг для ваших малюків. Ніжність у кожній деталі.',
+  title: {
+    default: 'Store Olivka | Ніжний одяг для немовлят',
+    template: '%s | Store Olivka',
+  },
+  description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -20,10 +23,10 @@ export const metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'olivka_store | Ніжний дитячий одяг',
-    description: 'Естетичний та комфортний одяг для ваших малюків. Ніжність у кожній деталі.',
+    title: 'Store Olivka | Ніжний одяг для немовлят',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
     url: 'https://www.olivka.store',
-    siteName: 'olivka_store',
+    siteName: 'Store Olivka',
     locale: 'uk_UA',
     type: 'website',
     images: [
@@ -31,14 +34,14 @@ export const metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'olivka_store - Ніжний дитячий одяг',
+        alt: 'Store Olivka - Ніжний дитячий одяг',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'olivka_store | Ніжний дитячий одяг',
-    description: 'Естетичний та комфортний одяг для ваших малюків. Ніжність у кожній деталі.',
+    title: 'Store Olivka | Ніжний одяг для немовлят',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store.',
     images: ['/og-image.png'],
   },
   robots: {

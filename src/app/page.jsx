@@ -4,13 +4,13 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
 
 export const metadata = {
   title: 'Olivka Store | Ніжний одяг для немовлят',
-  description: 'Естетичний та базовий одяг для немовлят. Натуральні тканини, комфорт та якість, перевірена мамами. Швидка доставка по Україні.',
+  description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят. Швидка доставка по Україні.',
   alternates: {
     canonical: baseUrl,
   },
   openGraph: {
     title: 'Olivka Store | Ніжний одяг для немовлят',
-    description: 'Найкращий вибір базового одягу для ваших малюків. Натуральні тканини та естетичний дизайн.',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
     url: baseUrl,
     siteName: 'Store Olivka',
     images: [{

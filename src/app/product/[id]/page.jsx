@@ -29,7 +29,7 @@ export async function generateMetadata({ params }) {
   const description = product.meta_description || product.description || '';
 
   return {
-    title: fullTitle,
+    title: product.name,
     description: description,
     keywords: product.meta_keywords || 'Store Olivka, дитячий одяг, купити',
     alternates: {
