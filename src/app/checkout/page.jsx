@@ -124,16 +124,20 @@ export default function CheckoutPage() {
       // --- n8n Webhook ---
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
       if (webhookUrl) {
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event: 'new_order',
-            source: 'olivka-store-web',
-            data: data, // Повна інформація з Supabase (включаючи товари, ФІО, суму тощо)
-            timestamp: new Date().toISOString()
-          })
-        }).catch(err => console.error('n8n Webhook Error:', err));
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'new_order',
+              source: 'olivka-store-web',
+              data: data, // Повна інформація з Supabase (включаючи товари, ФІО, суму тощо)
+              timestamp: new Date().toISOString()
+            })
+          });
+        } catch (err) {
+          console.error('n8n Webhook Error:', err);
+        }
       }
 
       clearCart();
