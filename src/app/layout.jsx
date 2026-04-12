@@ -2,8 +2,11 @@ import '../index.css';
 import '../admin.css';
 import ClientProviders from './ClientProviders';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+const normalizedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
+
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store'),
+  metadataBase: new URL(normalizedSiteUrl),
   title: {
     default: 'Store Olivka | Ніжний одяг для немовлят',
     template: '%s | Store Olivka',

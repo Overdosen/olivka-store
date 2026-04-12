@@ -4,6 +4,10 @@ import { LiqPay } from '../../../../lib/liqpay';
 export async function POST(request) {
   const publicKey = process.env.LIQPAY_PUBLIC_KEY?.trim();
   const privateKey = process.env.LIQPAY_PRIVATE_KEY?.trim();
+  const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const baseUrl = rawBaseUrl 
+    ? (rawBaseUrl.startsWith('http') ? rawBaseUrl : `https://${rawBaseUrl}`) 
+    : new URL(request.url).origin;
 
   // Логування для діагностики в терміналі
   console.log('[Prepare LiqPay] Checking environment variables...');
