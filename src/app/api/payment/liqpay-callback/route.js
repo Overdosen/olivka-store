@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { LiqPay } from '../../../../lib/liqpay';
-import { supabase } from '../../../../lib/supabase';
+import { supabase, supabaseService } from '../../../../lib/supabase';
 
 const liqpay = new LiqPay(
   process.env.LIQPAY_PUBLIC_KEY,
@@ -33,9 +33,12 @@ export async function POST(request) {
     const isSuccess = ['success', 'sandbox', 'wait_accept'].includes(status);
 
     if (isSuccess) {
-      // 3. Update Order Status in Supabase
-      // Assuming order_id is the UUID from our orders table
-      const { data: order, error: orderError } = await supabase
+      // 3. Update Order Status in Supabase (USING SERVICE ROLE TO BYPASS RLS)
+      console.log(`[LiqPay Callback] Attempting to update order ${order_id} to status 'paid'...`);
+      
+      const db = supabaseService || supabase; // Fallback if service role is missing
+      
+      const { data: order, error: orderError } = await db
         .from('orders')
         .update({ status: 'paid' })
         .eq('id', order_id)
@@ -83,7 +86,8 @@ export async function POST(request) {
       console.warn(`[LiqPay Callback] Unsuccessful payment status: ${status} for order ${order_id}`);
       
       // Update status to payment_error
-      await supabase
+      const db = supabaseService || supabase;
+      await db
         .from('orders')
         .update({ status: 'payment_error' })
         .eq('id', order_id);
