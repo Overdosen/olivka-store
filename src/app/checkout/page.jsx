@@ -166,6 +166,10 @@ export default function CheckoutPage() {
 
       // --- n8n Webhook (Immediate for non-liqpay, deferred for liqpay) ---
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+      if (!webhookUrl) {
+        console.warn('n8n Webhook URL is not defined in environment variables. Webhook will not be sent.');
+      }
+
       if (webhookUrl && payment !== 'liqpay') {
         try {
           await fetch(webhookUrl, {

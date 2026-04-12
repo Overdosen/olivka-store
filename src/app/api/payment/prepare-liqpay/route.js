@@ -17,6 +17,11 @@ export async function POST(request) {
   }
 
   const liqpay = new LiqPay(publicKey, privateKey);
+  const isSandbox = process.env.LIQPAY_SANDBOX === '1';
+
+  if (isSandbox) {
+    console.log('[Prepare LiqPay] Sandbox mode is ENABLED');
+  }
 
   try {
     const { orderId, amount, description } = await request.json();
@@ -39,6 +44,10 @@ export async function POST(request) {
       result_url: `${baseUrl}/payment/success?order_id=${orderId}`,
       server_url: `${baseUrl}/api/payment/liqpay-callback`,
     };
+
+    if (isSandbox) {
+      params.sandbox = 1;
+    }
 
     const { data, signature } = liqpay.cnfg_generate(params);
 
