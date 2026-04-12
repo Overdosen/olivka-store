@@ -1,6 +1,6 @@
 # Build Log
 
-## [2026-04-11T13:40:00] bootstrap | Initial Knowledge Base Setup
-- Source: manual migration from /wiki/
-- Articles created: [[concepts/architecture-overview]], [[concepts/database-schema]], [[concepts/order-flow]], [[concepts/delivery]], [[concepts/admin-panel]], [[concepts/design-system]]
-- Result: System initialized and ready for automated compilation.
+## [2026-04-12T19:35:00] compile | Daily Log 2026-04-12
+- Source: daily/2026-04-12.md
+- Articles created: [[concepts/liqpay-integration]], [[concepts/supabase-realtime-orders]], [[concepts/inventory-automation-triggers]]
+- Articles updated: (none)
