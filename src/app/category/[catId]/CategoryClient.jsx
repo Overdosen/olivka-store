@@ -131,11 +131,11 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 left-0 z-[70] w-[280px] bg-stone-50 flex flex-col lg:hidden shadow-2xl"
             >
-              <div className="p-6 pb-2 flex items-center justify-between border-b border-stone-100">
+              <div className="p-6 pb-2 relative flex items-center justify-center border-b border-stone-100">
                 <h2 className="font-bold font-sans text-[#524f25]" style={{ fontSize: '1.4rem' }}>Фільтри</h2>
                 <button
                   onClick={() => setIsMobileFiltersOpen(false)}
-                  className="p-2 border border-stone-200 rounded-full text-stone-500 bg-white shadow-sm"
+                  className="absolute right-6 p-2 border border-stone-200 rounded-full text-stone-500 bg-white shadow-sm"
                 >
                   <X className="w-5 h-5" />
                 </button>

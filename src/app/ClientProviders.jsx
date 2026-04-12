@@ -8,6 +8,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 export default function ClientProviders({ children }) {
   const pathname = usePathname();

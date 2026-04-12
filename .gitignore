@@ -29,3 +29,11 @@ dist-ssr
 _backup_store_olivka_/
 scratch/
 .agents/
+
+# Agent Knowledge Base Metadata
+scripts/state.json
+scripts/last-flush.json
+reports/
+.claude/
+uv.lock
+.python-version

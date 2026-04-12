@@ -122,7 +122,7 @@ export default function ProductClient({ product }) {
                 src={src} 
                 onLoad={() => i === 0 && setIsImageLoaded(true)}
                 onError={() => i === 0 && setIsImageLoaded(true)}
-                alt={`${product.name} - ${i === 0 ? 'Головне фото' : `Фото ${i + 1}`} | Дитячий одяг Olivka Store`} 
+                alt={`${product.name} - ${i === 0 ? 'Головне фото' : `Фото ${i + 1}`} | Дитячий одяг Store Olivka`} 
                 className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
             </div>

@@ -3,29 +3,29 @@ import HomeClient from './HomeClient';
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
 
 export const metadata = {
-  title: 'Olivka Store | Ніжний одяг для немовлят',
-  description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят. Швидка доставка по Україні.',
+  title: 'Store Olivka | Ніжний одяг для немовлят',
+  description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят. Швидка доставка по Україні.',
   alternates: {
     canonical: baseUrl,
   },
   openGraph: {
-    title: 'Olivka Store | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
+    title: 'Store Olivka | Ніжний одяг для немовлят',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
     url: baseUrl,
     siteName: 'Store Olivka',
     images: [{
       url: `${baseUrl}/favicon.svg`,
       width: 1200,
       height: 630,
-      alt: 'Olivka Store Logo',
+      alt: 'Store Olivka Logo',
     }],
     locale: 'uk_UA',
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'Olivka Store | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store.',
+    title: 'Store Olivka | Ніжний одяг для немовлят',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
     images: [`${baseUrl}/favicon.svg`],
   }
 };

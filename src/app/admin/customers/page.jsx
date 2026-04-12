@@ -34,14 +34,33 @@ export default function CustomersPage() {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Групуємо замовлення по user_id
+    // Групуємо замовлення та створюємо гостьові профілі
     const ordersMap = {};
+    const guestProfiles = {};
+
     (allOrders || []).forEach(o => {
-      if (!ordersMap[o.user_id]) ordersMap[o.user_id] = [];
-      ordersMap[o.user_id].push(o);
+      if (o.user_id) {
+        if (!ordersMap[o.user_id]) ordersMap[o.user_id] = [];
+        ordersMap[o.user_id].push(o);
+      } else if (o.email) {
+        const guestKey = `guest_${o.email}`;
+        if (!ordersMap[guestKey]) ordersMap[guestKey] = [];
+        ordersMap[guestKey].push(o);
+
+        if (!guestProfiles[guestKey] || new Date(o.created_at) > new Date(guestProfiles[guestKey].created_at)) {
+          guestProfiles[guestKey] = {
+            id: guestKey,
+            full_name: o.full_name,
+            email: o.email,
+            phone_ua: o.phone,
+            created_at: guestProfiles[guestKey]?.created_at || o.created_at,
+            isGuest: true
+          };
+        }
+      }
     });
 
-    setClients(profiles || []);
+    setClients([...(profiles || []), ...Object.values(guestProfiles)]);
     setOrders(ordersMap);
     setLoading(false);
   }, []);
@@ -157,10 +176,13 @@ export default function CustomersPage() {
                   >
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-600 font-semibold text-sm flex-shrink-0">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-600'}`}>
                           {(client.full_name || client.email || '?')[0].toUpperCase()}
                         </div>
-                        <span className="font-medium text-stone-800">{client.full_name || '—'}</span>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-stone-800">{client.full_name || '—'}</span>
+                          {client.isGuest && <span className="text-[10px] uppercase tracking-tighter text-amber-600 font-bold">Гість</span>}
+                        </div>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-stone-500">{client.email}</td>
@@ -232,11 +254,18 @@ function ClientModal({ client, onClose, onUpdateStatus }) {
         {/* Шапка */}
         <div className="flex items-center justify-between p-6 border-b border-stone-200/60">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-stone-800 text-white flex items-center justify-center font-semibold">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${client.isGuest ? 'bg-amber-500 text-white' : 'bg-stone-800 text-white'}`}>
               {(client.full_name || client.email || '?')[0].toUpperCase()}
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-stone-800">{client.full_name || 'Без імені'}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-stone-800">{client.full_name || 'Без імені'}</h3>
+                {client.isGuest && (
+                  <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+                    Гість
+                  </span>
+                )}
+              </div>
               <p className="text-sm text-stone-400">{client.email}</p>
             </div>
           </div>
@@ -279,8 +308,8 @@ function OrderRow({ order, onUpdateStatus }) {
   const status = STATUS_MAP[order.status] || STATUS_MAP.new;
   const items = Array.isArray(order.items) ? order.items : [];
   const dateObj = new Date(order.created_at);
-  const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
-  const time = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*р\.?$/, '');
+  const timeStr = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
 
   async function handleStatusChange(e) {
     setUpdating(true);
@@ -294,8 +323,15 @@ function OrderRow({ order, onUpdateStatus }) {
         <button onClick={() => setExpanded(v => !v)} className="flex-1 flex items-center gap-3 text-left">
           <ChevronDown size={15} className={`text-stone-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           <div>
-            <span className="text-xs font-mono font-semibold text-stone-600">#{order.id.slice(0,8).toUpperCase()}</span>
-            <span className="ml-2 text-xs text-stone-400">{date} о {time}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono font-semibold text-stone-600">#{order.id.slice(0,8).toUpperCase()}</span>
+              {Array.isArray(order.items) && order.items.some(i => i.sku) && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-bold border border-stone-200/50">
+                  {Array.from(new Set(order.items.map(i => i.sku).filter(Boolean))).join(', ')}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-stone-400">{dateStr}, {timeStr}</span>
           </div>
           <span className="ml-auto font-semibold text-stone-700 text-sm">{order.total} грн</span>
         </button>
@@ -322,9 +358,12 @@ function OrderRow({ order, onUpdateStatus }) {
           >
             <div className="px-4 pb-4 pt-2 border-t border-stone-100 bg-stone-50 text-sm">
               {items.map((item, i) => (
-                <div key={i} className="flex justify-between py-1.5 text-stone-600 border-b border-stone-100 last:border-0">
-                  <span>{item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}</span>
-                  <span className="text-stone-500">{item.price * item.qty} грн</span>
+                <div key={i} className="flex justify-between py-1.5 text-stone-600 border-b border-stone-100 last:border-0 items-baseline">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}</span>
+                    {item.sku && <span className="text-[10px] text-stone-400 font-mono mt-0.5 tracking-wider">Артикул: {item.sku}</span>}
+                  </div>
+                  <span className="text-stone-500 font-medium">{item.price * item.qty} грн</span>
                 </div>
               ))}
               <div className="mt-3 pt-3 border-t border-stone-200/60 flex flex-col gap-2">
@@ -348,7 +387,7 @@ function OrderRow({ order, onUpdateStatus }) {
 
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   <p className="text-xs text-stone-500 flex items-center gap-1">
-                    💳 {order.payment_method === 'cash_on_delivery' ? 'Накладений платіж' : order.payment_method} 
+                    💳 {order.payment_method === 'cash_on_delivery' ? 'Післяплата' : order.payment_method} 
                     <span className="ml-1 px-1.5 py-0.5 rounded bg-stone-100 text-[10px] text-stone-400 uppercase font-bold">Очікує оплати</span>
                   </p>
                   {order.notes && (

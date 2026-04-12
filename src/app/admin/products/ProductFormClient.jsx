@@ -11,6 +11,8 @@ export default function ProductFormClient({ id }) {
   const isEditing = Boolean(id);
   const router = useRouter();
 
+  const SIZE_OPTIONS = ['56', '56-62', '62', '62-68', '74', '80', '86', '92'];
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
@@ -38,7 +40,7 @@ export default function ProductFormClient({ id }) {
   });
   
   const [sizeInput, setSizeInput] = useState('');
-  const [sizeQuantity, setSizeQuantity] = useState('0');
+  const [sizeQuantity, setSizeQuantity] = useState('1'); // Default to 1 instead of 0
 
   useEffect(() => {
     fetchCategories();
@@ -46,6 +48,16 @@ export default function ProductFormClient({ id }) {
       fetchProduct();
     }
   }, [id]);
+
+  // Auto-calculate total stock from sizes
+  useEffect(() => {
+    if (formData.sizes && formData.sizes.length > 0) {
+      const totalStock = formData.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      if (totalStock !== formData.stock) {
+        setFormData(prev => ({ ...prev, stock: totalStock }));
+      }
+    }
+  }, [formData.sizes]);
 
   async function fetchCategories() {
     const { data } = await supabase.from('categories').select('*').order('name');
@@ -245,7 +257,9 @@ export default function ProductFormClient({ id }) {
       const productPayload = {
         ...formData,
         price: parseFloat(formData.price) || 0,
-        stock: parseInt(formData.stock) || 0,
+        stock: (formData.sizes && formData.sizes.length > 0) 
+          ? formData.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)
+          : (parseInt(formData.stock) || 0),
         image_url: mainImage ? mainImage.finalUrl : '',
         gallery: galleryImages,
         meta_keywords: formData.meta_keywords,
@@ -295,12 +309,25 @@ export default function ProductFormClient({ id }) {
     if (!sizeInput.trim()) return;
     if (formData.sizes.some(s => s.name === sizeInput.trim())) return;
     
+    const updatedSizes = [...formData.sizes, { name: sizeInput.trim(), quantity: parseInt(sizeQuantity) || 0 }];
     setFormData({
       ...formData,
-      sizes: [...formData.sizes, { name: sizeInput.trim(), quantity: parseInt(sizeQuantity) || 0 }]
+      sizes: updatedSizes,
+      stock: updatedSizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)
     });
     setSizeInput('');
-    setSizeQuantity('0');
+    setSizeQuantity('1');
+  };
+
+  const handleUpdateSizeQuantity = (sizeName, newQty) => {
+    const updatedSizes = formData.sizes.map(s => 
+      s.name === sizeName ? { ...s, quantity: parseInt(newQty) || 0 } : s
+    );
+    setFormData({
+      ...formData,
+      sizes: updatedSizes,
+      stock: updatedSizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)
+    });
   };
 
   const handleRemoveSize = (sizeToRemove) => {
@@ -383,15 +410,19 @@ export default function ProductFormClient({ id }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Кількість на складі (якщо немає розмірів)</label>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Кількість на складі {formData.sizes?.length > 0 ? '(Розраховано)' : '(якщо немає розмірів)'}</label>
               <input
                 type="number"
                 min="0"
                 value={formData.stock}
-                onChange={(e) => setFormData({...formData, stock: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                onChange={(e) => setFormData({...formData, stock: parseInt(e.target.value) || 0})}
+                readOnly={formData.sizes && formData.sizes.length > 0}
+                className={`w-full px-5 py-3.5 rounded-md border border-stone-200/80 focus:outline-none transition-all text-stone-800 font-medium ${formData.sizes?.length > 0 ? 'bg-stone-100 cursor-not-allowed opacity-70' : 'bg-stone-50/50 focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white'}`}
                 placeholder="0"
               />
+              {formData.sizes?.length > 0 && (
+                <p className="text-[10px] text-stone-400 mt-1 italic">* Сума всіх розмірів</p>
+              )}
             </div>
           </div>
 
@@ -446,7 +477,7 @@ export default function ProductFormClient({ id }) {
                 <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Особливості моделі</label>
                 <div className="flex flex-wrap gap-2 mt-2">
                 {[
-                  'З боді', 'З сорочкою', 'З шапочку', 'Без шапочки', 
+                  'З боді', 'З сорочкою', 'З шапочкою', 'Без шапочки', 
                   'Короткий рукав', 'Довгий рукав',
                   'Пісочник', 'Ромпер',
                   'Шапочка-вузлик', 'Чепчик',
@@ -480,46 +511,65 @@ export default function ProductFormClient({ id }) {
           <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">Розміри (опціонально)</label>
           <div className="flex flex-col space-y-4 p-6 bg-stone-50/50 rounded-md border border-stone-100">
             <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
-              <input
-                type="text"
+              <select
                 value={sizeInput}
                 onChange={(e) => setSizeInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddSize(e);
-                }}
-                className="flex-1 w-full sm:max-w-[200px] px-4 py-2 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800"
-                placeholder="Розмір (напр., 62 або 100*80 см)"
-              />
-              <input
-                type="number"
-                min="0"
-                value={sizeQuantity}
-                onChange={(e) => setSizeQuantity(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddSize(e);
-                }}
-                className="w-full sm:w-24 px-4 py-2 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800 text-center"
-                placeholder="К-ть"
-              />
+                className="flex-1 w-full sm:max-w-[200px] px-4 py-2 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800 appearance-none"
+              >
+                <option value="">Оберіть розмір...</option>
+                {SIZE_OPTIONS.map(opt => (
+                  <option key={opt} value={opt} disabled={formData.sizes.some(s => s.name === opt)}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-stone-400 font-medium whitespace-nowrap">К-ть:</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={sizeQuantity}
+                  onChange={(e) => setSizeQuantity(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleAddSize(e);
+                  }}
+                  className="w-20 px-3 py-2 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800 text-center"
+                />
+              </div>
               <button
                 type="button"
                 onClick={handleAddSize}
-                className="w-full sm:w-auto bg-stone-200 hover:bg-stone-300 text-stone-800 px-4 py-2 rounded-lg font-semibold tracking-wide transition-all shadow-sm whitespace-nowrap"
+                className="w-full sm:w-auto bg-stone-200 hover:bg-stone-300 text-stone-800 px-4 py-2 rounded-lg font-semibold tracking-wide transition-all shadow-sm whitespace-nowrap disabled:opacity-50"
+                disabled={!sizeInput}
               >
                 Додати +
               </button>
             </div>
             {formData.sizes.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-2">
-                {formData.sizes.map(size => (
-                  <div key={size.name} className="flex items-center bg-white border border-stone-200 pl-3 pr-1 py-1 rounded-full text-sm font-semibold text-stone-700 shadow-sm">
-                    {size.name} <span className="ml-1.5 px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded text-xs">{size.quantity} шт</span>
+              <div className="space-y-2 pt-2">
+                {formData.sizes.sort((a,b) => {
+                  return SIZE_OPTIONS.indexOf(a.name) - SIZE_OPTIONS.indexOf(b.name);
+                }).map(size => (
+                  <div key={size.name} className="flex items-center justify-between bg-white border border-stone-200 pl-4 pr-1 py-1.5 rounded-lg text-sm font-semibold text-stone-700 shadow-sm transition-all hover:border-stone-400">
+                    <div className="flex items-center space-x-4">
+                      <span className="w-12 text-stone-900 border-r border-stone-100">{size.name}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-[10px] uppercase text-stone-400 font-bold">Залишок:</span>
+                        <input 
+                          type="number"
+                          min="0"
+                          value={size.quantity}
+                          onChange={(e) => handleUpdateSizeQuantity(size.name, e.target.value)}
+                          className="w-16 px-2 py-0.5 bg-stone-50 border border-transparent focus:border-stone-200 focus:bg-white rounded transition-colors text-center text-xs"
+                        />
+                      </div>
+                    </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveSize(size.name)}
-                      className="ml-2 w-6 h-6 rounded-full bg-stone-100 hover:bg-red-100 text-stone-400 hover:text-red-500 flex items-center justify-center transition-colors"
+                      className="ml-2 w-8 h-8 rounded-md bg-stone-50 hover:bg-red-50 text-stone-400 hover:text-red-500 flex items-center justify-center transition-all"
                     >
-                      &times;
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 ))}

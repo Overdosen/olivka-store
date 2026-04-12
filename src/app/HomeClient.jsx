@@ -143,7 +143,7 @@ export default function HomeClient() {
         <div className="mobile-only" style={{ width: '100%' }}>
           <img
             src="/images/bannermobile.png"
-            alt="Olivka Store Mobile Banner"
+            alt="Store Olivka Mobile Banner"
             style={{
               width: '100%',
               height: 'auto',

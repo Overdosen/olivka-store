@@ -96,13 +96,14 @@ export default function CartDrawer() {
                 <div style={{ textAlign: 'center', color: 'var(--color-stone-500)', marginTop: '4rem' }}>
                   <ShoppingBagEmptyIcon />
                   <p style={{ marginTop: '1.5rem', fontSize: '1.125rem', color: '#524f25' }}>Упс! Кошик наразі порожній</p>
-                  <button
+                  <Link
+                    href="/catalog"
                     onClick={() => setIsCartOpen(false)}
                     className="btn btn-primary"
-                    style={{ marginTop: '2rem', padding: '1rem 2rem' }}
+                    style={{ marginTop: '2rem', padding: '1rem 2rem', display: 'inline-block', textDecoration: 'none' }}
                   >
                     Повернутися до каталогу
-                  </button>
+                  </Link>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -144,6 +145,11 @@ export default function CartDrawer() {
                           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-stone-500)' }}>
                             Розмір: {item.size}
                           </p>
+                          {item.sku && (
+                            <p style={{ margin: '0.1rem 0 0', fontSize: '0.7rem', color: 'var(--color-stone-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              Артикул: {item.sku}
+                            </p>
+                          )}
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}>
@@ -213,12 +219,47 @@ export default function CartDrawer() {
                     justifyContent: 'space-between',
                     marginBottom: '1.5rem',
                     fontSize: '1.25rem',
-                    fontWeight: 500,
+                    fontWeight: 600,
+                    color: '#524f25'
                   }}
                 >
-                  <span>Разом</span>
+                  <span>До сплати</span>
                   <span>{total} грн</span>
                 </div>
+
+                {/* Banner Counter */}
+                {total > 0 && total < 2500 && (
+                  <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '0.75rem 1rem',
+                    background: 'rgba(196, 168, 130, 0.12)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    border: '1px dashed rgba(196, 168, 130, 0.3)'
+                  }}>
+                    <span style={{ fontSize: '0.8rem', color: '#524f25', fontWeight: 500, lineHeight: 1.4 }}>
+                      Додайте ще на <span style={{ color: '#c4a882', fontWeight: 700 }}>{2500 - total} грн</span> для безкоштовної доставки
+                    </span>
+                  </div>
+                )}
+                {total >= 2500 && (
+                  <div style={{
+                    marginBottom: '1.5rem',
+                    padding: '0.75rem 1rem',
+                    background: 'rgba(82, 79, 37, 0.05)',
+                    borderRadius: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    border: '1px solid rgba(82, 79, 37, 0.1)'
+                  }}>
+                    <span style={{ fontSize: '0.8rem', color: '#524f25', fontWeight: 600, lineHeight: 1.4 }}>
+                      Доставка безкоштовна
+                    </span>
+                  </div>
+                )}
                 <Link
                   href="/checkout"
                   onClick={() => setIsCartOpen(false)}

@@ -432,7 +432,7 @@ function OrdersList({ userId }) {
         const isExpanded = expandedId === order.id;
         const shortId = order.id.slice(0, 8).toUpperCase();
         const dateObj = new Date(order.created_at);
-        const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' });
+        const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*р\.?$/, '');
         const time = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
         const items = Array.isArray(order.items) ? order.items : [];
 
@@ -454,7 +454,7 @@ function OrdersList({ userId }) {
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8rem', fontWeight: 600, color: '#524f25' }}>
                   #{shortId}
                 </span>
-                <span style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.4)' }}>{date} о {time}</span>
+                <span style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.4)' }}>{date}, {time}</span>
               </div>
               <span style={{
                 padding: '0.25rem 0.75rem', borderRadius: '99px', fontSize: '0.72rem', fontWeight: 600,

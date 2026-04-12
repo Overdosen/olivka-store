@@ -27,7 +27,7 @@ function App() {
             style: {
               background: '#fff',
               color: 'var(--color-stone-800)',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'var(--font-sans)',
               borderRadius: '999px',
               padding: '16px 24px',
               boxShadow: '0 10px 30px rgba(0,0,0,0.08)'

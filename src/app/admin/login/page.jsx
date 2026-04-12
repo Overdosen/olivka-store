@@ -38,7 +38,7 @@ export default function Login() {
       <div className="max-w-md w-full bg-white rounded-md shadow-xl overflow-hidden p-8 space-y-8">
         
         <div className="text-center">
-          <h2 className="text-3xl font-cormorant font-bold text-stone-800">Olivka Store</h2>
+          <h2 className="text-3xl font-cormorant font-bold text-stone-800">Store Olivka</h2>
           <p className="text-stone-500 mt-2 font-inter">Вхід в панель керування</p>
         </div>
 

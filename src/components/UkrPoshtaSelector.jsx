@@ -150,11 +150,15 @@ export default function UkrPoshtaSelector({ onChange, value }) {
 
     let finalValue = `Укрпошта ${SERVICE_TYPES[serviceType].label}: `;
     
+    const regionPart = selectedCity.REGION_UA;
+    const districtPart = selectedCity.DISTRICT_UA ? `${selectedCity.DISTRICT_UA} р-н, ` : '';
+    const cityPart = `${regionPart}, ${districtPart}${selectedCity.CITY_UA}`;
+
     if (deliveryMethod === 'POSTOFFICE' && selectedOff) {
-      finalValue += `${selectedOff.POSTINDEX}, ${selectedCity.REGION_UA}, ${selectedCity.CITY_UA}, ${selectedOff.PO_SHORT} (${selectedOff.ADDRESS})`;
+      finalValue += `${selectedOff.POSTINDEX}, ${cityPart}, ${selectedOff.PO_SHORT} (${selectedOff.ADDRESS})`;
       onChange(finalValue);
     } else if (deliveryMethod === 'COURIER' && selectedStreet && house) {
-      finalValue += `Кур'єрська доставка: ${selectedCity.CITY_UA}, вул. ${selectedStreet.STREET_UA}, буд. ${house}${apartment ? ', кв. ' + apartment : ''}`;
+      finalValue += `Кур'єрська доставка: ${cityPart}, вул. ${selectedStreet.STREET_UA}, буд. ${house}${apartment ? ', кв. ' + apartment : ''}`;
       onChange(finalValue);
     }
   }, [selectedCity, selectedOff, selectedStreet, house, apartment, deliveryMethod, serviceType]);
@@ -318,11 +322,11 @@ export default function UkrPoshtaSelector({ onChange, value }) {
                         filteredOffices.map((off, i) => (
                           <DropdownItem key={off.ID || off.POSTINDEX || i} onClick={() => { setSelectedOff(off); setOffOpen(false); }}>
                             <Package size={14} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ fontSize: '0.9rem', color: '#524f25', fontWeight: 500, lineHeight: 1.2, fontFamily: 'var(--font-sans)' }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.9rem', color: '#524f25', fontWeight: 500, lineHeight: 1.2, fontFamily: 'var(--font-sans)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                                 {off.PO_SHORT} ({off.POSTINDEX})
                               </div>
-                              <div style={{ fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-sans)' }}>
+                              <div style={{ fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)', marginTop: '2px', fontFamily: 'var(--font-sans)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
                                 {off.ADDRESS}
                               </div>
                             </div>
@@ -417,7 +421,9 @@ function DropdownList({ children, onClose, maxHeight = '280px' }) {
         background: 'white', borderRadius: '12px',
         border: '1px solid rgba(82,79,37,0.12)',
         boxShadow: '0 12px 40px rgba(82,79,37,0.18)',
-        maxHeight, overflowY: 'auto'
+        maxHeight: 'min(400px, 50vh)', overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        boxSizing: 'border-box'
       }}
     >
       {children}

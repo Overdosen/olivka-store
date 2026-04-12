@@ -20,10 +20,10 @@ export async function generateMetadata({ params }) {
     } else if (catId === 'fullset') {
       categoryName = 'Готові рішення';
     }
-    description = `Переглядайте наш асортимент товарів у категорії "${categoryName}". Обирайте найкращі речі для ваших малюків в Olivka Store.`;
+    description = `Переглядайте наш асортимент товарів у категорії "${categoryName}". Обирайте найкращі речі для ваших малюків в Store Olivka.`;
   } else {
     categoryName = 'Весь каталог';
-    description = 'Весь асортимент дитячого одягу Olivka Store в одному місці.';
+    description = 'Весь асортимент дитячого одягу Store Olivka в одному місці.';
   }
 
   const fullTitle = `${categoryName} | Store Olivka`;

@@ -1,0 +1,324 @@
+'use client';
+
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Package, Copy, Loader2, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
+import { useCart } from '../../../context/CartContext';
+import { supabase } from '../../../lib/supabase';
+import toast from 'react-hot-toast';
+
+// ─── Shared Components ───────────────────────────────────────────────────────
+
+function LoadingState() {
+  return (
+    <div className="min-h-[80vh] flex flex-col items-center pt-80 bg-[#fdfcf7]">
+      <Loader2 className="animate-spin text-[#524f25] mb-4" size={40} />
+      <p className="text-[#524f25]" style={{ fontFamily: 'var(--font-sans)' }}>Завантаження...</p>
+    </div>
+  );
+}
+
+const AnimatedCheckmark = () => (
+  <div className="mb-10 flex items-center justify-center w-24 h-24">
+    <svg 
+      viewBox="0 0 52 52" 
+      className="w-full h-full"
+      style={{ overflow: 'visible' }}
+    >
+      <motion.circle
+        cx="26"
+        cy="26"
+        r="25"
+        fill="none"
+        stroke="#3c7b27"
+        strokeWidth="2.5"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      />
+      <motion.path
+        fill="none"
+        stroke="#3c7b27"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.1 27.2l7.1 7.2 16.7-16.8"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.4, delay: 0.6, ease: "easeOut" }}
+      />
+    </svg>
+  </div>
+);
+
+// ─── COD View (Strictly based on screenshot 1) ──────────────────────────────
+
+function CodView({ shortId, copyToClipboard }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (text) => {
+    copyToClipboard(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="min-h-screen bg-[#fdfcf7] flex flex-col items-center px-6 text-center" style={{ fontFamily: 'var(--font-sans)', paddingTop: '5vh' }}>
+      <AnimatedCheckmark />
+
+      <h1 className="text-[28px] md:text-[32px] font-medium text-[#524f25] mt-8 mb-5 tracking-tight leading-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+        Замовлення №{shortId} прийнято та чекає на оплату авансу!
+      </h1>
+
+      <div className="max-w-2xl text-[#524f25] text-[16px] md:text-[17px] leading-relaxed mb-10 space-y-1">
+        <p>Ми вже отримали ваші дані та готуємо пакунок до відправки.</p>
+        <p>
+          Щоб ми могли якнайшвидше надіслати ваше замовлення, будь ласка,<br className="hidden md:block" /> 
+          внесіть аванс у розмірі 150 грн за реквізитами нижче:
+        </p>
+      </div>
+
+      <div className="w-full max-w-[480px] bg-[#fcfbf7] border border-[#524f25]/20 rounded-md overflow-hidden mb-10 text-left">
+        <div className="py-4 px-6 border-b border-[#524f25]/10 text-center">
+          <span className="text-[#524f25]/50 text-[12px] uppercase tracking-[0.2em] font-semibold">Реквізити для оплати</span>
+        </div>
+        
+        <div className="p-6 md:p-8 space-y-7">
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Отримувач</span>
+            <p className="text-[#524f25] text-[17px] font-normal">ФОП Сопіна Вікторія Іванівна</p>
+          </div>
+          
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">ЄДРПОУ</span>
+            <p className="text-[#524f25] text-[17px] font-normal tracking-wide">3522303066</p>
+          </div>
+          
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Банк</span>
+            <p className="text-[#524f25] text-[17px] font-normal">АТ КБ "ПРИВАТБАНК"</p>
+          </div>
+          
+          <div className="space-y-2 pt-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Рахунок IBAN</span>
+            <div 
+              onClick={() => handleCopy('UA203052990000026002043900812')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[14px] md:text-[15px] font-normal break-all pr-4">UA203052990000026002043900812</p>
+              <div className="text-[#524f25]/40 group-hover:text-[#524f25] transition-colors flex-shrink-0">
+                {copied ? (
+                  <span className="text-[10px] text-green-700 font-semibold tracking-wider uppercase">Готово</span>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-[#524f25]/5 rounded border border-[#524f25]/10 flex gap-3 items-start text-left">
+              <svg className="w-5 h-5 text-[#524f25] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-[12.5px] text-[#524f25] leading-relaxed font-normal italic">
+                В призначенні обов'язково вкажіть <span className="font-semibold">«Сплата за товар»</span> та ваше прізвище або номер замовлення. Враховуйте комісію банку.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-[#524f25] text-[16px] md:text-[17px] space-y-1 mb-12">
+        <p>Щойно оплата надійде — ваше замовлення вирушить у дорогу.</p>
+        <p>Дякуємо, що довіряєте нам піклування про комфорт вашого малюка!</p>
+      </div>
+
+      <Link 
+        href="/catalog" 
+        className="mt-32 text-[#524f25] text-[15px] font-bold tracking-[0.2em] uppercase hover:opacity-70 transition-opacity"
+        style={{ textDecoration: 'none' }}
+      >
+        До каталогу
+      </Link>
+    </div>
+  );
+}
+
+// ─── LiqPay View (Strictly based on screenshot 2) ─────────────────────────────
+
+function LiqPayView({ order, shortId }) {
+  const isPaid = order?.status === 'paid';
+
+  return (
+    <div className="min-h-screen bg-[#fdfcf7] flex flex-col items-center px-6 text-center" style={{ fontFamily: 'var(--font-sans)', paddingTop: '5vh' }}>
+      {isPaid ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center w-full max-w-2xl"
+        >
+          <AnimatedCheckmark />
+          
+          <h1 className="text-[28px] md:text-[32px] font-medium text-[#524f25] mb-5 tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+            Оплата пройшла успішно!
+          </h1>
+          
+          <div className="max-w-2xl text-[#524f25] text-[17px] leading-[1.6] mb-5 opacity-90 space-y-1">
+            <p>
+              Ваше замовлення <span className="font-semibold">№{shortId}</span> прийнято в роботу. Дякуємо, що довіряєте
+            </p>
+            <p>нам піклування про комфорт вашого малюка!</p>
+            <br />
+            <p> Ми вже бережно пакуємо ваш вибір. Очікуйте на оновлення статусу</p>
+            <p> доставки найближчим часом.</p>
+          </div>
+
+          <div className="flex flex-col items-center gap-6 w-full max-w-[320px]" style={{ marginTop: '3vh' }}>
+            <Link 
+              href="/catalog" 
+              className="text-[#524f25] text-[15px] font-semibold tracking-[0.2em] uppercase hover:opacity-70 transition-opacity"
+            >
+              До каталогу
+            </Link>
+          </div>
+        </motion.div>
+      ) : (
+        <div className="flex flex-col items-center" style={{ marginTop: '2.5vh' }}>
+          <div className="mb-12">
+            <Loader2 className="animate-spin text-[#524f25] opacity-20" size={64} strokeWidth={1.5} />
+          </div>
+          <h1 className="text-[24px] md:text-[28px] font-normal text-[#524f25] mb-4 tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+            Обробка оплати...
+          </h1>
+          <div className="max-w-md text-[#524f25] text-[16px] leading-relaxed mb-12 opacity-60">
+            <p>Будь ласка, зачекайте. Ми перевіряємо статус вашої оплати.</p>
+          </div>
+          <Link 
+            href="/catalog" 
+            className="mt-32 text-[#524f25] text-[15px] font-semibold tracking-[0.2em] uppercase hover:opacity-70 transition-opacity"
+          >
+            Перейти до каталогу
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Logic Container ────────────────────────────────────────────────────
+
+function SuccessContent() {
+  const searchParams = useSearchParams();
+  const { clearCart } = useCart();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const orderId = searchParams.get('order_id') || searchParams.get('orderId');
+  const method = searchParams.get('method');
+
+  useEffect(() => {
+    console.log("SUCCESS_PAGE: Component mounted. order_id:", orderId);
+    setIsMounted(true);
+    if (orderId) {
+      fetchOrder();
+      clearCart();
+    } else {
+      setLoading(false);
+    }
+  }, [orderId]);
+
+  // 2. Realtime subscription for status updates
+  useEffect(() => {
+    if (!orderId || !isMounted) return;
+
+    console.log("SUCCESS_PAGE: Setting up Realtime subscription for:", orderId);
+    
+    const channel = supabase
+      .channel(`order-status-${orderId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          console.log('SUCCESS_PAGE: Realtime update received. Fetching fresh data...');
+          // При отриманні будь-якого оновлення робимо запит до БД, щоб мати повний об'єкт
+          fetchOrder(true);
+        }
+      )
+      .subscribe((status) => {
+        console.log("SUCCESS_PAGE: Realtime channel status:", status);
+      });
+
+    // Резервний механізм (fallback): на випадок проблем з Websocket
+    // Перевіряємо статус раз на 10 секунд "тихо" у фоні
+    const fallbackInterval = setInterval(() => {
+      if (order?.status !== 'paid') {
+        console.log("SUCCESS_PAGE: Fallback check...");
+        fetchOrder(true);
+      }
+    }, 10000);
+
+    return () => {
+      console.log("SUCCESS_PAGE: Cleaning up...");
+      supabase.removeChannel(channel);
+      clearInterval(fallbackInterval);
+    };
+  }, [orderId, isMounted, order?.status]);
+
+  const fetchOrder = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+      if (error) throw error;
+      console.log("SUCCESS_PAGE: Order fetched:", data);
+      setOrder(data);
+    } catch (error) {
+      console.error('SUCCESS_PAGE: Error fetching order:', error);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Скопійовано!');
+  };
+
+  if (!isMounted || (loading && !order)) {
+    return <LoadingState />;
+  }
+
+  const shortId = order?.order_number || order?.human_id || (orderId ? orderId.slice(0, 8).toUpperCase() : '');
+  const isLiqPay = method === 'liqpay' || order?.payment_method?.includes('liqpay');
+
+  console.log("SUCCESS_PAGE: Rendering. isLiqPay:", isLiqPay, "status:", order?.status);
+
+  return (
+    <div>
+      {isLiqPay ? (
+        <LiqPayView order={order} shortId={shortId} />
+      ) : (
+        <CodView shortId={shortId} copyToClipboard={copyToClipboard} />
+      )}
+    </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={<LoadingState />}>
+      <SuccessContent />
+    </Suspense>
+  );
+}

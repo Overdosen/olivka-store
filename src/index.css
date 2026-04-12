@@ -25,9 +25,26 @@
   --font-serif: 'Century Gothic', Georgia, serif;
 }
 
+/* Mobile font override */
+@media (max-width: 768px) {
+  :root {
+    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Inter', Georgia, serif;
+  }
+}
+
 @keyframes dot-pulse {
   0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
   40%           { opacity: 1;   transform: scale(1.1); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 * {
@@ -805,4 +822,13 @@ html:has(body.no-scroll) {
   .checkout-container {
     padding-top: 1rem;
   }
+}
+
+/* Utility to hide scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

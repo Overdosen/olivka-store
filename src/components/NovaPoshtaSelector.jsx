@@ -75,16 +75,29 @@ export default function NovaPoshtaSelector({ onChange, value }) {
     debounceRef.current = setTimeout(async () => {
       setCityLoading(true);
       try {
+        const trimmed = cityQuery.trim();
+        // НП API не підтримує пошук латиницею і повертає помилку "CityName has invalid characters"
+        // Тому якщо в запиті немає жодної кириличної літери — навіть не робимо запит
+        if (!/[а-яА-ЯёЁіІїЇєЄґҐ]/.test(trimmed)) {
+          setCityList([]);
+          setCityLoading(false);
+          return;
+        }
+
         const data = await npPost('Address', 'searchSettlements', {
-          CityName: cityQuery,
+          CityName: trimmed,
           Limit: 7,
           Page: 1,
         });
         const list = data?.[0]?.Addresses || [];
         setCityList(list);
       } catch (e) {
-        console.error('[NP city search]', e);
-        setCityList([]);
+        // Якщо все ж таки проскочила помилка валідації назви — просто очищуємо список
+        if (e.message?.includes('CityName has invalid characters')) {
+          setCityList([]);
+        } else {
+          console.error('[NP city search]', e);
+        }
       } finally {
         setCityLoading(false);
       }
@@ -166,13 +179,14 @@ export default function NovaPoshtaSelector({ onChange, value }) {
   useEffect(() => {
     if (deliveryMethod === 'WAREHOUSE') {
       if (selectedCity && selectedWh) {
-        onChange(`НП Відділення: ${selectedWh.Description}`);
+        // Використовуємо Present для повної назви міста (з областю та районом)
+        onChange(`НП Відділення: ${selectedCity.Present}, ${selectedWh.Description}`);
       } else {
         onChange('');
       }
     } else {
       if (selectedCity && selectedStreet && house.trim()) {
-        const cityPart = `м. ${selectedCity.MainDescription}`;
+        const cityPart = selectedCity.Present; 
         const aptPart = apartment.trim() ? `, кв. ${apartment}` : '';
         onChange(`Кур'єр НП: ${cityPart}, вул. ${selectedStreet.SettlementStreetDescription}, буд. ${house}${aptPart}`);
       } else {
@@ -348,10 +362,10 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                         </div>
                         {filteredWarehouses.slice(0, 50).map((wh, i) => (
                           <DropdownItem key={wh.Ref || i} onClick={() => handleWhSelect(wh)}>
-                            <Package size={14} style={{ color: '#524f25' }} />
-                            <div>
-                              <div style={{ fontSize: '0.875rem', fontWeight: 500 }}>{wh.ShortAddress || wh.Description}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.45)' }}>{wh.Description}</div>
+                            <Package size={14} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: '0.875rem', fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.ShortAddress || wh.Description}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.45)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.Description}</div>
                             </div>
                           </DropdownItem>
                         ))}
@@ -457,7 +471,10 @@ function DropdownList({ children, onClose, maxHeight = '280px' }) {
       style={{
         position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 1000,
         background: 'white', borderRadius: '12px', border: '1px solid rgba(82,79,37,0.12)',
-        boxShadow: '0 12px 40px rgba(82,79,37,0.18)', maxHeight, overflowY: 'auto'
+        boxShadow: '0 12px 40px rgba(82,79,37,0.18)', 
+        maxHeight: 'min(400px, 50vh)', overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        boxSizing: 'border-box'
       }}
     >
       {children}

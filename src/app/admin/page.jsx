@@ -11,6 +11,7 @@ export default function Dashboard() {
     totalClients: '--',
     newClients: '--',
     totalOrders: '--',
+    totalUnits: '--',
   });
 
   useEffect(() => {
@@ -45,6 +46,12 @@ export default function Dashboard() {
           .from('orders')
           .select('*', { count: 'exact', head: true });
 
+        const { data: stockData } = await supabase
+          .from('products')
+          .select('stock');
+        
+        const totalStockUnits = stockData?.reduce((sum, p) => sum + (p.stock || 0), 0) || 0;
+
         setStats({
           totalProducts:    productsCount || 0,
           activeCategories: categoriesCount || 0,
@@ -52,6 +59,7 @@ export default function Dashboard() {
           totalClients:     clientsCount || 0,
           newClients:       newClientsCount || 0,
           totalOrders:      ordersCount || 0,
+          totalUnits:       totalStockUnits
         });
       } catch (error) {
         console.error('Помилка завантаження статистики:', error);
@@ -102,6 +110,10 @@ export default function Dashboard() {
         <div className="bg-white/80 backdrop-blur-sm p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow">
           <p className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">Всього замовлень</p>
           <p className="text-4xl font-cormorant font-bold text-stone-800">{stats.totalOrders}</p>
+        </div>
+        <div className="bg-white/80 backdrop-blur-sm p-6 rounded-md shadow-sm border border-emerald-200/60 hover:shadow-md transition-shadow ring-1 ring-emerald-50">
+          <p className="text-xs uppercase tracking-wider text-emerald-600 font-semibold mb-1">Одиниць на складі (РАЗОМ)</p>
+          <p className="text-4xl font-cormorant font-bold text-stone-800">{stats.totalUnits}</p>
         </div>
       </div>
     </div>

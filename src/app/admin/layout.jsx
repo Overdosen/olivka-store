@@ -23,7 +23,8 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { name: 'Статистика', path: '/admin', icon: LayoutDashboard },
     { name: 'Товари',     path: '/admin/products', icon: Package },
-    { name: 'Клієнти',   path: '/admin/customers', icon: Users },
+    { name: 'Категорії',  path: '/admin/categories', icon: Package }, // Reusing Package icon or another one
+    { name: 'Клієнти',    path: '/admin/customers', icon: Users },
   ];
 
   return (

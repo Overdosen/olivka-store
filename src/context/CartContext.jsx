@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const CartContext = createContext();
 
@@ -28,7 +28,7 @@ export function CartProvider({ children }) {
     }
   }, [cartItems, isLoaded]);
 
-  const addToCart = (product, selectedSize, quantity = 1) => {
+  const addToCart = useCallback((product, selectedSize, quantity = 1) => {
     // Визначаємо ліміт залишку для даного товару/розміру
     let stockLimit = product.stock;
     if (selectedSize && product.sizes) {
@@ -56,15 +56,15 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, size: selectedSize, quantity, stock: stockLimit }];
     });
-  };
+  }, []);
 
-  const removeFromCart = (productId, size) => {
+  const removeFromCart = useCallback((productId, size) => {
     setCartItems((prev) =>
       prev.filter((item) => !(item.id === productId && item.size === size))
     );
-  };
+  }, []);
 
-  const updateQuantity = (productId, size, delta) => {
+  const updateQuantity = useCallback((productId, size, delta) => {
     setCartItems((prev) =>
       prev.map((item) => {
         if (item.id === productId && item.size === size) {
@@ -75,30 +75,39 @@ export function CartProvider({ children }) {
         return item;
       })
     );
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
     localStorage.removeItem('olivka_cart');
-  };
+  }, []);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
+  const value = useMemo(() => ({
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    cartCount,
+    cartTotal,
+    isCartOpen,
+    setIsCartOpen,
+  }), [
+    cartItems, 
+    addToCart, 
+    removeFromCart, 
+    updateQuantity, 
+    clearCart, 
+    cartCount, 
+    cartTotal, 
+    isCartOpen
+  ]);
+
   return (
-    <CartContext.Provider
-      value={{
-        cartItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        cartCount,
-        cartTotal,
-        isCartOpen,
-        setIsCartOpen,
-      }}
-    >
+    <CartContext.Provider value={value}>
       {children}
     </CartContext.Provider>
   );

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,9 +19,11 @@ export default function Header() {
   
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
+    setIsMounted(true);
     if (isMobileMenuOpen) {
       document.body.classList.add('no-scroll');
     } else {
@@ -36,25 +40,44 @@ export default function Header() {
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
-    async function fetchCategories() {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('sort_order', { ascending: true });
+    if (!isMounted) return;
 
-      if (error) {
-        console.error('Помилка при завантаженні категорій:', error);
-      } else if (data) {
-        const hasFullset = data.some(cat => cat.id === 'fullset' || cat.name === 'Готові рішення');
-        if (!hasFullset) {
-          setCategories([...data, { id: 'fullset', name: 'Готові рішення' }]);
-        } else {
-          setCategories(data);
+    async function fetchCategories() {
+      console.log('[Header] Fetching categories...');
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('sort_order', { ascending: true });
+
+        if (error) {
+          console.error('[Header] Error fetching categories:', error);
+        } else if (data) {
+          console.log('[Header] Categories loaded:', data.length);
+          const hasFullset = data.some(cat => cat.id === 'fullset' || cat.name === 'Готові рішення');
+          if (!hasFullset) {
+            setCategories([...data, { id: 'fullset', name: 'Готові рішення' }]);
+          } else {
+            setCategories(data);
+          }
         }
+      } catch (err) {
+        console.error('[Header] Unexpected error:', err);
       }
     }
     fetchCategories();
-  }, []);
+  }, [isMounted]);
+
+  // Let the header render naturally, don't hide it with visibility: hidden
+  // This prevents the "white screen" or "ghost site" if hydration hangs
+
+  if (!isMounted) {
+    return (
+      <header className="header" style={{ height: '80px', visibility: 'hidden' }}>
+        {/* Placeholder to prevent layout shift */}
+      </header>
+    );
+  }
 
   return (
     <>

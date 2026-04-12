@@ -8,7 +8,7 @@ export const metadata = {
     default: 'Store Olivka | Ніжний одяг для немовлят',
     template: '%s | Store Olivka',
   },
-  description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
+  description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -24,7 +24,7 @@ export const metadata = {
   },
   openGraph: {
     title: 'Store Olivka | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store. Естетичний та комфортний одяг для немовлят.',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
     url: 'https://www.olivka.store',
     siteName: 'Store Olivka',
     locale: 'uk_UA',
@@ -41,7 +41,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Store Olivka | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Olivka Store.',
+    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
     images: ['/og-image.png'],
   },
   robots: {
@@ -70,7 +70,7 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Questrial&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>
