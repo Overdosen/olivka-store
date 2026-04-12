@@ -29,9 +29,19 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Клієнт для серверних операцій (обхід RLS)
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+
+if (!serviceKey && typeof window === 'undefined') {
+  console.warn('[Supabase] Service Role Key is missing. Server-side operations requiring RLS bypass will fail.');
+}
+
 export const supabaseService = (supabaseUrl && serviceKey) 
-  ? createClient(supabaseUrl, serviceKey) 
+  ? createClient(supabaseUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }) 
   : null;
 
 // \u041f\u0435\u0440\u0435\u0445\u043e\u043f\u043b\u044e\u0454\u043c\u043e \u0437\u0430\u0441\u0442\u0430\u0440\u0456\u043b\u0438\u0439 refresh \u0442\u043e\u043a\u0435\u043d \u0442\u0430 \u0432\u0438\u043a\u043e\u043d\u0443\u0454\u043c\u043e signOut

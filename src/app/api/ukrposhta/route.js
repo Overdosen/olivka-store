@@ -10,7 +10,14 @@ export async function GET(request) {
     return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
   }
 
-  const token = process.env.NEXT_PUBLIC_UKRPOST_BEARER;
+  let bearer = process.env.NEXT_PUBLIC_UKRPOST_BEARER || process.env.UKRPOST_BEARER;
+  
+  if (!bearer) {
+    console.error('[Ukrposhta API Proxy] Bearer token is missing.');
+  } else {
+    // Clean "Bearer " if user accidentally included it in the env var
+    bearer = bearer.replace(/^Bearer\s+/i, '');
+  }
   
   // Construct destination URL
   const destinationUrl = new URL(`${UKRPOST_API_BASE}${endpoint}`);
@@ -26,7 +33,7 @@ export async function GET(request) {
     const res = await fetch(destinationUrl.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${bearer}`,
         'Accept': 'application/json'
       },
       signal: AbortSignal.timeout(10000) 
