@@ -44,11 +44,7 @@ export async function POST(request) {
 
       const { data: orderData, error: orderError } = await db
         .from('orders')
-        .update({ 
-          status: 'paid',
-          payment_details: payment,
-          updated_at: new Date().toISOString()
-        })
+        .update({ status: 'paid' })
         .eq('id', order_id)
         .select()
         .single();
