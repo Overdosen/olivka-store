@@ -49,7 +49,9 @@ export async function POST(request) {
           payment_details: payment,
           updated_at: new Date().toISOString()
         })
-        .eq('id', order_id);
+        .eq('id', order_id)
+        .select()
+        .single();
 
       if (orderError) {
         console.error('[LiqPay Callback] Supabase Update Error:', orderError);
@@ -71,15 +73,16 @@ export async function POST(request) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              event: 'order_paid',
-              source: 'olivka-store-liqpay',
+              event: 'new_order_paid',
+              source: 'olivka-store-liqpay-callback',
               data: {
-                id: order_id,
-                status: 'paid',
-                payment_method: 'liqpay',
-                amount: amount,
-                currency: currency,
-                liqpay_payment_id: payment.payment_id
+                ...orderData,
+                payment_info: {
+                  status: status,
+                  amount: amount,
+                  currency: currency,
+                  timestamp: new Date().toISOString()
+                }
               },
               timestamp: new Date().toISOString()
             })
