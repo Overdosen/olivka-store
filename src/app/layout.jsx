@@ -2,7 +2,7 @@ import '../index.css';
 import '../admin.css';
 import ClientProviders from './ClientProviders';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
 const normalizedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
 
 export const metadata = {

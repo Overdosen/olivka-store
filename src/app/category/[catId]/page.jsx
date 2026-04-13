@@ -4,7 +4,7 @@ import CategoryClient from './CategoryClient';
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
   const { catId } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
   let categoryName = 'Категорія не знайдена';
   let description = '';
 

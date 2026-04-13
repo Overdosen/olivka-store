@@ -1,6 +1,6 @@
 import HomeClient from './HomeClient';
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
 
 export const metadata = {
   title: 'Store Olivka | Ніжний одяг для немовлят',

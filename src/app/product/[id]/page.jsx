@@ -4,7 +4,7 @@ import ProductClient from './ProductClient';
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
   const { id } = await params;
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
   
   const { data: product } = await supabase
     .from('products')
@@ -88,7 +88,7 @@ export default async function ProductPage({ params }) {
   }
   
   // Pre-calculate image and gallery links for consistency
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.olivka.store';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
   const mainImageUrl = data.image_url 
     ? (data.image_url.startsWith('http') ? data.image_url : `${baseUrl}/images/${data.image_url}`)
     : '';

@@ -5,6 +5,6 @@ export default function robots() {
       allow: '/',
       disallow: ['/admin/', '/api/'],
     },
-    sitemap: 'https://www.olivka.store/sitemap.xml',
+    sitemap: 'https://olivka.store/sitemap.xml',
   };
 }
