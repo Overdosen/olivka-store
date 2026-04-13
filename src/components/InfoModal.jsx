@@ -143,13 +143,17 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth,
                 <span className="truncate">{title}</span>
               </h2>
 
-              <button 
-                onClick={onClose}
-                className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full hover:bg-[#524f25]/5 text-[#524f25]/40 hover:text-[#524f25] transition-all active:scale-90"
-                aria-label="Закрити"
-              >
-                <IconX />
-              </button>
+              {compact ? (
+                <div className="w-10 h-10 shrink-0" />
+              ) : (
+                <button 
+                  onClick={onClose}
+                  className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full hover:bg-[#524f25]/5 text-[#524f25]/40 hover:text-[#524f25] transition-all active:scale-90"
+                  aria-label="Закрити"
+                >
+                  <IconX />
+                </button>
+              )}
             </div>
 
             {/* Body */}
