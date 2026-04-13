@@ -6,7 +6,7 @@ export const metadata = {
   title: 'Store Olivka | Ніжний одяг для немовлят',
   description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят. Швидка доставка по Україні.',
   alternates: {
-    canonical: baseUrl,
+    canonical: '/',
   },
   openGraph: {
     title: 'Store Olivka | Ніжний одяг для немовлят',

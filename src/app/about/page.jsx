@@ -1,6 +1,9 @@
 export const metadata = {
   title: "Про нас",
   description: "Дізнайтеся більше про Store Olivka: наші цінності, умови оплати та доставки, публічну оферту та корисні материалов для мам.",
+  alternates: {
+    canonical: '/about',
+  },
   openGraph: {
     title: "Про нас",
     description: "Дізнайтеся більше про Store Olivka: наші цінності, умови оплати та доставки, публічну оферту та корисні материалов для мам.",

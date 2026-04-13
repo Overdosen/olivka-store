@@ -22,13 +22,10 @@ export const metadata = {
     ],
   },
   manifest: '/manifest.json',
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     title: 'Store Olivka | Ніжний одяг для немовлят',
     description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
-    url: 'https://www.olivka.store',
+    url: normalizedSiteUrl,
     siteName: 'Store Olivka',
     locale: 'uk_UA',
     type: 'website',
