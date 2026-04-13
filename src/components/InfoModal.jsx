@@ -12,7 +12,7 @@ const IconExternalLink = () => <svg xmlns="http://www.w3.org/2000/svg" width="20
 const IconLoader = () => <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin"><path d="M12 2v4"/><path d="m16.2 7.8 2.9-2.9"/><path d="M18 12h4"/><path d="m16.2 16.2 2.9 2.9"/><path d="M12 18v4"/><path d="m4.9 19.1 2.9-2.9"/><path d="M2 12h4"/><path d="m4.9 4.9 2.9 2.9"/></svg>;
 const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
 
-export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth }) {
+export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth, compact = false }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [textContent, setTextContent] = useState('');
   const [loading, setLoading] = useState(false);
@@ -153,7 +153,7 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto bg-white/40 custom-scrollbar-minimal">
+            <div className={`flex-1 bg-white/40 custom-scrollbar-minimal ${compact ? '' : 'overflow-y-auto'}`}>
               {type === 'pdf' && (
                 <div className="p-4 md:p-8 flex flex-col items-center justify-center">
                   {/* Desktop View: Keep iframe */}
@@ -221,7 +221,7 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
                   className="max-w-4xl mx-auto w-full"
                   style={{ paddingLeft: '40px', paddingRight: '40px' }}
                 >
-                  <div style={{ height: '50px' }} />
+                  <div style={{ height: compact ? '20px' : '50px' }} />
                   
                   <div className="text-[#524f25]/90 text-base md:text-xl leading-relaxed space-y-4">
                     {loading ? (
@@ -231,7 +231,7 @@ export default function InfoModal({ isOpen, onClose, title, type, src, maxWidth 
                     )}
                   </div>
 
-                  <div style={{ height: '50px' }} />
+                  <div style={{ height: compact ? '20px' : '50px' }} />
                 </div>
               )}
             </div>

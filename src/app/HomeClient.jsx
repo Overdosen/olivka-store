@@ -9,11 +9,7 @@ import cottonIcon from '../assets/icons/cotton.png';
 import motherIcon from '../assets/icons/mother.png';
 import deliveryIcon from '../assets/icons/deliveryandpay.png';
 import giftIcon from '../assets/icons/gift.png';
-import {
-  FloatingPanelRoot,
-  FloatingPanelTrigger,
-  FloatingPanelContent
-} from '../components/ui/floating-panel';
+import InfoModal from '../components/InfoModal';
 
 function ProductCard({ product }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -62,6 +58,7 @@ function ProductCard({ product }) {
 export default function HomeClient() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const carouselRef = useRef(null);
+  const [activeFeature, setActiveFeature] = useState(null);
 
   const features = [
     {
@@ -282,25 +279,23 @@ export default function HomeClient() {
         <nav className="bg-[#f0ede4]/90 px-4 sm:px-10 py-5 sm:py-6 shadow-[0_10px_40px_rgba(82,79,37,0.12)] border-y border-[#524f25]/10 backdrop-blur-md w-full">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
             {features.map((item) => (
-              <FloatingPanelRoot key={item.id}>
-                <FloatingPanelTrigger>
-                  <div className="relative group flex items-center space-x-3 px-4 py-3 rounded-2xl cursor-pointer active:scale-95 transition-transform duration-100">
-                    <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
-                      <img src={item.icon?.src || item.icon} alt={item.title} className="w-full h-full object-contain" />
-                    </div>
-
-                    <div className="flex flex-col text-left">
-                      <span className="font-serif text-[#524f25] text-sm sm:text-base font-bold leading-tight">{item.title}</span>
-                      <span className="font-sans text-[#524f25]/70 text-[8px] sm:text-[10px] uppercase tracking-widest mt-0.5">{item.desc}</span>
-                    </div>
-
+              <button 
+                key={item.id} 
+                onClick={() => setActiveFeature(item)} 
+                type="button" 
+                className="bg-transparent border-none p-0 m-0 outline-none block"
+              >
+                <div className="relative group flex items-center space-x-3 px-4 py-3 rounded-2xl cursor-pointer active:scale-95 transition-transform duration-100">
+                  <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
+                    <img src={item.icon?.src || item.icon} alt={item.title} className="w-full h-full object-contain" />
                   </div>
-                </FloatingPanelTrigger>
 
-                <FloatingPanelContent title={item.title}>
-                  <p>{item.content}</p>
-                </FloatingPanelContent>
-              </FloatingPanelRoot>
+                  <div className="flex flex-col text-left">
+                    <span className="font-serif text-[#524f25] text-sm sm:text-base font-bold leading-tight">{item.title}</span>
+                    <span className="font-sans text-[#524f25]/70 text-[8px] sm:text-[10px] uppercase tracking-widest mt-0.5">{item.desc}</span>
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
         </nav>
@@ -332,6 +327,15 @@ export default function HomeClient() {
           )}
         </div>
       </section>
+
+      <InfoModal
+        isOpen={!!activeFeature}
+        onClose={() => setActiveFeature(null)}
+        title={activeFeature?.title}
+        type="static_text"
+        src={activeFeature?.content}
+        compact={true}
+      />
     </main>
   );
 }
