@@ -294,8 +294,8 @@ export default function NovaPoshtaSelector({ onChange, value }) {
               <DropdownList onClose={() => setCityOpen(false)}>
                 {cityList.map((city, i) => (
                   <DropdownItem key={i} onClick={() => handleCitySelect(city)}>
-                    <MapPin size={13} style={{ color: '#524f25', marginTop: '1px' }} />
-                    <span>{city.Present}</span>
+                    <MapPin size={13} style={{ color: '#524f25', marginTop: '1px', flexShrink: 0 }} />
+                    <span style={{ flex: 1, minWidth: 0, overflowWrap: 'break-word', wordBreak: 'break-word', display: 'block' }}>{city.Present}</span>
                   </DropdownItem>
                 ))}
               </DropdownList>
@@ -341,12 +341,12 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                     type="button"
                     onClick={() => warehouses.length > 0 && setWhOpen(v => !v)}
                     disabled={whLoading}
-                    style={{ ...inputWrapStyle(!!selectedWh), width: '100%', justifyContent: 'space-between', textAlign: 'left' }}
+                    style={{ ...inputWrapStyle(!!selectedWh), width: '100%', boxSizing: 'border-box', justifyContent: 'space-between', textAlign: 'left' }}
                   >
-                    <span style={{ fontSize: '0.9rem', color: selectedWh ? '#524f25' : 'rgba(82,79,37,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ flex: 1, minWidth: 0, display: 'block', fontSize: '0.9rem', color: selectedWh ? '#524f25' : 'rgba(82,79,37,0.35)', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                       {whLoading ? 'Завантаження...' : selectedWh ? selectedWh.Description : `Оберіть ${WAREHOUSE_TYPES[warehouseType].label.toLowerCase()}...`}
                     </span>
-                    <ChevronDown size={15} style={{ color: 'rgba(82,79,37,0.4)', transform: whOpen ? 'rotate(180deg)' : 'none' }} />
+                    <ChevronDown size={15} style={{ flexShrink: 0, color: 'rgba(82,79,37,0.4)', transform: whOpen ? 'rotate(180deg)' : 'none' }} />
                   </button>
 
                   <AnimatePresence>
@@ -403,8 +403,8 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                       <DropdownList onClose={() => setStreetOpen(false)}>
                         {streetList.map((s, i) => (
                           <DropdownItem key={i} onClick={() => handleStreetSelect(s)}>
-                            <MapPin size={13} style={{ color: '#524f25' }} />
-                            <span>{s.Present}</span>
+                            <MapPin size={13} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
+                            <span style={{ flex: 1, minWidth: 0, overflowWrap: 'break-word', wordBreak: 'break-word', display: 'block' }}>{s.Present}</span>
                           </DropdownItem>
                         ))}
                       </DropdownList>
@@ -487,7 +487,7 @@ function DropdownItem({ children, onClick }) {
     <button
       type="button" onClick={onClick}
       style={{
-        width: '100%', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+        width: '100%', boxSizing: 'border-box', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
         padding: '0.875rem 1rem', border: 'none', background: 'none', cursor: 'pointer',
         textAlign: 'left', transition: 'background 0.12s', fontFamily: 'var(--font-sans)'
       }}

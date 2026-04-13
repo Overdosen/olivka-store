@@ -267,7 +267,7 @@ export default function UkrPoshtaSelector({ onChange, value }) {
               {cityList.map((city, i) => (
                 <DropdownItem key={city.CITY_ID || i} onClick={() => handleCitySelect(city)}>
                   <MapPin size={13} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
-                  <span style={{ fontSize: '0.9rem', color: '#524f25', fontWeight: 500, fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>
+                  <span style={{ flex: 1, minWidth: 0, overflowWrap: 'break-word', wordBreak: 'break-word', display: 'block', fontSize: '0.9rem', color: '#524f25', fontWeight: 500, fontFamily: 'var(--font-sans)', lineHeight: 1.4 }}>
                     {city.CITY_UA}, {city.REGION_UA}{city.DISTRICT_UA ? `, ${city.DISTRICT_UA} р-н` : ''}
                   </span>
                 </DropdownItem>
@@ -293,15 +293,15 @@ export default function UkrPoshtaSelector({ onChange, value }) {
                   type="button"
                   onClick={() => offices.length > 0 && setOffOpen(!offOpen)}
                   disabled={offLoading}
-                  style={{ ...inputWrapStyle(!!selectedOff), width: '100%', justifyContent: 'space-between', textAlign: 'left', cursor: 'pointer' }}
+                  style={{ ...inputWrapStyle(!!selectedOff), width: '100%', boxSizing: 'border-box', justifyContent: 'space-between', textAlign: 'left', cursor: 'pointer' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flex: 1, minWidth: 0 }}>
                     <Package size={16} style={{ color: 'rgba(82,79,37,0.4)', flexShrink: 0 }} />
-                    <span style={{ fontSize: '0.9rem', color: selectedOff ? '#524f25' : 'rgba(82,79,37,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ flex: 1, minWidth: 0, display: 'block', fontSize: '0.9rem', color: selectedOff ? '#524f25' : 'rgba(82,79,37,0.4)', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                       {offLoading ? 'Завантаження...' : selectedOff ? `${selectedOff.PO_SHORT} (${selectedOff.POSTINDEX})` : 'Оберіть відділення...'}
                     </span>
                   </div>
-                  <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: offOpen ? 'rotate(180deg)' : 'none' }} />
+                  <ChevronDown size={16} style={{ flexShrink: 0, transition: 'transform 0.2s', transform: offOpen ? 'rotate(180deg)' : 'none' }} />
                 </button>
 
                 <AnimatePresence>
@@ -359,7 +359,7 @@ export default function UkrPoshtaSelector({ onChange, value }) {
                         {streetList.map((st, i) => (
                           <DropdownItem key={st.STREET_ID || i} onClick={() => { setSelectedStreet(st); setStreetQuery(st.STREET_UA); setStreetOpen(false); }}>
                             <Search size={13} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
-                            <span style={{ fontSize: '0.9rem', color: '#524f25', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>{st.STREET_UA}</span>
+                            <span style={{ flex: 1, minWidth: 0, overflowWrap: 'break-word', wordBreak: 'break-word', display: 'block', fontSize: '0.9rem', color: '#524f25', fontWeight: 500, fontFamily: 'var(--font-sans)' }}>{st.STREET_UA}</span>
                           </DropdownItem>
                         ))}
                       </DropdownList>
@@ -437,7 +437,7 @@ function DropdownItem({ children, onClick }) {
       type="button"
       onClick={onClick}
       style={{
-        width: '100%', padding: '0.875rem 1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
+        width: '100%', boxSizing: 'border-box', padding: '0.875rem 1rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem',
         textAlign: 'left', border: 'none', background: 'transparent', cursor: 'pointer',
         fontSize: '0.9rem', color: '#524f25', transition: 'background 0.12s', fontFamily: 'var(--font-sans)'
       }}
