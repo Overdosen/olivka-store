@@ -66,7 +66,7 @@ export const FloatingPanelContent = ({ children, title }) => {
             transition={{ duration: 0.18, ease: "easeOut" }}
             style={{
               backgroundColor: "#faf5ee",
-              padding: "60px",
+              padding: "30px 20px", // Зменшено падінги для мобільних
               cursor: "default",
               width: "calc(100% - 2rem)",
               maxWidth: "560px",
@@ -74,13 +74,37 @@ export const FloatingPanelContent = ({ children, title }) => {
               borderRadius: "12px",
               boxShadow: "0 30px 100px rgba(0,0,0,0.2)",
               border: "1px solid rgba(82,79,37,0.15)",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column"
             }}
+            className="md:p-[60px]" // Відновлено великі падінги на десктопі
           >
-            <div style={{ marginBottom: "32px" }}>
-              <h3 className="font-serif text-3xl text-[#524f25] leading-tight text-center">{title}</h3>
+            <button 
+              onClick={close}
+              className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#524f25]/5 text-[#524f25]/40 hover:text-[#524f25] transition-all active:scale-90"
+              aria-label="Закрити"
+            >
+              <X size={24} />
+            </button>
+
+            <div style={{ marginBottom: "24px", marginTop: "10px" }}>
+              <h3 className="font-serif text-2xl md:text-3xl text-[#524f25] leading-tight text-center px-6">{title}</h3>
             </div>
-            <div className="text-justify font-sans text-[#524f25]/80 leading-relaxed text-base">
+            
+            <div className="text-justify font-sans text-[#524f25]/80 leading-relaxed text-sm md:text-base mb-6">
               {children}
+            </div>
+
+            <div className="shrink-0 border-t border-[#524f25]/5 flex justify-center items-center pt-6 mt-auto">
+              <button
+                onClick={close}
+                className="w-full md:w-auto md:min-w-[300px] py-4 md:py-5 px-12 rounded-xl bg-[#524f25] text-white text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#3d3b1c] transition-all shadow-xl active:scale-95"
+              >
+                ЗАКРИТИ
+              </button>
             </div>
           </motion.div>
         </motion.div>
