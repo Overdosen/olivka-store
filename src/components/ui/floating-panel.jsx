@@ -97,15 +97,6 @@ export const FloatingPanelContent = ({ children, title }) => {
             <div className="text-justify font-sans text-[#524f25]/80 leading-relaxed text-sm md:text-base mb-6">
               {children}
             </div>
-
-            <div className="shrink-0 border-t border-[#524f25]/5 flex justify-center items-center pt-6 mt-auto">
-              <button
-                onClick={close}
-                className="w-full md:w-auto md:min-w-[300px] py-4 md:py-5 px-12 rounded-xl bg-[#524f25] text-white text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase hover:bg-[#3d3b1c] transition-all shadow-xl active:scale-95"
-              >
-                ЗАКРИТИ
-              </button>
-            </div>
           </motion.div>
         </motion.div>
       )}
