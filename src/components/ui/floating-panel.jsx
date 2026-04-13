@@ -82,20 +82,21 @@ export const FloatingPanelContent = ({ children, title }) => {
             }}
             className="md:p-[60px]" // Відновлено великі падінги на десктопі
           >
-            <button 
-              onClick={close}
-              className="absolute top-4 right-4 md:top-6 md:right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#524f25]/5 text-[#524f25]/40 hover:text-[#524f25] transition-all active:scale-90"
-              aria-label="Закрити"
-            >
-              <X size={24} />
-            </button>
-
             <div style={{ marginBottom: "24px", marginTop: "10px" }}>
               <h3 className="font-serif text-2xl md:text-3xl text-[#524f25] leading-tight text-center px-6">{title}</h3>
             </div>
             
-            <div className="text-justify font-sans text-[#524f25]/80 leading-relaxed text-sm md:text-base mb-6">
+            <div className="text-justify font-sans text-[#524f25]/80 leading-relaxed text-sm md:text-base mb-2">
               {children}
+            </div>
+
+            <div className="text-center mt-4">
+              <button
+                onClick={close}
+                className="text-[#524f25] font-semibold text-sm uppercase tracking-wide hover:opacity-70 transition-opacity"
+              >
+                Закрити
+              </button>
             </div>
           </motion.div>
         </motion.div>
