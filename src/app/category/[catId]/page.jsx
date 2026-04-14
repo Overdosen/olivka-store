@@ -5,40 +5,44 @@ import CategoryClient from './CategoryClient';
 export async function generateMetadata({ params }) {
   const { catId } = await params;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
-  let categoryName = 'Категорія не знайдена';
-  let description = '';
+  
+  let title = 'Категорія не знайдена';
+  let description = 'Весь асортимент дитячого одягу Store Olivka.';
+  let keywords = 'дитячий одяг, магазин, Olivka';
 
   if (catId) {
     const { data: catData } = await supabase
       .from('categories')
-      .select('name')
+      .select('name, seo_title, meta_description, meta_keywords')
       .eq('id', catId)
       .single();
 
     if (catData) {
-      categoryName = catData.name;
+      title = catData.seo_title || catData.name;
+      description = catData.meta_description || `Переглядайте наш асортимент товарів у категорії "${catData.name}". Обирайте найкращі речі для ваших малюків в Store Olivka.`;
+      keywords = catData.meta_keywords || keywords;
     } else if (catId === 'fullset') {
-      categoryName = 'Готові рішення';
+      title = 'Готові рішення';
+      description = 'Економте час та кошти з нашими готовими наборами одягу для немовлят.';
     }
-    description = `Переглядайте наш асортимент товарів у категорії "${categoryName}". Обирайте найкращі речі для ваших малюків в Store Olivka.`;
   } else {
-    categoryName = 'Весь каталог';
+    title = 'Весь каталог';
     description = 'Весь асортимент дитячого одягу Store Olivka в одному місці.';
   }
 
-  const fullTitle = `${categoryName} | Store Olivka`;
+  const fullTitle = `${title} | Store Olivka`;
   const logoUrl = `${baseUrl}/favicon.svg`;
 
   return {
-    title: categoryName,
+    title: title,
     description: description,
+    keywords: keywords,
     alternates: {
-      canonical: `${baseUrl}/category/${catId || ''}`,
+      canonical: `/category/${catId || ''}`,
     },
     openGraph: {
       title: fullTitle,
       description: description,
-      url: `${baseUrl}/category/${catId || ''}`,
       siteName: 'Store Olivka',
       images: [{ url: logoUrl, width: 800, height: 800, alt: 'Store Olivka Logo' }],
       locale: 'uk_UA',
@@ -55,23 +59,23 @@ export async function generateMetadata({ params }) {
 
 export default async function CategoryPage({ params }) {
   const { catId } = await params;
-  
+
   let category = null;
 
   if (catId) {
     const { data: catData } = await supabase
       .from('categories')
-      .select('name')
+      .select('name, description')
       .eq('id', catId)
       .single();
 
     if (catData) {
-      category = { id: catId, name: catData.name };
+      category = { id: catId, name: catData.name, description: catData.description };
     } else if (catId === 'fullset') {
-      category = { id: 'fullset', name: 'Готові рішення' };
+      category = { id: 'fullset', name: 'Готові рішення', description: 'Комплекти одягу для немовлят' };
     }
   } else {
-    category = { name: 'Весь каталог' };
+    category = { name: 'Весь каталог', description: 'Повний асортимент магазину' };
   }
 
   if (!category) {
@@ -86,7 +90,7 @@ export default async function CategoryPage({ params }) {
   let query = supabase.from('products').select('*');
   if (catId) query = query.eq('category_id', catId);
   const { data: prodData } = await query;
-  
+
   const products = (prodData || []).map(p => ({ ...p, image: p.image_url }));
 
   return <CategoryClient initialCategory={category} initialProducts={products} />;

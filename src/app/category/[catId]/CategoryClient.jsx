@@ -77,6 +77,11 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
         <div className="hidden lg:block w-[261px] shrink-0"></div>
         <div className="flex-1 text-center">
           <h1 className="section-title !mb-4">{category?.name}</h1>
+          {category?.description && (
+            <p className="text-[14px] text-stone-400 font-medium -mt-2 mb-6 tracking-wide">
+              {category.description}
+            </p>
+          )}
           <button
             onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
             className="lg:hidden mx-auto inline-flex justify-center items-center space-x-2 px-6 py-3 border border-stone-200 rounded-full font-medium text-stone-700 bg-white shadow-sm active:scale-95 transition-transform"

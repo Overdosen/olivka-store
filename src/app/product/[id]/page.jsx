@@ -33,12 +33,11 @@ export async function generateMetadata({ params }) {
     description: description,
     keywords: product.meta_keywords || 'Store Olivka, дитячий одяг, купити',
     alternates: {
-      canonical: `${baseUrl}/product/${id}`,
+      canonical: `/product/${id}`,
     },
     openGraph: {
       title: fullTitle,
       description: description,
-      url: `${baseUrl}/product/${id}`,
       siteName: 'Store Olivka',
       images: imageUrl ? [{ url: imageUrl, width: 1200, height: 630, alt: product.name }] : [],
       locale: 'uk_UA',

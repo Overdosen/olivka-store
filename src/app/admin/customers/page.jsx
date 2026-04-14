@@ -7,10 +7,12 @@ import { supabase } from '../../../lib/supabase';
 
 const STATUS_MAP = {
   new:       { label: 'Нове',         color: '#b5880b', bg: '#fef9e7' },
-  confirmed: { label: 'Підтверджено', color: '#1565c0', bg: '#e3f2fd' },
   shipped:   { label: 'Відправлено',  color: '#e65100', bg: '#fff3e0' },
   delivered: { label: 'Доставлено',   color: '#2e7d32', bg: '#e8f5e9' },
   cancelled: { label: 'Скасовано',    color: '#c62828', bg: '#ffebee' },
+  paid:      { label: 'Сплачено',     color: '#10b981', bg: '#ecfdf5' },
+  payment_error: { label: 'Помилка оплати', color: '#dc2626', bg: '#fef2f2' },
+  pending_payment: { label: 'Очікує оплати', color: '#7c3aed', bg: '#f5f3ff' },
 };
 
 const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([id, v]) => ({ id, ...v }));
@@ -35,6 +37,8 @@ export default function CustomersPage() {
       .order('created_at', { ascending: false });
 
     // Групуємо замовлення та створюємо гостьові профілі
+    const allProfiles = profiles || [];
+    const profilesMap = Object.fromEntries(allProfiles.map(p => [p.id, p]));
     const ordersMap = {};
     const guestProfiles = {};
 
@@ -42,6 +46,18 @@ export default function CustomersPage() {
       if (o.user_id) {
         if (!ordersMap[o.user_id]) ordersMap[o.user_id] = [];
         ordersMap[o.user_id].push(o);
+
+        // Якщо профілю немає в таблиці profiles, створюємо віртуальний
+        if (!profilesMap[o.user_id] && !guestProfiles[o.user_id]) {
+          guestProfiles[o.user_id] = {
+            id: o.user_id,
+            full_name: o.full_name,
+            email: o.email,
+            phone_ua: o.phone,
+            created_at: o.created_at,
+            isMissingProfile: true
+          };
+        }
       } else if (o.email) {
         const guestKey = `guest_${o.email}`;
         if (!ordersMap[guestKey]) ordersMap[guestKey] = [];
@@ -60,12 +76,26 @@ export default function CustomersPage() {
       }
     });
 
-    setClients([...(profiles || []), ...Object.values(guestProfiles)]);
+    setClients([...allProfiles, ...Object.values(guestProfiles)]);
     setOrders(ordersMap);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    fetchData(); 
+
+    // Підписка на зміни в замовленнях
+    const channel = supabase
+      .channel('admin-orders-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
 
   const filteredClients = clients.filter(c => {
     const q = search.toLowerCase();
@@ -182,6 +212,7 @@ export default function CustomersPage() {
                         <div className="flex flex-col">
                           <span className="font-medium text-stone-800">{client.full_name || '—'}</span>
                           {client.isGuest && <span className="text-[10px] uppercase tracking-tighter text-amber-600 font-bold">Гість</span>}
+                          {client.isMissingProfile && <span className="text-[10px] uppercase tracking-tighter text-rose-500 font-bold">Без профілю</span>}
                         </div>
                       </div>
                     </td>
@@ -265,6 +296,11 @@ function ClientModal({ client, onClose, onUpdateStatus }) {
                     Гість
                   </span>
                 )}
+                {client.isMissingProfile && (
+                  <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wider">
+                    Без профілю
+                  </span>
+                )}
               </div>
               <p className="text-sm text-stone-400">{client.email}</p>
             </div>
@@ -324,7 +360,7 @@ function OrderRow({ order, onUpdateStatus }) {
           <ChevronDown size={15} className={`text-stone-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold text-stone-600">#{order.id.slice(0,8).toUpperCase()}</span>
+              <span className="text-xs font-mono font-semibold text-stone-600">#{order.order_number || order.id.slice(0,8).toUpperCase()}</span>
               {Array.isArray(order.items) && order.items.some(i => i.sku) && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-bold border border-stone-200/50">
                   {Array.from(new Set(order.items.map(i => i.sku).filter(Boolean))).join(', ')}
@@ -388,7 +424,9 @@ function OrderRow({ order, onUpdateStatus }) {
                 <div className="flex flex-wrap gap-x-4 gap-y-2">
                   <p className="text-xs text-stone-500 flex items-center gap-1">
                     💳 {order.payment_method === 'cash_on_delivery' ? 'Післяплата' : order.payment_method} 
-                    <span className="ml-1 px-1.5 py-0.5 rounded bg-stone-100 text-[10px] text-stone-400 uppercase font-bold">Очікує оплати</span>
+                    <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${order.status === 'paid' ? 'bg-emerald-100 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
+                      {order.status === 'paid' ? 'Оплачено' : 'Очікує оплати'}
+                    </span>
                   </p>
                   {order.notes && (
                     <p className="text-xs text-stone-600 bg-amber-50 px-2 py-1.5 rounded-md border border-amber-100/50 flex items-start gap-1.5 w-full mt-1 italic">

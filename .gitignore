@@ -24,11 +24,13 @@ dist-ssr
 *.sw?
 
 .vercel
-.env*.local
+.env*
 .next/
 _backup_store_olivka_/
 scratch/
 .agents/
+*.mjs
+daily/
 
 # Agent Knowledge Base Metadata
 scripts/state.json

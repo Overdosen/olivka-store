@@ -388,11 +388,13 @@ function ActionBtn({ onClick, label }) {
 // ─── OrdersList ─────────────────────────────────────────────────────────────
 
 const STATUS_MAP = {
-  new:         { label: 'Нове',        color: '#b5880b', bg: '#fef9e7' },
-  confirmed:   { label: 'Підтверджено', color: '#1565c0', bg: '#e3f2fd' },
-  shipped:     { label: 'Відправлено', color: '#e65100', bg: '#fff3e0' },
-  delivered:   { label: 'Доставлено',  color: '#2e7d32', bg: '#e8f5e9' },
-  cancelled:   { label: 'Скасовано',   color: '#c62828', bg: '#ffebee' },
+  new:             { label: 'Нове',         color: '#b5880b', bg: '#fef9e7' },
+  shipped:         { label: 'Відправлено',  color: '#e65100', bg: '#fff3e0' },
+  delivered:       { label: 'Доставлено',   color: '#2e7d32', bg: '#e8f5e9' },
+  cancelled:       { label: 'Скасовано',    color: '#c62828', bg: '#ffebee' },
+  paid:            { label: 'Сплачено',     color: '#10b981', bg: '#ecfdf5' },
+  payment_error:   { label: 'Помилка оплати', color: '#dc2626', bg: '#fef2f2' },
+  pending_payment: { label: 'Очікує оплати', color: '#7c3aed', bg: '#f5f3ff' },
 };
 
 function OrdersList({ userId }) {
@@ -410,7 +412,29 @@ function OrdersList({ userId }) {
       if (!error) setOrders(data || []);
       setLoading(false);
     }
+
     fetchOrders();
+
+    // Підписка на зміни статусів або нові замовлення користувача
+    const channel = supabase
+      .channel(`user-orders-${userId}`)
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'orders',
+          filter: `user_id=eq.${userId}` 
+        },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) return (
@@ -430,7 +454,7 @@ function OrdersList({ userId }) {
       {orders.map(order => {
         const status = STATUS_MAP[order.status] || STATUS_MAP.new;
         const isExpanded = expandedId === order.id;
-        const shortId = order.id.slice(0, 8).toUpperCase();
+        const displayId = order.order_number || order.id.slice(0, 8).toUpperCase();
         const dateObj = new Date(order.created_at);
         const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*р\.?$/, '');
         const time = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
@@ -452,7 +476,7 @@ function OrdersList({ userId }) {
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8rem', fontWeight: 600, color: '#524f25' }}>
-                  #{shortId}
+                  #{displayId}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.4)' }}>{date}, {time}</span>
               </div>

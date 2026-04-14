@@ -72,7 +72,7 @@ export default function ProductClient({ product }) {
     // Отримуємо поточну кількість цього товару в кошику
     const existingInCart = cartItems.find(item => item.id === product.id && item.size === selectedSize);
     const qtyInCart = existingInCart ? existingInCart.quantity : 0;
-    
+
     let stockLimit = product.stock;
     if (selectedSize && product.sizes) {
       const sizeObj = product.sizes.find(s => s.name === selectedSize);
@@ -89,13 +89,13 @@ export default function ProductClient({ product }) {
   };
 
   return (
-    <motion.main 
+    <motion.main
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
       className="container product-details"
     >
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -104,12 +104,12 @@ export default function ProductClient({ product }) {
         {!isImageLoaded && (
           <div className="absolute inset-0 bg-stone-100 animate-pulse rounded-xl" />
         )}
-        <div 
+        <div
           ref={sliderRef}
           className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory aspect-[4/5] bg-stone-50 rounded-xl"
-          style={{ 
-            scrollbarWidth: 'none', 
-            msOverflowStyle: 'none', 
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
             WebkitOverflowScrolling: 'touch',
             touchAction: 'auto'
           }}
@@ -117,28 +117,28 @@ export default function ProductClient({ product }) {
         >
           {galleryImages.map((src, i) => (
             <div key={i} className="snap-center relative bg-stone-50 flex items-center justify-center overflow-hidden" style={{ flex: '0 0 100%', height: '100%' }}>
-              <img 
+              <img
                 ref={i === 0 ? mainImgRef : null}
-                src={src} 
+                src={src}
                 onLoad={() => i === 0 && setIsImageLoaded(true)}
                 onError={() => i === 0 && setIsImageLoaded(true)}
-                alt={`${product.name} - ${i === 0 ? 'Головне фото' : `Фото ${i + 1}`} | Дитячий одяг Store Olivka`} 
+                alt={`${product.name} - ${i === 0 ? 'Головне фото' : `Фото ${i + 1}`} | Дитячий одяг Store Olivka`}
                 className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
               />
             </div>
           ))}
         </div>
-        
+
         {galleryImages.length > 1 && (
           <>
-            <button 
+            <button
               onClick={scrollPrev}
               className="absolute top-1/2 left-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 opacity-90 hover:opacity-100"
               style={{ backgroundColor: 'rgba(235, 215, 210, 0.95)', color: '#8c5a55' }}
             >
               <ChevronLeft size={28} />
             </button>
-            <button 
+            <button
               onClick={scrollNext}
               className="absolute top-1/2 right-4 -translate-y-1/2 w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all duration-300 z-10 hidden md:flex hover:scale-110 active:scale-95 opacity-90 hover:opacity-100"
               style={{ backgroundColor: 'rgba(235, 215, 210, 0.95)', color: '#8c5a55' }}
@@ -147,8 +147,8 @@ export default function ProductClient({ product }) {
             </button>
             <div className="absolute bottom-6 left-0 right-0 flex justify-center space-x-2.5 z-10">
               {galleryImages.map((_, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`w-2 h-2 rounded-full shadow-sm transition-all duration-300 ${i === activeSlide ? 'bg-stone-800 scale-125' : 'bg-white/80 hover:bg-white'}`}
                 />
               ))}
@@ -157,7 +157,7 @@ export default function ProductClient({ product }) {
         )}
       </motion.div>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
@@ -170,17 +170,17 @@ export default function ProductClient({ product }) {
           </div>
         )}
         <div className="price">{product.price} грн</div>
-        
+
         {hasSizes && (
           <div className="size-selector">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6">
               <div />
               <h3 className="m-0 leading-none text-center">
-                Розмір <span style={{fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px'}}>(Оберіть доступний)</span>
+                Розмір <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>(Оберіть доступний)</span>
               </h3>
               <div className="flex items-center">
                 {product.measurements && (
-                  <button 
+                  <button
                     onClick={() => setIsSizeGuideOpen(true)}
                     className="flex items-center justify-center -translate-y-3 hover:scale-110 active:scale-95 transition-transform"
                     style={{ marginLeft: 'calc(1cm - 10px)' }}
@@ -194,7 +194,7 @@ export default function ProductClient({ product }) {
               {product.sizes.map(size => {
                 const isOutOfStock = size.quantity <= 0;
                 return (
-                  <button 
+                  <button
                     key={size.name}
                     className={`size-btn ${selectedSize === size.name ? 'active' : ''}`}
                     onClick={() => !isOutOfStock && setSelectedSize(size.name)}
@@ -255,12 +255,12 @@ export default function ProductClient({ product }) {
         )}
       </motion.div>
 
-      <InfoModal 
-        isOpen={isSizeGuideOpen} 
-        onClose={() => setIsSizeGuideOpen(false)} 
-        title="Заміри виробу" 
-        type="static_text" 
-        src={product.measurements} 
+      <InfoModal
+        isOpen={isSizeGuideOpen}
+        onClose={() => setIsSizeGuideOpen(false)}
+        title="Заміри виробу"
+        type="static_text"
+        src={product.measurements}
         maxWidth="max-w-[360px]"
       />
     </motion.main>

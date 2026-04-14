@@ -111,7 +111,7 @@ export function AuthProvider({ children }) {
     if (error) throw error;
 
     if (data.user) {
-      await supabase.from('profiles').upsert({
+      const { error: profileError } = await supabase.from('profiles').upsert({
         id:               data.user.id,
         email:            email,
         full_name:        fullName,
@@ -119,6 +119,11 @@ export function AuthProvider({ children }) {
         is_international: isInternational || false,
       }, { onConflict: 'id' });
       
+      if (profileError) {
+        console.error('[AuthContext] Profile creation error:', profileError);
+        throw new Error(`Помилка створення профілю: ${profileError.message}`);
+      }
+
       // Відразу підтягуємо профіль у стан
       await fetchProfile(data.user.id);
     }

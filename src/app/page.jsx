@@ -11,10 +11,9 @@ export const metadata = {
   openGraph: {
     title: 'Store Olivka | Ніжний одяг для немовлят',
     description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
-    url: baseUrl,
     siteName: 'Store Olivka',
     images: [{
-      url: `${baseUrl}/favicon.svg`,
+      url: '/favicon.svg',
       width: 1200,
       height: 630,
       alt: 'Store Olivka Logo',

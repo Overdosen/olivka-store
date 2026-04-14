@@ -248,6 +248,10 @@ function SuccessContent() {
         },
         (payload) => {
           console.log('SUCCESS_PAGE: Realtime update received. Fetching fresh data...');
+          if (payload.new && payload.new.status === 'payment_error') {
+            router.push(`/payment/failure?order_id=${orderId}`);
+            return;
+          }
           // При отриманні будь-якого оновлення робимо запит до БД, щоб мати повний об'єкт
           fetchOrder(true);
         }
@@ -282,6 +286,12 @@ function SuccessContent() {
         .single();
       if (error) throw error;
       console.log("SUCCESS_PAGE: Order fetched:", data);
+      
+      if (data?.status === 'payment_error') {
+        router.push(`/payment/failure?order_id=${orderId}`);
+        return;
+      }
+
       setOrder(data);
     } catch (error) {
       console.error('SUCCESS_PAGE: Error fetching order:', error);

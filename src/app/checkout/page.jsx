@@ -180,6 +180,7 @@ export default function CheckoutPage() {
               source: 'olivka-store-web',
               data: {
                 id: newOrderId,
+                order_number: newOrder?.order_number,
                 user_id: user?.id || null,
                 total,
                 items: orderItems,
@@ -200,42 +201,7 @@ export default function CheckoutPage() {
         }
       }
 
-      // --- Stock Deduction (only for non-liqpay here, as liqpay decrements on callback) ---
-      if (payment !== 'liqpay') {
-        try {
-          for (const item of cartItems) {
-            const { data: product, error: fetchError } = await supabase
-              .from('products')
-              .select('stock, sizes')
-              .eq('id', item.id)
-              .single();
-
-            if (!fetchError && product) {
-              let updatedStock = (product.stock || 0) - item.quantity;
-              let updatedSizes = product.sizes || [];
-
-              if (item.size && updatedSizes.length > 0) {
-                updatedSizes = updatedSizes.map(s => 
-                  s.name === item.size 
-                    ? { ...s, quantity: Math.max(0, (s.quantity || 0) - item.quantity) }
-                    : s
-                );
-              }
-
-              await supabase
-                .from('products')
-                .update({ 
-                  stock: Math.max(0, updatedStock),
-                  sizes: updatedSizes
-                })
-                .eq('id', item.id);
-            }
-          }
-        } catch (stockErr) {
-          console.error('Error deducting stock:', stockErr);
-          // We don't block the order if stock update fails, but we log it
-        }
-      }
+      // --- Stock Management is now handled by DB Triggers ---
 
       // --- LiqPay Redirect ---
       if (payment === 'liqpay') {
