@@ -28,13 +28,20 @@ export const metadata = {
     siteName: 'Store Olivka',
     locale: 'uk_UA',
     type: 'website',
-    images: [], // Next.js will use opengraph-image.png automatically
+    images: [
+      {
+        url: '/opengraph-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Store Olivka Logo',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Store Olivka | Ніжний одяг для немовлят',
     description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
-    images: [], // Next.js will use twitter-image.png automatically
+    images: ['/twitter-image.png'],
   },
   robots: {
     index: true,
