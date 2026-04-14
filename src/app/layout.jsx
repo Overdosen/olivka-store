@@ -30,7 +30,7 @@ export const metadata = {
     type: 'website',
     images: [
       {
-        url: `${normalizedSiteUrl}/opengraph-image.png`,
+        url: `${normalizedSiteUrl}/opengraph-image.png?v=1.1`,
         width: 1200,
         height: 630,
         alt: 'Store Olivka Logo',
@@ -41,7 +41,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Store Olivka | Ніжний одяг для немовлят',
     description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
-    images: [`${normalizedSiteUrl}/twitter-image.png`],
+    images: [`${normalizedSiteUrl}/twitter-image.png?v=1.1`],
   },
   robots: {
     index: true,
