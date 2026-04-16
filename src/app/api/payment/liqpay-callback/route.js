@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { LiqPay } from '../../../../lib/liqpay';
 import { supabase, supabaseService } from '../../../../lib/supabase';
+import { checkboxService } from '../../../../lib/checkbox';
+
 
 const liqpay = new LiqPay(
   process.env.LIQPAY_PUBLIC_KEY,
@@ -58,6 +60,27 @@ export async function POST(request) {
 
       // 4. Stock Deduction is now handled automatically by a Postgres trigger (trigger_on_order_paid)
       // in the database when status changes to 'paid'.
+
+      // 4a. Checkbox Fiscalization
+      console.log('[LiqPay Callback] Starting Checkbox fiscalization...');
+      try {
+        const receipt = await checkboxService.createReceipt(orderData);
+        console.log('[LiqPay Callback] Checkbox receipt created:', receipt.id);
+        
+        // Optionally update order with receipt info
+        await db
+          .from('orders')
+          .update({ 
+            fiscal_receipt_id: receipt.id,
+            fiscal_receipt_url: receipt.tax_url || `https://check.checkbox.ua/${receipt.id}`
+          })
+          .eq('id', order_id);
+          
+      } catch (checkboxErr) {
+        console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', checkboxErr.message);
+        // We log the error but don't return an error response to LiqPay, 
+        // as the payment itself was successful.
+      }
 
       // 5. Notify n8n with FULL order data
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;

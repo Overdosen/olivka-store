@@ -44,12 +44,26 @@ export const supabaseService = (supabaseUrl && serviceKey)
     }) 
   : null;
 
-// \u041f\u0435\u0440\u0435\u0445\u043e\u043f\u043b\u044e\u0454\u043c\u043e \u0437\u0430\u0441\u0442\u0430\u0440\u0456\u043b\u0438\u0439 refresh \u0442\u043e\u043a\u0435\u043d \u0442\u0430 \u0432\u0438\u043a\u043e\u043d\u0443\u0454\u043c\u043e signOut
+// Перехоплюємо застарілий refresh токен та виконуємо signOut
 if (typeof window !== 'undefined') {
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'TOKEN_REFRESHED' && !session) {
-      // \u0422\u043e\u043a\u0435\u043d \u043d\u0435 \u0432\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u043d\u043e\u0432\u0438\u0442\u0438 — \u0447\u0438\u0441\u0442\u0438\u043c\u043e
-      supabase.auth.signOut();
+  let isSigningOut = false;
+
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    // Якщо токен не вдалося оновити або сесія явно недійсна
+    if ((event === 'TOKEN_REFRESHED' && !session) || (event === 'SIGNED_OUT' && !session)) {
+      if (isSigningOut) return;
+      isSigningOut = true;
+      
+      try {
+        // Використовуємо локальний scope, якщо ми вже знаємо, що сесія недійсна
+        // Це запобігає зайвим помилкам "Refresh Token Not Found" при спробі 
+        // деактивувати сесію на сервері з невалідним токеном.
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch (err) {
+        console.warn('[supabase] error during local sign out:', err.message);
+      } finally {
+        isSigningOut = false;
+      }
     }
   });
 }

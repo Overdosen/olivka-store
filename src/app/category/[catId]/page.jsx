@@ -1,3 +1,4 @@
+import React from 'react';
 import { supabase } from '../../../lib/supabase';
 import CategoryClient from './CategoryClient';
 
@@ -92,6 +93,15 @@ export default async function CategoryPage({ params }) {
   const { data: prodData } = await query;
 
   const products = (prodData || []).map(p => ({ ...p, image: p.image_url }));
+  const categoryWithId = { ...category, id: catId || 'all' };
 
-  return <CategoryClient initialCategory={category} initialProducts={products} />;
+  return (
+    <React.Suspense fallback={
+      <div className="container section text-center" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p className="font-serif italic text-[#524f25]/60">Завантаження...</p>
+      </div>
+    }>
+      <CategoryClient initialCategory={categoryWithId} initialProducts={products} />
+    </React.Suspense>
+  );
 }

@@ -49,10 +49,24 @@ export function AuthProvider({ children }) {
 
     // Отримуємо початкову сесію
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return;
+
       if (error) {
-        // Застарілий токен — очищаємо
-        console.warn('[AuthContext] getSession error, clearing session:', error.message);
-        supabase.auth.signOut();
+        // Застарілий токен або інша помилка сесії
+        console.warn('[AuthContext] getSession error:', error.message);
+        
+        // Якщо токен не знайдено — примусово чистимо локальний стан
+        if (error.message.includes('Refresh Token Not Found') || error.status === 400) {
+          supabase.auth.signOut({ scope: 'local' }).finally(() => {
+            if (mounted) {
+              setUser(null);
+              setProfile(null);
+              setLoading(false);
+            }
+          });
+          return;
+        }
+        
         setUser(null);
         setProfile(null);
         setLoading(false);

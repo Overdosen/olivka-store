@@ -1,26 +1,271 @@
+'use client';
+
+import { useState } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import bearImg from '../assets/teddy_bear.png';
+import ContactModal from './ContactModal';
+
+const FOOTER_CATEGORIES = [
+  { name: 'Комплекти', slug: 'sets' },
+  { name: 'Боді', slug: 'body' },
+  { name: 'Пісочники, ромпери', slug: 'pisochniki' },
+  { name: 'Чоловічки', slug: 'men' },
+];
+
+const EMAIL = 'olivka.hello@gmail.com';
+const INSTAGRAM_URL = 'https://www.instagram.com/store.olivka?igsh=cmZpdWp2dXQ2a2F4';
+
+/* ── Inline SVG логотипи з checkout ── */
+const VisaSVG = () => (
+  <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+    <rect width="120" height="80" rx="4" fill="white" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M86.6666 44.9375L90.3239 35.0625L92.3809 44.9375H86.6666ZM100.952 52.8375L95.8086 27.1625H88.7383C86.3525 27.1625 85.7723 29.0759 85.7723 29.0759L76.1904 52.8375H82.8868L84.2269 49.0244H92.3947L93.1479 52.8375H100.952Z" fill="#1434CB" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M77.1866 33.5711L78.0952 28.244C78.0952 28.244 75.2896 27.1625 72.3648 27.1625C69.2031 27.1625 61.6955 28.5638 61.6955 35.3738C61.6955 41.7825 70.5071 41.8621 70.5071 45.2266C70.5071 48.5912 62.6034 47.9901 59.9955 45.8676L59.0476 51.4362C59.0476 51.4362 61.8919 52.8375 66.2397 52.8375C70.5869 52.8375 77.1467 50.5544 77.1467 44.3455C77.1467 37.8964 68.2552 37.296 68.2552 34.4921C68.2552 31.6882 74.4602 32.0484 77.1866 33.5711Z" fill="#1434CB" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M54.6517 52.8375H47.6191L52.0144 27.1625H59.0477L54.6517 52.8375Z" fill="#1434CB" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M42.3113 27.1625L35.9217 44.8213L35.1663 41.0185L35.167 41.0199L32.9114 29.4749C32.9114 29.4749 32.6394 27.1625 29.7324 27.1625H19.1709L19.0476 27.5966C19.0476 27.5966 22.2782 28.2669 26.057 30.5326L31.8793 52.8375H38.8617L49.5238 27.1625H42.3113Z" fill="#1434CB" />
+  </svg>
+);
+
+const MastercardSVG = () => (
+  <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+    <rect width="120" height="80" rx="4" fill="white" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M97.5288 54.6562V53.7384H97.289L97.0137 54.3698L96.7378 53.7384H96.498V54.6562H96.6675V53.9637L96.9257 54.5609H97.1011L97.36 53.9624V54.6562H97.5288ZM96.0111 54.6562V53.8947H96.318V53.7397H95.5361V53.8947H95.843V54.6562H96.0111Z" fill="#F79E1B" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M49.6521 58.595H70.3479V21.4044H49.6521V58.595Z" fill="#FF5F00" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M98.2675 40.0003C98.2675 53.063 87.6791 63.652 74.6171 63.652C69.0996 63.652 64.0229 61.7624 60 58.5956C65.5011 54.2646 69.0339 47.5448 69.0339 40.0003C69.0339 32.4552 65.5011 25.7354 60 21.4044C64.0229 18.2376 69.0996 16.348 74.6171 16.348C87.6791 16.348 98.2675 26.937 98.2675 40.0003Z" fill="#F79E1B" />
+    <path fillRule="evenodd" clipRule="evenodd" d="M50.966 40.0003C50.966 32.4552 54.4988 25.7354 59.9999 21.4044C55.977 18.2376 50.9003 16.348 45.3828 16.348C32.3208 16.348 21.7324 26.937 21.7324 40.0003C21.7324 53.063 32.3208 63.652 45.3828 63.652C50.9003 63.652 55.977 61.7624 59.9999 58.5956C54.4988 54.2646 50.966 47.5448 50.966 40.0003Z" fill="#EB001B" />
+  </svg>
+);
+
+const ApplePaySVG = () => (
+  <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+    <rect x="1.375" y="1.375" width="117.25" height="77.25" rx="6.625" fill="white" />
+    <path d="M55.5533 22.9046C61.103 22.9046 64.9675 26.7301 64.9675 32.2997C64.9675 37.8892 61.0235 41.7345 55.4142 41.7345H49.2696V51.5062H44.8301V22.9046L55.5533 22.9046ZM49.2695 38.0081H54.3635C58.2288 38.0081 60.4286 35.9271 60.4286 32.3196C60.4286 28.7124 58.2288 26.6509 54.3834 26.6509H49.2695V38.0081Z" fill="black" />
+    <path d="M66.1274 45.5799C66.1274 41.9326 68.9222 39.6929 73.8778 39.4154L79.5858 39.0786V37.4732C79.5858 35.1541 78.0198 33.7666 75.404 33.7666C72.9258 33.7666 71.3797 34.9556 71.0035 36.8191H66.9601C67.1979 33.0528 70.4086 30.278 75.5623 30.278C80.6165 30.278 83.8471 32.9538 83.8471 37.136V51.5062H79.7441V48.0772H79.6454C78.4365 50.3963 75.8001 51.8629 73.065 51.8629C68.9818 51.8629 66.1274 49.3258 66.1274 45.5799ZM79.5858 43.697V42.0518L74.452 42.3688C71.8951 42.5473 70.4484 43.6771 70.4484 45.461C70.4484 47.2842 71.9547 48.4736 74.254 48.4736C77.2468 48.4736 79.5858 46.4122 79.5858 43.697Z" fill="black" />
+    <path d="M87.7206 59.177V55.7082C88.0372 55.7874 88.7506 55.7874 89.1077 55.7874C91.0896 55.7874 92.1601 54.9551 92.8139 52.8145C92.8139 52.7747 93.1908 51.5459 93.1908 51.5261L85.6592 30.6546H90.2967L95.5696 47.6214H95.6484L100.921 30.6546H105.44L97.6303 52.5962C95.8472 57.6508 93.7857 59.276 89.4648 59.276C89.1077 59.276 88.0372 59.2363 87.7206 59.177Z" fill="black" />
+    <path d="M31.7358 25.6955C32.8058 24.3572 33.5319 22.5603 33.3404 20.724C31.7741 20.8019 29.8627 21.7573 28.7562 23.0967C27.7626 24.2436 26.8832 26.1158 27.1124 27.8751C28.8707 28.0276 30.6273 26.9962 31.7358 25.6955Z" fill="black" />
+    <path d="M33.3204 28.2186C30.7671 28.0665 28.5961 29.6678 27.3767 29.6678C26.1567 29.6678 24.2894 28.2952 22.2698 28.3322C19.6412 28.3708 17.2022 29.8571 15.8682 32.2209C13.1246 36.9497 15.1442 43.9642 17.8122 47.8155C19.1079 49.7209 20.6694 51.8189 22.7269 51.7435C24.6709 51.6672 25.4328 50.4847 27.7958 50.4847C30.1571 50.4847 30.8435 51.7435 32.9013 51.7054C35.0353 51.6672 36.3695 49.799 37.6651 47.8918C39.1515 45.7198 39.7599 43.6225 39.7982 43.5073C39.7599 43.4692 35.6832 41.9053 35.6454 37.2158C35.6069 33.2892 38.8461 31.4215 38.9985 31.3057C37.1694 28.6003 34.3113 28.2952 33.3204 28.2186Z" fill="black" />
+  </svg>
+);
+
+const GooglePaySVG = () => (
+  <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+    <rect width="120" height="80" rx="4" fill="white" />
+    <path d="M57.5437 26.997V35.9796H63.0833C64.4033 35.9796 65.4945 35.5352 66.3569 34.6486C67.2435 33.7642 67.6879 32.7082 67.6879 31.4872C67.6879 30.2904 67.2435 29.2476 66.3569 28.3588C65.4945 27.4502 64.4033 26.9948 63.0833 26.9948H57.5437V26.997ZM57.5437 39.141V49.5602H54.2349V23.8356H63.0129C65.2415 23.8356 67.1335 24.577 68.6933 26.062C70.2773 27.547 71.0693 29.3554 71.0693 31.4872C71.0693 33.6674 70.2773 35.489 68.6933 36.9476C67.1599 38.4106 65.2635 39.1388 63.0107 39.1388H57.5437V39.141ZM74.4133 44.1724C74.4133 45.0348 74.7785 45.752 75.5111 46.3284C76.2415 46.9004 77.0995 47.1886 78.0807 47.1886C79.4733 47.1886 80.7119 46.6738 81.8031 45.6464C82.8965 44.6146 83.4399 43.4046 83.4399 42.0164C82.4081 41.2024 80.9693 40.7954 79.1235 40.7954C77.7815 40.7954 76.6595 41.121 75.7619 41.7678C74.8621 42.4146 74.4133 43.2132 74.4133 44.1724ZM78.6945 31.3794C81.1409 31.3794 83.0703 32.0328 84.4871 33.3374C85.8995 34.6442 86.6079 36.435 86.6079 38.7098V49.5602H83.4421V47.1182H83.2991C81.9307 49.129 80.1091 50.1366 77.8299 50.1366C75.8895 50.1366 74.2637 49.5602 72.9569 48.4118C71.6501 47.2612 70.9967 45.8246 70.9967 44.0998C70.9967 42.2782 71.6853 40.8306 73.0647 39.7526C74.4441 38.6746 76.2833 38.1356 78.5867 38.1356C80.5491 38.1356 82.1705 38.4942 83.4399 39.2136V38.4568C83.4399 37.3084 82.9845 36.3316 82.0737 35.5308C81.1961 34.7411 80.0531 34.3114 78.8727 34.3274C77.0247 34.3274 75.5639 35.104 74.4837 36.6638L71.5709 34.829C73.1769 32.53 75.5529 31.3794 78.6945 31.3794ZM104.771 31.9558L93.7271 57.3218H90.3105L94.4113 48.447L87.1469 31.9558H90.7439L95.9953 44.6036H96.0657L101.174 31.9536L104.771 31.9558Z" fill="#3C4043" />
+    <path d="M44.1722 36.8948C44.1722 35.8542 44.0842 34.8488 43.917 33.8896H29.9602V39.5832H37.955C37.6239 41.4215 36.5557 43.0445 34.9982 44.0756V47.7716H39.77C42.564 45.1976 44.1722 41.3916 44.1722 36.8948Z" fill="#4285F4" />
+    <path d="M29.9603 51.34C33.9555 51.34 37.3171 50.031 39.7701 47.7738L34.9983 44.0756C33.6717 44.9688 31.9623 45.4902 29.9603 45.4902C26.1015 45.4902 22.8235 42.8898 21.6531 39.3874H16.7383V43.1956C19.2527 48.1909 24.3678 51.3425 29.9603 51.3422" fill="#34A853" />
+    <path d="M21.6529 39.3874C21.0355 37.5518 21.0355 35.5646 21.6529 33.729V29.9208H16.7381C15.6991 31.9782 15.1587 34.2512 15.1606 36.556C15.1606 38.943 15.7327 41.198 16.7381 43.1934L21.6529 39.3852V39.3874Z" fill="#FABB05" />
+    <path d="M29.96 27.6262C32.1424 27.6262 34.096 28.3742 35.636 29.8438V29.846L39.86 25.6264C37.2992 23.2416 33.9552 21.7764 29.9622 21.7764C24.3703 21.7757 19.2553 24.9264 16.7402 29.9208L21.655 33.729C22.8254 30.2266 26.1034 27.6262 29.9622 27.6262" fill="#E94235" />
+  </svg>
+);
+
+/* Уніфікована обгортка для логотипів */
+function LogoBadge({ children, wide, bottom }) {
+  const cls = [
+    'footer-logo-badge',
+    wide ? 'footer-logo-badge--wide' : '',
+    bottom ? 'footer-logo-badge--bottom' : '',
+  ].filter(Boolean).join(' ');
+  return <div className={cls}>{children}</div>;
+}
 
 export default function Footer() {
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const pathname = usePathname();
+
   return (
-    <footer className="footer">
+    <>
+      <footer className="footer">
       <div className="container">
-        <a href="/" className="footer-logo">
-          <img src={bearImg.src || bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" />
-          store.olivka
-        </a>
-        <p style={{ marginBottom: '1.5rem' }}>
-          З любов'ю для найменших ✨
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem' }}>
-          <a href="https://www.instagram.com/store.olivka?igsh=cmZpdWp2dXQ2a2F4" target="_blank" rel="noreferrer" style={{ color: 'var(--color-stone-200)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
+
+        {/* ─── Main grid ─── */}
+        {/* ─── DESKTOP VERSION ─── */}
+        <div className="footer-desktop-container">
+          <div className="footer-grid">
+
+            {/* Col 1 — Brand */}
+            <div className="footer-col footer-col-brand">
+              <div className="footer-brand-wrap">
+                <Link href="/" className="footer-logo">
+                  <img src={bearImg.src || bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" />
+                  <span>store.olivka</span>
+                </Link>
+                <p className="footer-slogan">З любов'ю до найменших</p>
+              </div>
+            </div>
+
+            {/* Col 2 — Categories */}
+            <div className="footer-col">
+              <h3 className="footer-col-title">Категорії</h3>
+              <ul className="footer-links">
+                {FOOTER_CATEGORIES.map(cat => (
+                  <li key={cat.slug}>
+                    <Link href={`/category/${cat.slug}`} className="footer-link">
+                      {cat.name}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link href="/catalog" className="footer-link footer-link-more">
+                    Всі категорії →
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Col 3 — For buyers */}
+            <div className="footer-col">
+              <h3 className="footer-col-title">Покупцям</h3>
+              <ul className="footer-links">
+                <li><Link href="/about" className="footer-link">Оплата і доставка</Link></li>
+                <li><Link href="/about" className="footer-link">Обмін та повернення</Link></li>
+                <li><Link href="/about" className="footer-link">Публічна оферта</Link></li>
+                <li><Link href="/about" className="footer-link">Захист персональних даних</Link></li>
+              </ul>
+            </div>
+
+            {/* Col 4 — Contacts */}
+            <div className="footer-col">
+              <h3 className="footer-col-title">Контакти</h3>
+              <ul className="footer-links">
+                <li>
+                  <a href={`mailto:${EMAIL}`} className="footer-link footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    {EMAIL}
+                  </a>
+                </li>
+                <li>
+                  <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-link footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                    </svg>
+                    store.olivka
+                  </a>
+                </li>
+                <li>
+                  <Link href="/about" className="footer-link footer-contact-item">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 16v-4M12 8h.01" />
+                    </svg>
+                    Про нас
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setIsContactOpen(true)}
+                    className="footer-email-btn"
+                    style={{ marginTop: '0.5rem', cursor: 'pointer', background: 'transparent' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    Написати нам
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* ─── Logos + Copyright row ─── */}
+          <div className="footer-badges-row">
+
+            {/* Ліва частина — логотипи оплати і доставки */}
+            <div className="footer-all-logos">
+
+              {/* LiqPay */}
+              <LogoBadge alt="LiqPay">
+                <img src="/footerlogos/logo_liqpay_for black.svg" alt="LiqPay" className="footer-svg-logo" />
+              </LogoBadge>
+
+              {/* 24Pay */}
+              <LogoBadge>
+                <img src="/footerlogos/24-pay-mark_border.svg" alt="24Pay" className="footer-svg-logo footer-svg-logo--no-blend" />
+              </LogoBadge>
+
+              {/* Visa */}
+              <LogoBadge alt="Visa">
+                <VisaSVG />
+              </LogoBadge>
+
+              {/* Mastercard */}
+              <LogoBadge alt="Mastercard">
+                <MastercardSVG />
+              </LogoBadge>
+
+              {/* Apple Pay */}
+              <LogoBadge alt="Apple Pay">
+                <ApplePaySVG />
+              </LogoBadge>
+
+              {/* Google Pay */}
+              <LogoBadge alt="Google Pay">
+                <GooglePaySVG />
+              </LogoBadge>
+
+              {/* Нова Пошта */}
+              <LogoBadge wide>
+                <img src="/footerlogos/novapost.svg" alt="Нова Пошта" className="footer-svg-logo footer-svg-logo--no-blend" />
+              </LogoBadge>
+
+              {/* Укрпошта */}
+              <LogoBadge wide bottom>
+                <img src="/footerlogos/Ukrposhta-ua.svg" alt="Укрпошта" className="footer-svg-logo footer-svg-logo--no-blend" />
+              </LogoBadge>
+            </div>
+
+            {/* Права частина — copyright */}
+            <p className="footer-copyright">
+              © {new Date().getFullYear()} store.olivka · Всі права захищені
+            </p>
+          </div>
+        </div>
+
+        {/* ─── MOBILE VERSION ─── */}
+        <div className="footer-mobile-container">
+          <Link href="/" className="footer-mobile-logo">
+            <img src={bearImg.src || bearImg} alt="Olivka Logo" />
+            <span>store.olivka</span>
+          </Link>
+
+          <p className="footer-mobile-slogan">
+            З любов'ю до найменших
+          </p>
+
+          <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-mobile-insta">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+            </svg>
             <span>Instagram</span>
           </a>
+
+          <button onClick={() => setIsContactOpen(true)} className="footer-mobile-contact">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect width="20" height="16" x="2" y="4" rx="2" />
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+            </svg>
+            <span>Написати нам</span>
+          </button>
+
+          <p className="footer-mobile-copyright">
+            © {new Date().getFullYear()} store.olivka · Всі права захищені
+          </p>
         </div>
-        <p style={{ fontSize: '0.75rem', color: 'var(--color-stone-300)' }}>
-          © {new Date().getFullYear()} store.olivka Всі права захищені.
-        </p>
       </div>
-    </footer>
+      </footer>
+
+      <ContactModal 
+        isOpen={isContactOpen} 
+        onClose={() => setIsContactOpen(false)} 
+      />
+    </>
   );
 }

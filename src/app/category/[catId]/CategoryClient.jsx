@@ -2,23 +2,49 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X } from 'lucide-react';
 import FilterBar from '../../../components/filters/FilterBar';
 
 export default function CategoryClient({ initialCategory, initialProducts }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [category] = useState(initialCategory);
   const [products] = useState(initialProducts);
 
+  // Initialize filters from URL search params
+  const getInitialFilters = () => {
+    return {
+      gender: searchParams.get('gender') || '',
+      sizes: searchParams.get('sizes')?.split(',').filter(Boolean) || [],
+      ages: searchParams.get('ages')?.split(',').filter(Boolean) || [],
+      materials: searchParams.get('materials')?.split(',').filter(Boolean) || [],
+      colors: searchParams.get('colors')?.split(',').filter(Boolean) || [],
+      features: searchParams.get('features')?.split(',').filter(Boolean) || []
+    };
+  };
+
   // Unified Filters state
-  const [filters, setFilters] = useState({
-    gender: '',
-    sizes: [],
-    ages: [],
-    materials: [],
-    colors: [],
-    features: []
-  });
+  const [filters, setFilters] = useState(getInitialFilters);
+
+  // Sync state with URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (filters.gender) params.set('gender', filters.gender);
+    if (filters.sizes.length > 0) params.set('sizes', filters.sizes.join(','));
+    if (filters.ages.length > 0) params.set('ages', filters.ages.join(','));
+    if (filters.materials.length > 0) params.set('materials', filters.materials.join(','));
+    if (filters.colors.length > 0) params.set('colors', filters.colors.join(','));
+    if (filters.features.length > 0) params.set('features', filters.features.join(','));
+
+    const query = params.toString();
+    const url = query ? `${pathname}?${query}` : pathname;
+    
+    router.replace(url, { scroll: false });
+  }, [filters, pathname, router]);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   // Options
