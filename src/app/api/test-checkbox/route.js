@@ -23,6 +23,7 @@ export async function GET(request) {
     const shift = await checkboxService.ensureShiftOpened();
     console.log('[Checkbox Debug] Shift status:', shift.status);
 
+    /* 
     // 3. Dummy Order for Receipt
     const dummyOrder = {
       order_number: 9999,
@@ -43,13 +44,14 @@ export async function GET(request) {
     console.log('[Checkbox Debug] Attempting to create dummy receipt...');
     const receipt = await checkboxService.createReceipt(dummyOrder);
     console.log('[Checkbox Debug] Receipt created successfully:', receipt.id);
+    */
 
     return NextResponse.json({
       status: 'success',
+      message: 'Connection and Shift checks PASSED. (Receipt creation skipped for safety)',
       auth: 'ok',
       shift: shift.status,
-      receipt_id: receipt.id,
-      receipt_url: `https://check.checkbox.ua/${receipt.id}`
+      shift_details: shift
     });
 
   } catch (error) {
