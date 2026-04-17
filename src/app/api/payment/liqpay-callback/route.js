@@ -73,12 +73,16 @@ export async function POST(request) {
 
       if (!receiptId) {
         try {
-          console.log('[LiqPay Callback] Starting Checkbox fiscalization...');
+          console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
+          console.log('[LiqPay Callback] Items for fiscalization:', JSON.stringify(orderData.items));
+          
           const receipt = await checkboxService.createReceipt(orderData);
           
           if (receipt && receipt.id) {
             receiptId = receipt.id;
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
+            
+            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}. Updating order...`);
             
             await db
               .from('orders')
@@ -88,11 +92,17 @@ export async function POST(request) {
               })
               .eq('id', order_id);
               
-            console.log('[LiqPay Callback] Checkbox receipt created:', receiptId);
+            console.log('[LiqPay Callback] Order successfully updated with receipt details.');
+          } else {
+            console.error('[LiqPay Callback] Checkbox returned no receipt ID');
           }
-        } catch (checkboxErr) {
+        } catch (error) {
           console.error('[LiqPay Callback] Checkbox Fiscalization Failed');
-          console.error('[LiqPay Callback] Error Message:', checkboxErr.message);
+          console.error('[LiqPay Callback] Error Message:', error.message);
+          // Optional: log object if it helps
+          if (error.responseBody) {
+             console.error('[LiqPay Callback] Full Error Response:', error.responseBody);
+          }
         }
       } else {
         console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);

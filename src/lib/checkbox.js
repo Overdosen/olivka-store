@@ -20,11 +20,15 @@ class CheckboxService {
     try {
       const response = await fetch(`${this.baseUrl}/cashier/signin`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-License-Key': this.licenseKey,
+        },
         body: JSON.stringify({
           login: this.login,
           password: this.password,
         }),
+        cache: 'no-store'
       });
 
       const data = await response.json();
@@ -130,6 +134,7 @@ class CheckboxService {
       
       const res = await fetch(`${this.baseUrl}/shifts/${shiftId}`, {
         headers: this.getHeaders(),
+        cache: 'no-store'
       });
       const shiftData = await res.json();
       console.log(`[Checkbox] Shift poll attempt ${attempt}/${maxAttempts}: status = ${shiftData.status}`);
@@ -159,14 +164,19 @@ class CheckboxService {
       const { items, email, full_name, total } = order;
 
       // Map items to Checkbox goods
-      const goods = items.map(item => ({
-        good: {
-          code: item.sku || `p-${item.product_id}`,
-          name: `${item.name}${item.size ? ` (р. ${item.size})` : ''}`,
-          price: Math.round(item.price * 100), // in kopecks
-        },
-        quantity: Math.round(item.qty * 1000), // in thousands (1.000 = 1000)
-      }));
+      const goods = items.map(item => {
+        const itemPrice = Math.round(Number(item.price) * 100);
+        const itemQty = Number(item.qty);
+        
+        return {
+          good: {
+            code: item.sku || `p-${item.product_id}`,
+            name: `${item.name}${item.size ? ` (р. ${item.size})` : ''}`,
+            price: itemPrice, // in kopecks
+          },
+          quantity: itemQty, // Actual quantity (1.0 = 1 item)
+        };
+      });
 
       // Map payment
       const body = {
@@ -187,6 +197,7 @@ class CheckboxService {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(body),
+        cache: 'no-store'
       });
 
       const result = await response.json();
