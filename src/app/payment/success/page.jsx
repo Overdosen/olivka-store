@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Package, Copy, Loader2, ArrowRight } from 'lucide-react';
@@ -56,13 +56,35 @@ const AnimatedCheckmark = () => (
 // ─── COD View (Strictly based on screenshot 1) ──────────────────────────────
 
 function CodView({ shortId, copyToClipboard }) {
-  const [copied, setCopied] = useState(false);
+  const [copiedIban, setCopiedIban] = useState(false);
+  const [copiedRecipient, setCopiedRecipient] = useState(false);
+  const [copiedEdrpou, setCopiedEdrpou] = useState(false);
 
-  const handleCopy = (text) => {
+  const handleCopy = (text, type) => {
     copyToClipboard(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (type === 'iban') {
+      setCopiedIban(true);
+      setTimeout(() => setCopiedIban(false), 2000);
+    } else if (type === 'recipient') {
+      setCopiedRecipient(true);
+      setTimeout(() => setCopiedRecipient(false), 2000);
+    } else if (type === 'edrpou') {
+      setCopiedEdrpou(true);
+      setTimeout(() => setCopiedEdrpou(false), 2000);
+    }
   };
+
+  const CopyIcon = ({ copied }) => (
+    <div className="text-[#524f25]/40 group-hover:text-[#524f25] transition-colors flex-shrink-0">
+      {copied ? (
+        <span className="text-[10px] text-green-700 font-semibold tracking-wider uppercase">Готово</span>
+      ) : (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+        </svg>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#fdfcf7] flex flex-col items-center px-6 text-center" style={{ fontFamily: 'var(--font-sans)', paddingTop: '5vh' }}>
@@ -88,35 +110,39 @@ function CodView({ shortId, copyToClipboard }) {
         <div className="p-6 md:p-8 space-y-7">
           <div className="space-y-1">
             <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Отримувач</span>
-            <p className="text-[#524f25] text-[17px] font-normal">ФОП Сопіна Вікторія Іванівна</p>
+            <div 
+              onClick={() => handleCopy('ФОП Сопіна Вікторія Іванівна', 'recipient')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[15px] font-normal">ФОП Сопіна Вікторія Іванівна</p>
+              <CopyIcon copied={copiedRecipient} />
+            </div>
           </div>
           
           <div className="space-y-1">
             <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">ЄДРПОУ</span>
-            <p className="text-[#524f25] text-[17px] font-normal tracking-wide">3522303066</p>
+            <div 
+              onClick={() => handleCopy('3522303066', 'edrpou')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[17px] font-normal tracking-wide">3522303066</p>
+              <CopyIcon copied={copiedEdrpou} />
+            </div>
           </div>
           
           <div className="space-y-1">
             <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Банк</span>
-            <p className="text-[#524f25] text-[17px] font-normal">АТ КБ "ПРИВАТБАНК"</p>
+            <p className="text-[#524f25] text-[17px] font-normal pl-4 py-2">АТ КБ "ПРИВАТБАНК"</p>
           </div>
           
           <div className="space-y-2 pt-1">
             <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Рахунок IBAN</span>
             <div 
-              onClick={() => handleCopy('UA203052990000026002043900812')}
+              onClick={() => handleCopy('UA203052990000026002043900812', 'iban')}
               className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
             >
               <p className="text-[#524f25] text-[14px] md:text-[15px] font-normal break-all pr-4">UA203052990000026002043900812</p>
-              <div className="text-[#524f25]/40 group-hover:text-[#524f25] transition-colors flex-shrink-0">
-                {copied ? (
-                  <span className="text-[10px] text-green-700 font-semibold tracking-wider uppercase">Готово</span>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                  </svg>
-                )}
-              </div>
+              <CopyIcon copied={copiedIban} />
             </div>
             <div className="mt-4 p-4 bg-[#524f25]/5 rounded border border-[#524f25]/10 flex gap-3 items-start text-left">
               <svg className="w-5 h-5 text-[#524f25] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,6 +236,7 @@ function LiqPayView({ order, shortId }) {
 // ─── Main Logic Container ────────────────────────────────────────────────────
 
 function SuccessContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart } = useCart();
   const [order, setOrder] = useState(null);
@@ -219,8 +246,60 @@ function SuccessContent() {
   const orderId = searchParams.get('order_id') || searchParams.get('orderId');
   const method = searchParams.get('method');
 
+  const fetchOrder = useCallback(async (silent = false, retryCount = 0) => {
+    if (!orderId) {
+      setLoading(false);
+      return;
+    }
+
+    // Якщо замовлення вже оплачене або ми вже маємо дані і це фоновий запит - ігноруємо
+    if (order?.status === 'paid' && silent) return;
+
+    if (!silent && retryCount === 0) setLoading(true);
+    
+    try {
+      const { data, error: supabaseError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (supabaseError) {
+        // Повторні спроби, якщо запис ще не з'явився (для нових замовлень)
+        if (supabaseError.code === 'PGRST116' && retryCount < 3 && !order) {
+          setTimeout(() => fetchOrder(silent, retryCount + 1), 1500);
+          return;
+        }
+        
+        // Якщо замовлення зникло вже після завантаження (наприклад, видалене вручну)
+        if (supabaseError.code === 'PGRST116' && order) {
+          if (!silent) setLoading(false);
+          return;
+        }
+
+        console.error('SUCCESS_PAGE: Fetch error:', supabaseError.message);
+        if (!silent) setLoading(false);
+        return;
+      }
+
+      if (data) {
+        setOrder(prev => {
+          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+          return data;
+        });
+
+        if (data.status === 'payment_error') {
+          router.push(`/payment/failure?order_id=${orderId}`);
+        }
+      }
+    } catch (err) {
+      console.error('SUCCESS_PAGE: Unexpected error:', err);
+    } finally {
+      if (!silent && retryCount === 0) setLoading(false);
+    }
+  }, [orderId, order, router]);
+
   useEffect(() => {
-    console.log("SUCCESS_PAGE: Component mounted. order_id:", orderId);
     setIsMounted(true);
     if (orderId) {
       fetchOrder();
@@ -228,14 +307,15 @@ function SuccessContent() {
     } else {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, fetchOrder, clearCart]);
 
   // 2. Realtime subscription for status updates
   useEffect(() => {
     if (!orderId || !isMounted) return;
 
-    console.log("SUCCESS_PAGE: Setting up Realtime subscription for:", orderId);
-    
+    // Вже маємо фінальний статус, підписка не потрібна
+    if (order?.status === 'paid' || order?.status === 'payment_error') return;
+
     const channel = supabase
       .channel(`order-status-${orderId}`)
       .on(
@@ -247,58 +327,24 @@ function SuccessContent() {
           filter: `id=eq.${orderId}`,
         },
         (payload) => {
-          console.log('SUCCESS_PAGE: Realtime update received. Fetching fresh data...');
           if (payload.new && payload.new.status === 'payment_error') {
             router.push(`/payment/failure?order_id=${orderId}`);
             return;
           }
-          // При отриманні будь-якого оновлення робимо запит до БД, щоб мати повний об'єкт
           fetchOrder(true);
         }
       )
-      .subscribe((status) => {
-        console.log("SUCCESS_PAGE: Realtime channel status:", status);
-      });
+      .subscribe();
 
-    // Резервний механізм (fallback): на випадок проблем з Websocket
-    // Перевіряємо статус раз на 10 секунд "тихо" у фоні
     const fallbackInterval = setInterval(() => {
-      if (order?.status !== 'paid') {
-        console.log("SUCCESS_PAGE: Fallback check...");
-        fetchOrder(true);
-      }
+      fetchOrder(true);
     }, 10000);
 
     return () => {
-      console.log("SUCCESS_PAGE: Cleaning up...");
       supabase.removeChannel(channel);
       clearInterval(fallbackInterval);
     };
-  }, [orderId, isMounted, order?.status]);
-
-  const fetchOrder = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
-      if (error) throw error;
-      console.log("SUCCESS_PAGE: Order fetched:", data);
-      
-      if (data?.status === 'payment_error') {
-        router.push(`/payment/failure?order_id=${orderId}`);
-        return;
-      }
-
-      setOrder(data);
-    } catch (error) {
-      console.error('SUCCESS_PAGE: Error fetching order:', error);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
+  }, [orderId, isMounted, order?.status, fetchOrder, router]);
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
@@ -309,10 +355,24 @@ function SuccessContent() {
     return <LoadingState />;
   }
 
-  const shortId = order?.order_number || order?.human_id || (orderId ? orderId.slice(0, 8).toUpperCase() : '');
-  const isLiqPay = method === 'liqpay' || order?.payment_method?.includes('liqpay');
+  const shortId = order?.order_number || '';
+  
+  // Robust detection of LiqPay:
+  // 1. From URL param
+  // 2. From DB payment_method field
+  // 3. From DB status (if pending_payment, it's definitely an online order)
+  const isLiqPay = 
+    method?.toLowerCase() === 'liqpay' || 
+    order?.payment_method?.toLowerCase().includes('liqpay') ||
+    order?.status === 'pending_payment';
 
-  console.log("SUCCESS_PAGE: Rendering. isLiqPay:", isLiqPay, "status:", order?.status);
+  console.log("SUCCESS_PAGE: Rendering.", { 
+    orderId, 
+    method, 
+    dbMethod: order?.payment_method, 
+    dbStatus: order?.status,
+    isLiqPay 
+  });
 
   return (
     <div>

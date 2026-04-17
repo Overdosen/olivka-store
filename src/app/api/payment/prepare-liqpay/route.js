@@ -28,7 +28,7 @@ export async function POST(request) {
   }
 
   try {
-    const { orderId, amount, description } = await request.json();
+    const { orderId, amount, description, order_number } = await request.json();
 
     if (!orderId || !amount) {
       return NextResponse.json({ error: 'Missing orderId or amount' }, { status: 400 });
@@ -38,14 +38,15 @@ export async function POST(request) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
 
     // Prepare parameters for LiqPay
+    const displayNum = order_number ? `№${order_number}` : '';
     const params = {
       action: 'pay',
       amount: amount,
       currency: 'UAH',
-      description: description || `Оплата замовлення #${orderId.slice(0, 8).toUpperCase()} в Store Olivka`,
+      description: description || `Оплата замовлення ${displayNum} в Store Olivka`.trim(),
       order_id: orderId,
       version: 3,
-      result_url: `${baseUrl}/payment/success?order_id=${orderId}`,
+      result_url: `${baseUrl}/payment/success?order_id=${orderId}&method=liqpay`,
       server_url: `${baseUrl}/api/payment/liqpay-callback`,
     };
 

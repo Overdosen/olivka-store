@@ -43,13 +43,22 @@ export default function AccountClient() {
   }
 
   function handlePhoneChange(e) {
+    const val = e.target.value;
     if (isInternational) {
-      const val = e.target.value;
       if (/^[\d+()\-\s]*$/.test(val)) {
         setPhoneUa(val.startsWith('+') ? val : '+' + val.replace(/\+/g, ''));
       }
     } else {
-      setPhoneUa(formatUaMasked(e.target.value));
+      const isDeletion = val.length < phoneUa.length;
+      let digits = val.replace(/\D/g, '');
+      
+      if (isDeletion) {
+        const prevDigits = phoneUa.replace(/\D/g, '');
+        if (digits === prevDigits && digits.length > 2) {
+          digits = digits.slice(0, -1);
+        }
+      }
+      setPhoneUa(formatUaMasked(digits));
     }
   }
 
@@ -189,6 +198,7 @@ export default function AccountClient() {
                 value={phoneUa}
                 onChange={handlePhoneChange}
                 onFocus={handlePhoneFocus}
+                onClear={!isInternational ? (() => setPhoneUa(formatUaMasked(''))) : null}
                 placeholder={isInternational ? "+XXX XXXXXXXX" : "+38 (0__) ___-__-__"}
               />
               
@@ -340,8 +350,10 @@ function InfoRow({ label, value }) {
   );
 }
 
-function EditInput({ label, value, onChange, placeholder }) {
+function EditInput({ label, value, onChange, onFocus, onBlur, onClear, placeholder }) {
   const [focused, setFocused] = useState(false);
+  const { isInternational } = useAuth(); // or pass it as prop, though here we can just check if onClear exists
+  
   return (
     <div>
       <label style={{
@@ -351,18 +363,45 @@ function EditInput({ label, value, onChange, placeholder }) {
       }}>
         {label}
       </label>
-      <input
-        value={value} onChange={onChange} placeholder={placeholder || ''}
-        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{
-          width: '100%', padding: '0.7rem 1rem',
-          border: `1px solid ${focused ? '#524f25' : 'rgba(82,79,37,0.15)'}`,
-          borderRadius: '10px', outline: 'none',
-          fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25',
-          background: focused ? 'white' : 'rgba(255,255,255,0.7)',
-          transition: 'all 0.2s',
-        }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          value={value} 
+          onChange={onChange} 
+          placeholder={placeholder || ''}
+          onFocus={(e) => { setFocused(true); onFocus?.(e); }} 
+          onBlur={(e) => { setFocused(false); onBlur?.(e); }}
+          style={{
+            width: '100%', padding: '0.7rem 1rem', paddingRight: onClear ? '2.5rem' : '1rem',
+            border: `1px solid ${focused ? '#524f25' : 'rgba(82,79,37,0.15)'}`,
+            borderRadius: '10px', outline: 'none',
+            fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25',
+            background: focused ? 'white' : 'rgba(255,255,255,0.7)',
+            transition: 'all 0.2s',
+          }}
+        />
+        {onClear && value && value !== '+38 (___) ___-__-__' && (
+          <button
+            type="button"
+            onClick={onClear}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              padding: '4px',
+              cursor: 'pointer',
+              color: 'rgba(82,79,37,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LogOut size={14} style={{ transform: 'rotate(180deg)' }} /> 
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -454,7 +493,7 @@ function OrdersList({ userId }) {
       {orders.map(order => {
         const status = STATUS_MAP[order.status] || STATUS_MAP.new;
         const isExpanded = expandedId === order.id;
-        const displayId = order.order_number || order.id.slice(0, 8).toUpperCase();
+        const displayId = order.order_number;
         const dateObj = new Date(order.created_at);
         const date = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*р\.?$/, '');
         const time = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
@@ -476,7 +515,7 @@ function OrdersList({ userId }) {
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
                 <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.8rem', fontWeight: 600, color: '#524f25' }}>
-                  #{displayId}
+                  №{displayId}
                 </span>
                 <span style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.4)' }}>{date}, {time}</span>
               </div>

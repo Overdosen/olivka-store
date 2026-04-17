@@ -1,14 +1,30 @@
 'use client';
 
-import { Suspense } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, ArrowLeft, RefreshCcw, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { supabase } from '../../../lib/supabase';
 
 function FailureContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('order_id');
+  const [orderNumber, setOrderNumber] = useState(null);
+
+  useEffect(() => {
+    async function fetchOrderNumber() {
+      if (orderId) {
+        const { data } = await supabase
+          .from('orders')
+          .select('order_number')
+          .eq('id', orderId)
+          .single();
+        if (data) setOrderNumber(data.order_number);
+      }
+    }
+    fetchOrderNumber();
+  }, [orderId]);
 
   return (
     <div className="min-h-screen bg-[#fdfcf7] flex flex-col items-center px-6 text-center" style={{ fontFamily: 'var(--font-sans)', paddingTop: '10vh' }}>
@@ -43,7 +59,7 @@ function FailureContent() {
           На жаль, платіжна система відхилила транзакцію. Це міг бути недостатній ліміт для інтернет-оплат або технічна відмова банку.
         </p>
         <p className="text-[15px] italic">
-          Ваше замовлення <span className="font-semibold text-[#524f25]">{orderId ? `№${orderId.slice(0, 8).toUpperCase()}` : ''}</span> збережене. Ви можете спробувати оплатити його знову через кошик.
+          Ваше замовлення <span className="font-semibold text-[#524f25]">{orderNumber ? `№${orderNumber}` : ''}</span> збережене. Ви можете спробувати оплатити його знову через кошик.
         </p>
       </motion.div>
 

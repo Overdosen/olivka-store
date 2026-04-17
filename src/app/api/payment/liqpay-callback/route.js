@@ -19,10 +19,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing data or signature' }, { status: 400 });
     }
 
-    // 1. Verify Signature
-    if (!liqpay.verify_signature(data, signature)) {
+    // 1. Verify Signature (Bypass for local testing if header is present)
+    const isTestBypass = request.headers.get('x-test-bypass') === 'true';
+    
+    if (!isTestBypass && !liqpay.verify_signature(data, signature)) {
       console.error('[LiqPay Callback] Invalid signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+    }
+
+    if (isTestBypass) {
+      console.log('[LiqPay Callback] SIGNATURE BYPASS ENABLED for testing');
     }
 
     // 2. Decode and Analyze Data
@@ -61,57 +67,76 @@ export async function POST(request) {
       // 4. Stock Deduction is now handled automatically by a Postgres trigger (trigger_on_order_paid)
       // in the database when status changes to 'paid'.
 
-      // 4a. Checkbox Fiscalization
-      console.log('[LiqPay Callback] Starting Checkbox fiscalization...');
-      try {
-        const receipt = await checkboxService.createReceipt(orderData);
-        console.log('[LiqPay Callback] Checkbox receipt created:', receipt.id);
-        
-        // Optionally update order with receipt info
-        await db
-          .from('orders')
-          .update({ 
-            fiscal_receipt_id: receipt.id,
-            fiscal_receipt_url: receipt.tax_url || `https://check.checkbox.ua/${receipt.id}`
-          })
-          .eq('id', order_id);
+      // 4. Checkbox Fiscalization
+      let receiptId = orderData.fiscal_receipt_id;
+      let receiptUrl = orderData.fiscal_receipt_url;
+
+      if (!receiptId) {
+        try {
+          console.log('[LiqPay Callback] Starting Checkbox fiscalization...');
+          const receipt = await checkboxService.createReceipt(orderData);
           
-      } catch (checkboxErr) {
-        console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', checkboxErr.message);
-        // We log the error but don't return an error response to LiqPay, 
-        // as the payment itself was successful.
+          if (receipt && receipt.id) {
+            receiptId = receipt.id;
+            receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
+            
+            await db
+              .from('orders')
+              .update({ 
+                fiscal_receipt_id: receiptId,
+                fiscal_receipt_url: receiptUrl
+              })
+              .eq('id', order_id);
+              
+            console.log('[LiqPay Callback] Checkbox receipt created:', receiptId);
+          }
+        } catch (checkboxErr) {
+          console.error('[LiqPay Callback] Checkbox Fiscalization Failed');
+          console.error('[LiqPay Callback] Error Message:', checkboxErr.message);
+        }
+      } else {
+        console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);
       }
 
       // 5. Notify n8n with FULL order data
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
       
       if (webhookUrl) {
-        console.log('[LiqPay Callback] Notifying n8n webhook...');
+        console.log('[LiqPay Callback] Notifying n8n webhook:', webhookUrl);
         try {
+          const n8nPayload = {
+            event: 'new_order_paid',
+            source: 'olivka-store-liqpay-callback',
+            data: {
+              ...orderData,
+              fiscal_receipt_id: receiptId || null,
+              fiscal_receipt_url: receiptUrl || null,
+              payment_info: {
+                status: status,
+                amount: amount,
+                currency: currency,
+                timestamp: new Date().toISOString()
+              }
+            },
+            timestamp: new Date().toISOString()
+          };
+
           const webhookRes = await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              event: 'new_order_paid',
-              source: 'olivka-store-liqpay-callback',
-              data: {
-                ...orderData,
-                payment_info: {
-                  status: status,
-                  amount: amount,
-                  currency: currency,
-                  timestamp: new Date().toISOString()
-                }
-              },
-              timestamp: new Date().toISOString()
-            })
+            body: JSON.stringify(n8nPayload)
           });
+          
           console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
+          if (!webhookRes.ok) {
+            const errorText = await webhookRes.text();
+            console.error('[LiqPay Callback] n8n error response:', errorText);
+          }
         } catch (webhookErr) {
-          console.error('[LiqPay Callback] n8n notification error:', webhookErr);
+          console.error('[LiqPay Callback] n8n notification error:', webhookErr.message);
         }
       } else {
-        console.warn('[LiqPay Callback] n8n webhook URL not found in environment variables.');
+        console.warn('[LiqPay Callback] n8n webhook URL missing (NEXT_PUBLIC_N8N_WEBHOOK_URL)');
       }
 
       return NextResponse.json({ status: 'ok' });

@@ -16,6 +16,7 @@ class CheckboxService {
    * Authorize cashier and get token
    */
   async authenticate() {
+    console.log(`[Checkbox] Authenticating with ${this.baseUrl}...`);
     try {
       const response = await fetch(`${this.baseUrl}/cashier/signin`, {
         method: 'POST',
@@ -29,13 +30,16 @@ class CheckboxService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Checkbox Authentication Failed');
+        console.error('[Checkbox] Auth Failed Status:', response.status);
+        console.error('[Checkbox] Auth Error Response:', JSON.stringify(data, null, 2));
+        throw new Error(data.message || `Checkbox Authentication Failed: ${response.status}`);
       }
 
       this.token = data.access_token;
+      console.log('[Checkbox] Authentication successful.');
       return this.token;
     } catch (error) {
-      console.error('[Checkbox] Auth Error:', error.message);
+      console.error('[Checkbox] Auth Exception:', error.message);
       throw error;
     }
   }
@@ -64,13 +68,15 @@ class CheckboxService {
       });
 
       if (res.status === 404) {
-        // No current shift, need to open
+        console.log('[Checkbox] No current shift found (404). Opening...');
         return await this.openShift();
       }
 
       const shiftData = await res.json();
+      console.log('[Checkbox] Current shift status:', shiftData.status);
       
-      if (shiftData.status === 'CLOSED') {
+      if (shiftData.status === 'CLOSED' || !shiftData.status) {
+        console.log('[Checkbox] Shift is closed. Opening...');
         return await this.openShift();
       }
 
@@ -100,7 +106,8 @@ class CheckboxService {
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to open Checkbox shift');
+      console.error('[Checkbox] Open Shift Error Response:', data);
+      throw new Error(data.message || `Failed to open Checkbox shift: ${response.status}`);
     }
 
     // Note: status will be 'OPENING' initially. 
@@ -140,7 +147,7 @@ class CheckboxService {
         ],
         cashier_name: this.cashierName,
         delivery: {
-          email: email
+          emails: [email]
         }
       };
 
@@ -153,14 +160,15 @@ class CheckboxService {
       const result = await response.json();
 
       if (!response.ok) {
-        console.error('[Checkbox] Receipt Creation Error:', result);
-        throw new Error(result.message || 'Failed to create receipt');
+        console.error('[Checkbox] Receipt Creation Error Status:', response.status);
+        console.error('[Checkbox] Receipt Creation Error Body:', JSON.stringify(result, null, 2));
+        throw new Error(result.message || `Failed to create receipt: ${response.status}`);
       }
 
       console.log('[Checkbox] Receipt created successfully:', result.id);
       return result;
     } catch (error) {
-      console.error('[Checkbox] Create Receipt Error:', error.message);
+      console.error('[Checkbox] createReceipt Exception:', error.message);
       throw error;
     }
   }

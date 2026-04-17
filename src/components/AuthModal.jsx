@@ -36,13 +36,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
 
   // ── Форматування UA-номера ──────────────────────────────────────────────────
   function handlePhoneChange(e) {
+    const val = e.target.value;
     if (isInternational) {
-      const val = e.target.value;
       if (/^[\d+()\-\s]*$/.test(val)) {
         setPhoneUa(val.startsWith('+') ? val : '+' + val.replace(/\+/g, ''));
       }
     } else {
-      setPhoneUa(formatUaMasked(e.target.value));
+      const isDeletion = val.length < phoneUa.length;
+      let digits = val.replace(/\D/g, '');
+      
+      if (isDeletion) {
+        const prevDigits = phoneUa.replace(/\D/g, '');
+        if (digits === prevDigits && digits.length > 2) {
+          digits = digits.slice(0, -1);
+        }
+      }
+      setPhoneUa(formatUaMasked(digits));
     }
   }
 
@@ -278,6 +287,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
                     value={phoneUa} 
                     onChange={handlePhoneChange}
                     onFocus={handlePhoneFocus}
+                    onClear={!isInternational ? (() => setPhoneUa(formatUaMasked(''))) : null}
                     required
                   />
 
@@ -320,7 +330,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
 
 // ─── Допоміжні компоненти ──────────────────────────────────────────────────────
 
-function AuthInput({ icon, ...props }) {
+function AuthInput({ icon, onClear, ...props }) {
   const [focused, setFocused] = useState(false);
   return (
     <div style={{
@@ -329,6 +339,7 @@ function AuthInput({ icon, ...props }) {
       borderRadius: '12px', padding: '0.75rem 1rem',
       background: focused ? 'white' : 'rgba(255,255,255,0.6)',
       transition: 'all 0.2s ease',
+      position: 'relative',
     }}>
       <span style={{ color: focused ? '#524f25' : 'rgba(82,79,37,0.35)', flexShrink: 0, display: 'flex' }}>
         {icon}
@@ -341,8 +352,23 @@ function AuthInput({ icon, ...props }) {
           background: 'none', border: 'none', outline: 'none',
           fontFamily: 'var(--font-sans)', fontSize: '0.9rem',
           color: '#524f25', width: '100%',
+          paddingRight: onClear ? '2rem' : '0',
         }}
       />
+      {onClear && props.value && props.value !== '+38 (___) ___-__-__' && (
+        <button
+          type="button"
+          onClick={onClear}
+          style={{
+            position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(82,79,37,0.3)', display: 'flex', alignItems: 'center',
+            padding: '4px',
+          }}
+        >
+          <X size={14} />
+        </button>
+      )}
     </div>
   );
 }

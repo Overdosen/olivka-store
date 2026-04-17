@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Truck, MapPin, Phone, User, FileText, ChevronRight, Package, ShieldCheck, Lock, CreditCard, Banknote, Wallet } from 'lucide-react';
+import { ShoppingBag, Truck, MapPin, Phone, User, FileText, ChevronRight, Package, ShieldCheck, Lock, CreditCard, Banknote, Wallet, Eraser } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/useAuth';
 import AuthModal from '../../components/AuthModal';
@@ -16,8 +16,18 @@ import InfoModal from '../../components/InfoModal';
 import { formatUaMasked, isPhoneFull } from '../../lib/utils';
 
 const DELIVERY_OPTIONS = [
-  { id: 'nova_poshta', label: 'Нова Пошта', icon: '🚚', desc: '1–2 дні' },
-  { id: 'ukrposhta',   label: 'Укрпошта',   icon: '📮', desc: '3–4 дні' },
+  { 
+    id: 'nova_poshta', 
+    label: 'Нова Пошта', 
+    icon: <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" style={{ height: '22px', width: 'auto', display: 'block' }} />, 
+    desc: '1–2 дні' 
+  },
+  { 
+    id: 'ukrposhta',   
+    label: 'Укрпошта',   
+    icon: <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" style={{ height: '26px', width: 'auto', display: 'block' }} />, 
+    desc: '3–4 дні' 
+  },
 ];
 
 const PAYMENT_OPTIONS = [
@@ -56,10 +66,25 @@ export default function CheckoutPage() {
   const [notes, setNotes]           = useState('');
   const [infoModal, setInfoModal]   = useState({ isOpen: false, title: '', type: '', src: '' });
 
-  // --- Phone Formatting ---
+  // --- Phone Formatting (Mask is handled by component internally) ---
   const handlePhoneChange = (e) => {
-    const val = formatUaMasked(e.target.value);
-    setPhone(val);
+    const val = e.target.value;
+    const isDeletion = val.length < phone.length;
+    
+    let digits = val.replace(/\D/g, '');
+    
+    // Якщо це видалення і кількість цифр не змінилася (видалили тільки символ маски),
+    // ми повинні примусово видалити останню цифру.
+    if (isDeletion) {
+      const prevDigits = phone.replace(/\D/g, '');
+      if (digits === prevDigits && digits.length > 2) {
+        digits = digits.slice(0, -1);
+      }
+    }
+
+    const formatted = formatUaMasked(digits);
+    setPhone(formatted);
+    
     if (phoneRef.current) {
       phoneRef.current.setCustomValidity('');
     }
@@ -119,8 +144,19 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) { toast.error("Кошик порожній"); return; }
 
     setSubmitting(true);
+    const loadingToast = toast.loading("Оформлюємо замовлення...");
+    
     try {
-      const newOrderId = crypto.randomUUID();
+      // Fallback для crypto.randomUUID()
+      const generateUUID = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      };
+
+      const newOrderId = generateUUID();
       const orderItems = cartItems.map(item => ({
         product_id: item.id,
         name:       item.name,
@@ -162,7 +198,7 @@ export default function CheckoutPage() {
         throw error;
       }
 
-      const shortId = newOrder?.order_number || newOrderId.slice(0, 8).toUpperCase();
+      const shortId = newOrder?.order_number || '';
 
       // --- n8n Webhook (Immediate for non-liqpay, deferred for liqpay) ---
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
@@ -171,35 +207,34 @@ export default function CheckoutPage() {
       }
 
       if (webhookUrl && payment !== 'liqpay') {
-        try {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              event: 'new_order',
-              source: 'olivka-store-web',
-              data: {
-                id: newOrderId,
-                order_number: newOrder?.order_number,
-                user_id: user?.id || null,
-                total,
-                items: orderItems,
-                full_name: fullName.trim(),
-                phone: phone.trim(),
-                email: email.trim(),
-                address: address.trim(),
-                delivery_method: delivery,
-                payment_method: payment,
-                notes: notes.trim() || null,
-                created_at: new Date().toISOString()
-              },
-              timestamp: new Date().toISOString()
-            })
-          });
-        } catch (err) {
-          console.error('n8n Webhook Error:', err);
-        }
+        // Відправляємо вебхук без очікування (неблокуюче), щоб пришвидшити редірект для Післяплати
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event: 'new_order',
+            source: 'olivka-store-web',
+            data: {
+              id: newOrderId,
+              order_number: newOrder?.order_number,
+              user_id: user?.id || null,
+              total,
+              items: orderItems,
+              full_name: fullName.trim(),
+              phone: phone.trim(),
+              email: email.trim(),
+              address: address.trim(),
+              delivery_method: delivery,
+              payment_method: payment,
+              notes: notes.trim() || null,
+              created_at: new Date().toISOString()
+            },
+            timestamp: new Date().toISOString()
+          })
+        }).catch(err => console.error('n8n Webhook Error:', err));
       }
+
+
 
       // --- Stock Management is now handled by DB Triggers ---
 
@@ -211,7 +246,7 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             orderId: newOrderId,
             amount: total,
-            description: `Оплата замовлення #${shortId} в Store Olivka`
+            description: `Оплата замовлення №${shortId} в Store Olivka`
           })
         });
         
@@ -248,11 +283,13 @@ export default function CheckoutPage() {
       }
 
       clearCart();
-      toast.success(`✅ Замовлення #${shortId} прийнято!`, { duration: 5000 });
+      toast.dismiss(loadingToast);
+      toast.success(`✅ Замовлення №${shortId} прийнято!`, { duration: 5000 });
       
       // Перенаправлення на сторінку успіху для всіх користувачів (щоб бачили реквізити для COD)
       router.push(`/payment/success?order_id=${newOrderId}&orderNo=${newOrder?.order_number || ''}&method=cod`);
     } catch (err) {
+      toast.dismiss(loadingToast);
       console.error('Помилка замовлення:', err);
       toast.error('Помилка при оформленні. Спробуйте ще раз.');
     } finally {
@@ -260,8 +297,8 @@ export default function CheckoutPage() {
     }
   }
 
-  // Порожній кошик
-  if (!authLoading && cartItems.length === 0 && user) {
+  // Порожній кошик (тепер для всіх, включаючи гостей)
+  if (!authLoading && cartItems.length === 0) {
     return (
       <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', fontFamily: 'var(--font-sans)' }}>
         <ShoppingBag size={48} color="rgba(82,79,37,0.25)" />
@@ -396,6 +433,7 @@ export default function CheckoutPage() {
                       value={phone}
                       onChange={handlePhoneChange}
                       onFocus={handlePhoneFocus}
+                      onClear={() => setPhone(formatUaMasked(''))}
                       placeholder="+38 (0__) ___-__-__"
                       type="tel"
                       required
@@ -426,7 +464,9 @@ export default function CheckoutPage() {
                       }}>
                         <input type="radio" name="delivery" value={opt.id} checked={delivery === opt.id}
                           onChange={() => setDelivery(opt.id)} style={{ accentColor: '#524f25' }} />
-                        <span style={{ fontSize: '1.25rem' }}>{opt.icon}</span>
+                        <div style={{ width: '36px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+                          {opt.icon}
+                        </div>
                         <div>
                           <p style={{ margin: 0, fontWeight: 500, color: '#524f25', fontSize: '0.9rem' }}>{opt.label}</p>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(82,79,37,0.45)' }}>{opt.desc}</p>
@@ -930,7 +970,7 @@ function CheckoutCard({ icon, title, children }) {
   );
 }
 
-const CheckoutInput = forwardRef(({ label, ...props }, ref) => {
+const CheckoutInput = forwardRef(({ label, onClear, ...props }, ref) => {
   const [focused, setFocused] = useState(false);
   return (
     <div>
@@ -941,20 +981,47 @@ const CheckoutInput = forwardRef(({ label, ...props }, ref) => {
       }}>
         {label}
       </label>
-      <input
-        {...props}
-        ref={ref}
-        onFocus={e => { setFocused(true); props.onFocus?.(e); }}
-        onBlur={e => { setFocused(false); props.onBlur?.(e); }}
-        style={{
-          width: '100%', padding: '0.7rem 1rem', boxSizing: 'border-box',
-          border: `1px solid ${focused ? '#524f25' : 'rgba(82,79,37,0.15)'}`,
-          borderRadius: '10px', outline: 'none',
-          fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25',
-          background: focused ? 'white' : 'rgba(255,255,255,0.7)',
-          transition: 'all 0.2s',
-        }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          {...props}
+          ref={ref}
+          onFocus={e => { setFocused(true); props.onFocus?.(e); }}
+          onBlur={e => { setFocused(false); props.onBlur?.(e); }}
+          style={{
+            width: '100%', padding: '0.7rem 1rem', paddingRight: onClear ? '2.5rem' : '1rem', boxSizing: 'border-box',
+            border: `1px solid ${focused ? '#524f25' : 'rgba(82,79,37,0.15)'}`,
+            borderRadius: '10px', outline: 'none',
+            fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25',
+            background: focused ? 'white' : 'rgba(255,255,255,0.7)',
+            transition: 'all 0.2s',
+          }}
+        />
+        {onClear && props.value && props.value !== '+38 (___) ___-__-__' && (
+          <button
+            type="button"
+            onClick={onClear}
+            style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
+              border: 'none',
+              padding: '4px',
+              cursor: 'pointer',
+              color: 'rgba(82,79,37,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = '#524f25'}
+            onMouseLeave={e => e.currentTarget.style.color = 'rgba(82,79,37,0.4)'}
+          >
+            <Eraser size={16} />
+          </button>
+        )}
+      </div>
     </div>
   );
 });
