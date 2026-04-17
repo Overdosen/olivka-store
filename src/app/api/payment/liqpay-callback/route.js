@@ -99,35 +99,36 @@ export async function POST(request) {
           if (receipt && receipt.id) {
             receiptId = receipt.id;
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
-            
-            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}. Updating order record...`);
-            
-            const { error: updateError } = await db
-              .from('orders')
-              .update({ 
-                fiscal_receipt_id: receiptId,
-                fiscal_receipt_url: receiptUrl
-              })
-              .eq('id', order_id);
-              
-            if (updateError) {
-              console.error('[LiqPay Callback] Failed to save receipt info to DB:', updateError);
-            } else {
-              console.log('[LiqPay Callback] Order successfully updated with receipt details.');
-            }
+            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}`);
           } else {
             console.error('[LiqPay Callback] Checkbox returned no receipt ID');
+            receiptId = "ERROR_EMPTY";
+            receiptUrl = "БЕЗ ЧЕКА: Сервіс Checkbox повернув порожній ID";
           }
         } catch (error) {
           if (error.message === 'CHECKBOX_TIMEOUT') {
             receiptId = "ERROR_TIMEOUT";
-            receiptUrl = "Таймаут: Checkbox не відповів протягом 12 секунд";
-            console.warn('[LiqPay Callback] Fiscalization timed out. Proceeding to n8n notification...');
+            receiptUrl = "БЕЗ ЧЕКА: Таймаут 12с (Checkbox не відповів)";
+            console.warn('[LiqPay Callback] Fiscalization timed out.');
           } else {
             receiptId = "ERROR_API";
-            receiptUrl = `Помилка Checkbox: ${error.message}`;
+            receiptUrl = `БЕЗ ЧЕКА: Помилка API (${error.message})`;
             console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
           }
+        }
+
+        // Гарантовано зберігаємо результат фіскалізації (успіх або опис помилки)
+        console.log(`[LiqPay Callback] Updating order ${order_id} with fiscal status: ${receiptId}`);
+        const { error: finalUpdateError } = await db
+          .from('orders')
+          .update({ 
+            fiscal_receipt_id: receiptId,
+            fiscal_receipt_url: receiptUrl
+          })
+          .eq('id', order_id);
+          
+        if (finalUpdateError) {
+          console.error('[LiqPay Callback] Failed to save final receipt info to DB:', finalUpdateError);
         }
       } else {
         console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);

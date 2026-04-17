@@ -278,6 +278,13 @@ class CheckboxService {
         }
       };
 
+      console.log('[Checkbox] Creating receipt with payload:', JSON.stringify({
+        ...body,
+        // Ensure we don't accidentally log huge objects if they exist
+        goods_count: goods.length,
+        total_kopecks: body.payments[0].value
+      }, null, 2));
+
       const response = await fetch(`${this.baseUrl}/receipts/sell`, {
         method: 'POST',
         headers: this.getHeaders(),
