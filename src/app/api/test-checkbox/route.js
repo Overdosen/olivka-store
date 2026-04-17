@@ -59,7 +59,8 @@ export async function GET(request) {
       message: 'Connection and Shift checks PASSED. (Receipt creation skipped for safety)',
       auth: 'ok',
       shift: shift.status,
-      shift_details: shift
+      shift_details: shift,
+      recent_shifts: shiftsData.entities
     });
 
   } catch (error) {
