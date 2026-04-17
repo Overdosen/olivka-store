@@ -74,17 +74,21 @@ export async function POST(request) {
       if (!receiptId) {
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
-          console.log('[LiqPay Callback] Items for fiscalization:', JSON.stringify(orderData.items));
           
+          // Using the new robust shift check
+          const shift = await checkboxService.ensureShiftOpened();
+          console.log(`[LiqPay Callback] Shift confirmed: ${shift?.id} (${shift?.status})`);
+          
+          console.log(`[LiqPay Callback] Creating receipt for ${orderData.items?.length} items...`);
           const receipt = await checkboxService.createReceipt(orderData);
           
           if (receipt && receipt.id) {
             receiptId = receipt.id;
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
             
-            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}. Updating order...`);
+            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}. Updating order record...`);
             
-            await db
+            const { error: updateError } = await db
               .from('orders')
               .update({ 
                 fiscal_receipt_id: receiptId,
@@ -92,21 +96,23 @@ export async function POST(request) {
               })
               .eq('id', order_id);
               
-            console.log('[LiqPay Callback] Order successfully updated with receipt details.');
+            if (updateError) {
+                console.error('[LiqPay Callback] Failed to save receipt info to DB:', updateError);
+            } else {
+                console.log('[LiqPay Callback] Order successfully updated with receipt details.');
+            }
           } else {
             console.error('[LiqPay Callback] Checkbox returned no receipt ID');
           }
         } catch (error) {
           console.error('[LiqPay Callback] Checkbox Fiscalization Failed');
-          console.error('[LiqPay Callback] Error Message:', error.message);
-          // Optional: log object if it helps
-          if (error.responseBody) {
-             console.error('[LiqPay Callback] Full Error Response:', error.responseBody);
-          }
+          console.error('[LiqPay Callback] Exception:', error.message);
+          // Don't throw, we want at least the payment to be processed
         }
       } else {
         console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);
       }
+
 
       // 5. Notify n8n with FULL order data
       const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;

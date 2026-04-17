@@ -61,54 +61,87 @@ class CheckboxService {
 
   /**
    * Check current shift status and open if closed
+   * This is the main entry point for shift management
    */
   async ensureShiftOpened() {
     try {
       if (!this.token) await this.authenticate();
 
-      // 1. Try primary check
-      const res = await fetch(`${this.baseUrl}/shifts/current`, {
-        headers: this.getHeaders(),
-        cache: 'no-store'
-      });
-
-      if (res.ok) {
-        const shiftData = await res.json();
-        console.log('[Checkbox] Current shift status (primary):', shiftData.status);
-        
-        if (shiftData.status === 'OPENED') return shiftData;
-        if (shiftData.status === 'OPENING') return await this.waitForShiftOpened(shiftData.id);
-        // If CLOSED, we continue to fallback/opening
-      }
-
-      // 2. Fallback: Search for any OPENED or OPENING shifts
-      console.log('[Checkbox] Primary check failed or shift closed. Searching for any active shifts (OPENED/OPENING)...');
+      // 1. Check primary active shift status
+      const activeShift = await this.getActiveShift();
       
-      const activeShift = await this.findActiveShiftInList();
       if (activeShift) {
-        console.log(`[Checkbox] Found active shift in list: ${activeShift.id} (${activeShift.status})`);
+        console.log(`[Checkbox] Active shift found: ${activeShift.id} (${activeShift.status})`);
+        
+        if (activeShift.status === 'OPENED') {
+          return activeShift;
+        }
+        
         if (activeShift.status === 'OPENING') {
+          console.log('[Checkbox] Shift is currently OPENING, waiting...');
           return await this.waitForShiftOpened(activeShift.id);
         }
-        return activeShift;
+        
+        // If it's something else like CREATED, we might need to wait or handle it
+        console.log(`[Checkbox] Active shift has status ${activeShift.status}, treating as valid or waiting...`);
+        if (activeShift.status === 'CREATED') return await this.waitForShiftOpened(activeShift.id);
       }
 
-      // 3. If still nothing, try to open
-      return await this.openShiftAndWait();
-    } catch (error) {
-      console.error('[Checkbox] Shift Check Error:', error.message);
-      // Final attempt if we get "busy" error
-      if (error.message.includes('вже працює')) {
-        console.log('[Checkbox] Cashier is busy, performing emergency search...');
-        const emergencyShift = await this.findActiveShiftInList();
-        if (emergencyShift) {
-            if (emergencyShift.status === 'OPENING') return await this.waitForShiftOpened(emergencyShift.id);
-            return emergencyShift;
+      // 2. If no active shift reported by /cashier/shift, check the list just in case
+      console.log('[Checkbox] No active shift via primary check. Searching recent shifts list...');
+      const fallbackShift = await this.findActiveShiftInList();
+      
+      if (fallbackShift) {
+        console.log(`[Checkbox] Found active shift in list: ${fallbackShift.id} (${fallbackShift.status})`);
+        if (fallbackShift.status === 'OPENING' || fallbackShift.status === 'CREATED') {
+          return await this.waitForShiftOpened(fallbackShift.id);
         }
-        throw new Error(`Cashier reported BUSY, but no active shifts found (OPENED/OPENING). Error: ${error.message}`);
+        return fallbackShift;
       }
+
+      // 3. If still nothing, attempt to open a new shift
+      try {
+        return await this.openShiftAndWait();
+      } catch (error) {
+        // If opening fails with conflict, try to find the shift one last time
+        if (error.message.includes('вже працює') || error.message.includes('Conflict')) {
+          console.log('[Checkbox] Conflict while opening shift. Performing emergency rescue search...');
+          const emergencyShift = await this.findActiveShiftInList();
+          if (emergencyShift) {
+            console.log('[Checkbox] Rescue search successful.');
+            return emergencyShift;
+          }
+          throw new Error(`CRITICAL: Cashier busy error, but no active shifts found. Error: ${error.message}`);
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error('[Checkbox] ensureShiftOpened Fatal Error:', error.message);
       throw error;
     }
+  }
+
+  /**
+   * Get current cashier shift using /cashier/shift
+   */
+  async getActiveShift() {
+    const response = await fetch(`${this.baseUrl}/cashier/shift`, {
+      method: 'GET',
+      headers: this.getHeaders(),
+      cache: 'no-store'
+    });
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[Checkbox] getActiveShift Error:', response.status, errorData);
+      return null;
+    }
+
+    return await response.json();
   }
 
   /**
