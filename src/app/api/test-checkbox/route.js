@@ -19,9 +19,17 @@ export async function GET(request) {
     console.log('[Checkbox Debug] Auth successful, token obtained.');
 
     // 2. Test Shift Status
-    console.log('[Checkbox Debug] Checking shift...');
+    console.log('[Checkbox Debug] Checking shift list...');
+    const shiftsRes = await fetch(`${checkboxService.baseUrl}/shifts?limit=5&desc=true`, {
+      headers: checkboxService.getHeaders(),
+      cache: 'no-store'
+    });
+    const shiftsData = await shiftsRes.json();
+    console.log('[Checkbox Debug] Recent shifts:', JSON.stringify(shiftsData.entities?.map(s => ({ id: s.id, status: s.status })), null, 2));
+
+    console.log('[Checkbox Debug] Ensuring shift is opened (using service logic)...');
     const shift = await checkboxService.ensureShiftOpened();
-    console.log('[Checkbox Debug] Shift status:', shift.status);
+    console.log('[Checkbox Debug] Final shift status:', shift.status);
 
     /* 
     // 3. Dummy Order for Receipt
