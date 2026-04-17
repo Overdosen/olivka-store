@@ -131,7 +131,8 @@ class CheckboxService {
     
     console.log(`[Checkbox] Found ${shifts.length} recent shifts. Checking for active entries...`);
     
-    // Log statuses for debugging
+    // Log full entities for debugging
+    console.log(`[Checkbox] Shift entities: ${JSON.stringify(shifts)}`);
     shifts.forEach(s => console.log(`  - Shift ${s.id}: ${s.status}`));
 
     const activeShift = shifts.find(s => {
