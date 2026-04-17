@@ -69,7 +69,7 @@ class CheckboxService {
 
       if (res.status === 404) {
         console.log('[Checkbox] No current shift found (404). Opening...');
-        return await this.openShift();
+        return await this.openShiftAndWait();
       }
 
       const shiftData = await res.json();
@@ -77,14 +77,13 @@ class CheckboxService {
       
       if (shiftData.status === 'CLOSED' || !shiftData.status) {
         console.log('[Checkbox] Shift is closed. Opening...');
-        return await this.openShift();
+        return await this.openShiftAndWait();
       }
 
+      // If shift is still OPENING — wait for it to become OPENED
       if (shiftData.status === 'OPENING') {
-        // Wait a bit and check again? 
-        // For simplicity, we assume if it's opening, it will be ready soon.
-        // But better to poll or just continue.
-        return shiftData;
+        console.log('[Checkbox] Shift is OPENING. Waiting for it to become OPENED...');
+        return await this.waitForShiftOpened(shiftData.id);
       }
 
       return shiftData;
@@ -95,9 +94,9 @@ class CheckboxService {
   }
 
   /**
-   * Open a new shift
+   * Open a new shift and wait until it becomes OPENED
    */
-  async openShift() {
+  async openShiftAndWait() {
     console.log('[Checkbox] Opening new shift...');
     const response = await fetch(`${this.baseUrl}/shifts`, {
       method: 'POST',
@@ -110,9 +109,42 @@ class CheckboxService {
       throw new Error(data.message || `Failed to open Checkbox shift: ${response.status}`);
     }
 
-    // Note: status will be 'OPENING' initially. 
-    // Checkbox usually handles receipts even if it's 'OPENING'.
-    return data;
+    console.log('[Checkbox] Shift opened with status:', data.status);
+
+    // If already OPENED — great, return immediately
+    if (data.status === 'OPENED') return data;
+
+    // Otherwise poll until OPENED (Checkbox API takes 2-5 seconds)
+    return await this.waitForShiftOpened(data.id);
+  }
+
+  /**
+   * Poll shift status until it becomes OPENED (max 15 seconds)
+   */
+  async waitForShiftOpened(shiftId) {
+    const maxAttempts = 10;
+    const delay = 1500; // 1.5 seconds between checks
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      
+      const res = await fetch(`${this.baseUrl}/shifts/${shiftId}`, {
+        headers: this.getHeaders(),
+      });
+      const shiftData = await res.json();
+      console.log(`[Checkbox] Shift poll attempt ${attempt}/${maxAttempts}: status = ${shiftData.status}`);
+
+      if (shiftData.status === 'OPENED') {
+        console.log('[Checkbox] Shift is now OPENED. Proceeding...');
+        return shiftData;
+      }
+
+      if (shiftData.status === 'CLOSED' || shiftData.status === 'CLOSING') {
+        throw new Error(`[Checkbox] Shift entered unexpected status: ${shiftData.status}`);
+      }
+    }
+
+    throw new Error('[Checkbox] Timed out waiting for shift to become OPENED after 15 seconds');
   }
 
   /**

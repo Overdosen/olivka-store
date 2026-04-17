@@ -9,6 +9,7 @@ import { useCart } from '../../../context/CartContext';
 import { supabase } from '../../../lib/supabase';
 import toast from 'react-hot-toast';
 
+
 // ─── Shared Components ───────────────────────────────────────────────────────
 
 function LoadingState() {
@@ -246,58 +247,45 @@ function SuccessContent() {
   const orderId = searchParams.get('order_id') || searchParams.get('orderId');
   const method = searchParams.get('method');
 
-  const fetchOrder = useCallback(async (silent = false, retryCount = 0) => {
+  // Fetch order status via API endpoint (uses service role — bypasses RLS)
+  const fetchOrder = useCallback(async (silent = false) => {
     if (!orderId) {
       setLoading(false);
       return;
     }
 
-    // Якщо замовлення вже оплачене або ми вже маємо дані і це фоновий запит - ігноруємо
+    // If we already have paid status and this is a silent background poll, skip
     if (order?.status === 'paid' && silent) return;
 
-    if (!silent && retryCount === 0) setLoading(true);
-    
+    if (!silent) setLoading(true);
+
     try {
-      const { data, error: supabaseError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      const res = await fetch(`/api/order-status?id=${orderId}`);
 
-      if (supabaseError) {
-        // Повторні спроби, якщо запис ще не з'явився (для нових замовлень)
-        if (supabaseError.code === 'PGRST116' && retryCount < 3 && !order) {
-          setTimeout(() => fetchOrder(silent, retryCount + 1), 1500);
-          return;
-        }
-        
-        // Якщо замовлення зникло вже після завантаження (наприклад, видалене вручну)
-        if (supabaseError.code === 'PGRST116' && order) {
-          if (!silent) setLoading(false);
-          return;
-        }
-
-        console.error('SUCCESS_PAGE: Fetch error:', supabaseError.message);
+      if (!res.ok) {
+        // 404 — order not found yet, will retry via interval
         if (!silent) setLoading(false);
         return;
       }
 
-      if (data) {
-        setOrder(prev => {
-          if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
-          return data;
-        });
+      const data = await res.json();
 
-        if (data.status === 'payment_error') {
-          router.push(`/payment/failure?order_id=${orderId}`);
-        }
+      if (data?.status === 'payment_error') {
+        router.push(`/payment/failure?order_id=${orderId}`);
+        return;
       }
+
+      setOrder(prev => {
+        if (prev?.status === data?.status && prev?.order_number === data?.order_number) return prev;
+        return data;
+      });
     } catch (err) {
       console.error('SUCCESS_PAGE: Unexpected error:', err);
     } finally {
-      if (!silent && retryCount === 0) setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [orderId, order, router]);
+  }, [orderId, order?.status, router]);
+
 
   useEffect(() => {
     setIsMounted(true);
