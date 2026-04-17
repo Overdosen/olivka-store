@@ -72,18 +72,20 @@ export async function POST(request) {
       let receiptUrl = orderData.fiscal_receipt_url;
 
       if (!receiptId) {
+        let finalUpdateErrorObj = null;
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
           
           // Helper function for timeout
           const withTimeout = (promise, ms, timeoutErrorMsg) => {
+            let timeoutId;
             const timeout = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error(timeoutErrorMsg)), ms);
+              timeoutId = setTimeout(() => reject(new Error(timeoutErrorMsg)), ms);
             });
-            return Promise.race([promise, timeout]);
+            return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
           };
 
-          // Wrap the entire fiscalization flow in a 12-second timeout
+          // Wrap the entire fiscalization flow in a 8-second timeout (Vercel max is usually 10s on Hobby)
           const receipt = await withTimeout(
             (async () => {
               const shift = await checkboxService.ensureShiftOpened();
@@ -92,7 +94,7 @@ export async function POST(request) {
               console.log(`[LiqPay Callback] Creating receipt for ${orderData.items?.length} items...`);
               return await checkboxService.createReceipt(orderData);
             })(),
-            12000,
+            8000,
             'CHECKBOX_TIMEOUT'
           );
 
@@ -108,11 +110,11 @@ export async function POST(request) {
         } catch (error) {
           if (error.message === 'CHECKBOX_TIMEOUT') {
             receiptId = "ERROR_TIMEOUT";
-            receiptUrl = "БЕЗ ЧЕКА: Таймаут 12с (Checkbox не відповів)";
+            receiptUrl = "БЕЗ ЧЕКА: Таймаут 8с (Checkbox не відповів)";
             console.warn('[LiqPay Callback] Fiscalization timed out.');
           } else {
             receiptId = "ERROR_API";
-            receiptUrl = `БЕЗ ЧЕКА: Помилка API (${error.message})`;
+            receiptUrl = `БЕЗ ЧЕКА: Checkbox API помилка: ${error.message}`;
             console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
           }
         }
@@ -128,6 +130,7 @@ export async function POST(request) {
           .eq('id', order_id);
           
         if (finalUpdateError) {
+          finalUpdateErrorObj = finalUpdateError;
           console.error('[LiqPay Callback] Failed to save final receipt info to DB:', finalUpdateError);
         }
       } else {
@@ -148,6 +151,7 @@ export async function POST(request) {
               ...orderData,
               fiscal_receipt_id: receiptId || null,
               fiscal_receipt_url: receiptUrl || null,
+              final_update_error: finalUpdateErrorObj ? finalUpdateErrorObj.message : null,
               payment_info: {
                 status: status,
                 amount: amount,
