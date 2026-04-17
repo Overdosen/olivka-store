@@ -251,7 +251,8 @@ class CheckboxService {
       // Map items to Checkbox goods
       const goods = items.map(item => {
         const itemPrice = Math.round(Number(item.price) * 100);
-        const itemQty = Number(item.qty);
+        const itemQty = Math.round(Number(item.qty) * 1000); // Checkbox uses 1/1000 units (1000 = 1 piece)
+        const itemSum = Math.round((itemPrice * itemQty) / 1000);
         
         return {
           good: {
@@ -259,7 +260,8 @@ class CheckboxService {
             name: `${item.name}${item.size ? ` (р. ${item.size})` : ''}`,
             price: itemPrice, // in kopecks
           },
-          quantity: itemQty, // Actual quantity (1.0 = 1 item)
+          quantity: itemQty, // in 1/1000 units (integer)
+          sum: itemSum, // explicit sum in kopecks
         };
       });
 
@@ -273,9 +275,9 @@ class CheckboxService {
           }
         ],
         cashier_name: this.cashierName,
-        delivery: {
-          emails: [email]
-        }
+        delivery: email ? {
+          email: email
+        } : undefined
       };
 
       console.log('[Checkbox] Creating receipt with payload:', JSON.stringify({

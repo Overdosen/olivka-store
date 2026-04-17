@@ -162,16 +162,32 @@ export async function POST(request) {
             timestamp: new Date().toISOString()
           };
 
-          const webhookRes = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(n8nPayload)
-          });
-          
-          console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
-          if (!webhookRes.ok) {
-            const errorText = await webhookRes.text();
-            console.error('[LiqPay Callback] n8n error response:', errorText);
+          // 5-second timeout for n8n to prevent blocking too long
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+          try {
+            const webhookRes = await fetch(webhookUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(n8nPayload),
+              signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
+            
+            if (!webhookRes.ok) {
+              const errorText = await webhookRes.text();
+              console.error('[LiqPay Callback] n8n error response:', errorText);
+            }
+          } catch (fetchErr) {
+            clearTimeout(timeoutId);
+            if (fetchErr.name === 'AbortError') {
+              console.warn('[LiqPay Callback] n8n webhook timed out (5s)');
+            } else {
+              throw fetchErr;
+            }
           }
         } catch (webhookErr) {
           console.error('[LiqPay Callback] n8n notification error:', webhookErr.message);

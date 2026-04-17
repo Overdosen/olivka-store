@@ -8,3 +8,6 @@
 | [[concepts/footer-redesign]] | Редизайн футера, мікровізуальне вирівнювання та робота з blend-modes | daily/2026-04-15.md | 2026-04-15 |
 | [[concepts/professional-modal-pattern]] | Дизайн-патерн преміальних модалок (Portal + CSS + Spring) | daily/2026-04-15.md | 2026-04-15 |
 | [[concepts/resend-integration]] | Бекенд-інтеграція Resend API для відправки email | daily/2026-04-15.md | 2026-04-15 |
+| [[concepts/deployment-protection-secrets]] | Vercel Deployment Protection та дії при витоку секретів | daily/2026-04-17.md | 2026-04-17 |
+| [[concepts/checkbox-fiscalization-robustness]] | Надійна фіскалізація Checkbox: таймаути та діагностика | daily/2026-04-17.md | 2026-04-17 |
+| [[concepts/nextjs-env-variable-mapping]] | Мапінг VITE_ -> NEXT_PUBLIC_ зміних у Next.js | daily/2026-04-17.md | 2026-04-17 |
