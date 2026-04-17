@@ -134,7 +134,10 @@ class CheckboxService {
     // Log statuses for debugging
     shifts.forEach(s => console.log(`  - Shift ${s.id}: ${s.status}`));
 
-    const activeShift = shifts.find(s => s.status === 'OPENED' || s.status === 'OPENING');
+    const activeShift = shifts.find(s => {
+      const status = (s.status || '').toUpperCase();
+      return status !== 'CLOSED';
+    });
     
     if (activeShift) {
         console.log(`[Checkbox] Selected active shift: ${activeShift.id} (${activeShift.status})`);
