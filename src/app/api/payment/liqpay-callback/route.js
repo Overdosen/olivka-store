@@ -75,13 +75,27 @@ export async function POST(request) {
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
           
-          // Using the new robust shift check
-          const shift = await checkboxService.ensureShiftOpened();
-          console.log(`[LiqPay Callback] Shift confirmed: ${shift?.id} (${shift?.status})`);
-          
-          console.log(`[LiqPay Callback] Creating receipt for ${orderData.items?.length} items...`);
-          const receipt = await checkboxService.createReceipt(orderData);
-          
+          // Helper function for timeout
+          const withTimeout = (promise, ms, timeoutErrorMsg) => {
+            const timeout = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error(timeoutErrorMsg)), ms);
+            });
+            return Promise.race([promise, timeout]);
+          };
+
+          // Wrap the entire fiscalization flow in a 12-second timeout
+          const receipt = await withTimeout(
+            (async () => {
+              const shift = await checkboxService.ensureShiftOpened();
+              console.log(`[LiqPay Callback] Shift confirmed: ${shift?.id} (${shift?.status})`);
+              
+              console.log(`[LiqPay Callback] Creating receipt for ${orderData.items?.length} items...`);
+              return await checkboxService.createReceipt(orderData);
+            })(),
+            12000,
+            'CHECKBOX_TIMEOUT'
+          );
+
           if (receipt && receipt.id) {
             receiptId = receipt.id;
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
@@ -97,17 +111,23 @@ export async function POST(request) {
               .eq('id', order_id);
               
             if (updateError) {
-                console.error('[LiqPay Callback] Failed to save receipt info to DB:', updateError);
+              console.error('[LiqPay Callback] Failed to save receipt info to DB:', updateError);
             } else {
-                console.log('[LiqPay Callback] Order successfully updated with receipt details.');
+              console.log('[LiqPay Callback] Order successfully updated with receipt details.');
             }
           } else {
             console.error('[LiqPay Callback] Checkbox returned no receipt ID');
           }
         } catch (error) {
-          console.error('[LiqPay Callback] Checkbox Fiscalization Failed');
-          console.error('[LiqPay Callback] Exception:', error.message);
-          // Don't throw, we want at least the payment to be processed
+          if (error.message === 'CHECKBOX_TIMEOUT') {
+            receiptId = "ERROR_TIMEOUT";
+            receiptUrl = "Таймаут: Checkbox не відповів протягом 12 секунд";
+            console.warn('[LiqPay Callback] Fiscalization timed out. Proceeding to n8n notification...');
+          } else {
+            receiptId = "ERROR_API";
+            receiptUrl = `Помилка Checkbox: ${error.message}`;
+            console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
+          }
         }
       } else {
         console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);
