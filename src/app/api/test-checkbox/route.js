@@ -11,60 +11,66 @@ export async function GET(request) {
   }
 
   try {
-    console.log('[Checkbox Debug] Starting manual test...');
+    console.log('[Checkbox Debug] Deep status check starting...');
     
-    // 1. Test Authentication
-    console.log('[Checkbox Debug] Testing authentication...');
+    // 1. Authenticate first to get token
     const token = await checkboxService.authenticate();
-    console.log('[Checkbox Debug] Auth successful, token obtained.');
-
-    // 2. Test Shift Status
-    console.log('[Checkbox Debug] Checking shift list...');
-    const shiftsRes = await fetch(`${checkboxService.baseUrl}/shifts?limit=5&desc=true`, {
-      headers: checkboxService.getHeaders(),
-      cache: 'no-store'
-    });
-    const shiftsData = await shiftsRes.json();
-    console.log('[Checkbox Debug] Recent shifts:', JSON.stringify(shiftsData.entities?.map(s => ({ id: s.id, status: s.status })), null, 2));
-
-    console.log('[Checkbox Debug] Ensuring shift is opened (using service logic)...');
-    const shift = await checkboxService.ensureShiftOpened();
-    console.log('[Checkbox Debug] Final shift status:', shift.status);
-
-    /* 
-    // 3. Dummy Order for Receipt
-    const dummyOrder = {
-      order_number: 9999,
-      email: 'denisopin@gmail.com',
-      full_name: 'Debug Test',
-      total: 10,
-      items: [
-        {
-          product_id: 'test-p-1',
-          name: 'Тестовий товар',
-          price: 10,
-          qty: 1,
-          sku: 'TEST-SKU'
-        }
-      ]
+    const headers = {
+      ...checkboxService.getHeaders(),
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache'
     };
 
-    console.log('[Checkbox Debug] Attempting to create dummy receipt...');
-    const receipt = await checkboxService.createReceipt(dummyOrder);
-    console.log('[Checkbox Debug] Receipt created successfully:', receipt.id);
-    */
+    // 2. Fetch Cashier Profile (/cashier/me)
+    const profileRes = await fetch(`${checkboxService.baseUrl}/cashier/me`, { headers, cache: 'no-store' });
+    const profile = await profileRes.json();
+
+    // 3. Fetch Cash Register Info (/cash-registers/info)
+    const registerRes = await fetch(`${checkboxService.baseUrl}/cash-registers/info`, { headers, cache: 'no-store' });
+    const register = await registerRes.json();
+
+    // 4. Fetch Active Shift (/cashier/shift)
+    const activeShiftRes = await fetch(`${checkboxService.baseUrl}/cashier/shift`, { headers, cache: 'no-store' });
+    let activeShift = null;
+    if (activeShiftRes.status === 200) {
+      activeShift = await activeShiftRes.json();
+    } else if (activeShiftRes.status === 404) {
+      activeShift = { message: 'No active shift found (404)' };
+    } else {
+      activeShift = { error: `HTTP ${activeShiftRes.status}`, text: await activeShiftRes.text() };
+    }
+
+    // 5. Fetch Recent Shifts List (limit 10)
+    const recentRes = await fetch(`${checkboxService.baseUrl}/shifts?limit=10&desc=true`, { headers, cache: 'no-store' });
+    const recent = await recentRes.json();
 
     return NextResponse.json({
       status: 'success',
-      message: 'Connection and Shift checks PASSED. (Receipt creation skipped for safety)',
-      auth: 'ok',
-      shift: shift.status,
-      shift_details: shift,
-      recent_shifts: shiftsData.entities
+      timestamp: new Date().toISOString(),
+      cashier: {
+        id: profile.id,
+        name: profile.full_name,
+        organization: profile.organization?.title
+      },
+      cash_register: {
+        id: register.id,
+        fiscal_number: register.fiscal_number,
+        title: register.title,
+        has_shift: register.has_shift,
+        offline_mode: register.offline_mode
+      },
+      active_shift: activeShift,
+      recent_shifts_summary: recent.entities?.map(s => ({
+        id: s.id,
+        status: s.status,
+        serial: s.serial,
+        opened_at: s.opened_at,
+        closed_at: s.closed_at
+      }))
     });
 
   } catch (error) {
-    console.error('[Checkbox Debug] Test Failed:', error.message);
+    console.error('[Checkbox Debug] Deep check failed:', error.message);
     return NextResponse.json({
       status: 'error',
       message: error.message,
