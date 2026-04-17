@@ -66,35 +66,63 @@ class CheckboxService {
     try {
       if (!this.token) await this.authenticate();
 
-      // Check current shift
+      // 1. Try primary check
       const res = await fetch(`${this.baseUrl}/shifts/current`, {
         headers: this.getHeaders(),
+        cache: 'no-store'
       });
 
-      if (res.status === 404) {
-        console.log('[Checkbox] No current shift found (404). Opening...');
-        return await this.openShiftAndWait();
+      if (res.ok) {
+        const shiftData = await res.json();
+        console.log('[Checkbox] Current shift status (primary):', shiftData.status);
+        
+        if (shiftData.status === 'OPENED') return shiftData;
+        if (shiftData.status === 'OPENING') return await this.waitForShiftOpened(shiftData.id);
+        // If CLOSED, we continue to fallback/opening
       }
 
-      const shiftData = await res.json();
-      console.log('[Checkbox] Current shift status:', shiftData.status);
-      
-      if (shiftData.status === 'CLOSED' || !shiftData.status) {
-        console.log('[Checkbox] Shift is closed. Opening...');
-        return await this.openShiftAndWait();
+      // 2. Fallback: Search for any OPENED shifts
+      console.log('[Checkbox] Primary check failed or shift closed. Searching for any OPENED shifts...');
+      const listRes = await fetch(`${this.baseUrl}/shifts?status=OPENED&limit=1`, {
+        headers: this.getHeaders(),
+        cache: 'no-store'
+      });
+
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        if (listData.entities && listData.entities.length > 0) {
+          const activeShift = listData.entities[0];
+          console.log('[Checkbox] Found active shift in list:', activeShift.id);
+          return activeShift;
+        }
       }
 
-      // If shift is still OPENING — wait for it to become OPENED
-      if (shiftData.status === 'OPENING') {
-        console.log('[Checkbox] Shift is OPENING. Waiting for it to become OPENED...');
-        return await this.waitForShiftOpened(shiftData.id);
-      }
-
-      return shiftData;
+      // 3. If still nothing, try to open
+      return await this.openShiftAndWait();
     } catch (error) {
       console.error('[Checkbox] Shift Check Error:', error.message);
+      // Final attempt if we get "busy" error
+      if (error.message.includes('вже працює')) {
+        console.log('[Checkbox] Cashier is busy, trying to find the shift one last time...');
+        return await this.findLastOpenedShift();
+      }
       throw error;
     }
+  }
+
+  /**
+   * Emergency fallback to find the last opened shift
+   */
+  async findLastOpenedShift() {
+    const res = await fetch(`${this.baseUrl}/shifts?status=OPENED&limit=1`, {
+      headers: this.getHeaders(),
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    if (data.entities && data.entities.length > 0) {
+      return data.entities[0];
+    }
+    throw new Error('Could not find opened shift even after busy error');
   }
 
   /**
@@ -105,6 +133,7 @@ class CheckboxService {
     const response = await fetch(`${this.baseUrl}/shifts`, {
       method: 'POST',
       headers: this.getHeaders(),
+      cache: 'no-store'
     });
 
     const data = await response.json();
