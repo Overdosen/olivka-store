@@ -115,26 +115,30 @@ class CheckboxService {
    * Universal helper to find any active shift (OPENED or OPENING)
    */
   async findActiveShiftInList() {
-    // Check OPENED first
-    let res = await fetch(`${this.baseUrl}/shifts?status=OPENED&limit=1`, {
+    console.log('[Checkbox] Fetching recent shifts to find an active one...');
+    const res = await fetch(`${this.baseUrl}/shifts?limit=10&desc=true`, {
       headers: this.getHeaders(),
       cache: 'no-store'
     });
-    let data = await res.json();
     
-    if (data.entities && data.entities.length > 0) {
-      return data.entities[0];
+    if (!res.ok) {
+        console.error('[Checkbox] Failed to fetch shifts list:', res.status);
+        return null;
     }
 
-    // Then check OPENING
-    res = await fetch(`${this.baseUrl}/shifts?status=OPENING&limit=1`, {
-        headers: this.getHeaders(),
-        cache: 'no-store'
-    });
-    data = await res.json();
+    const data = await res.json();
+    const shifts = data.entities || [];
+    
+    console.log(`[Checkbox] Found ${shifts.length} recent shifts. Checking for active entries...`);
+    
+    // Log statuses for debugging
+    shifts.forEach(s => console.log(`  - Shift ${s.id}: ${s.status}`));
 
-    if (data.entities && data.entities.length > 0) {
-        return data.entities[0];
+    const activeShift = shifts.find(s => s.status === 'OPENED' || s.status === 'OPENING');
+    
+    if (activeShift) {
+        console.log(`[Checkbox] Selected active shift: ${activeShift.id} (${activeShift.status})`);
+        return activeShift;
     }
 
     return null;
