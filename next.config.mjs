@@ -16,6 +16,21 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'www.olivka.store',
+          },
+        ],
+        destination: 'https://olivka.store/:path*',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
