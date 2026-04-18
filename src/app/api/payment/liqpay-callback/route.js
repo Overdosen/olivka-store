@@ -76,6 +76,9 @@ export async function POST(request) {
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
           
+          // Reset and start performance tracking
+          checkboxService.startPerformanceTracking();
+
           // Helper function for timeout
           const withTimeout = (promise, ms, timeoutErrorMsg) => {
             let timeoutId;
@@ -98,25 +101,59 @@ export async function POST(request) {
             'CHECKBOX_TIMEOUT'
           );
 
+          const perfReport = checkboxService.getPerformanceReport();
+
           if (receipt && receipt.id) {
             receiptId = receipt.id;
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
             console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}`);
+
+            // Log performance on success
+            await db.from('fiscal_performance_logs').insert({
+              order_id: order_id,
+              order_number: orderData.order_number,
+              auth_ms: perfReport.auth_ms,
+              shift_check_ms: perfReport.shift_check_ms,
+              shift_open_ms: perfReport.shift_open_ms,
+              receipt_creation_ms: perfReport.receipt_creation_ms,
+              total_ms: perfReport.total_ms,
+              status: 'success',
+              api_url: checkboxService.baseUrl,
+              cashier_name: checkboxService.cashierName
+            }).catch(err => console.error('[LiqPay Callback] Failed to log success performance:', err));
           } else {
             console.error('[LiqPay Callback] Checkbox returned no receipt ID');
             receiptId = "ERROR_EMPTY";
             receiptUrl = "БЕЗ ЧЕКА: Сервіс Checkbox повернув порожній ID";
           }
         } catch (error) {
+          const perfReport = checkboxService.getPerformanceReport();
+          let errorType = 'error';
+
           if (error.message === 'CHECKBOX_TIMEOUT') {
             receiptId = "ERROR_TIMEOUT";
             receiptUrl = "БЕЗ ЧЕКА: Таймаут 8с (Checkbox не відповів)";
             console.warn('[LiqPay Callback] Fiscalization timed out.');
+            errorType = 'timeout';
           } else {
             receiptId = "ERROR_API";
             receiptUrl = `БЕЗ ЧЕКА: Checkbox API помилка: ${error.message}`;
             console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
           }
+
+          // Log performance even on error
+          await db.from('fiscal_performance_logs').insert({
+            order_id: order_id,
+            order_number: orderData.order_number,
+            auth_ms: perfReport.auth_ms,
+            shift_check_ms: perfReport.shift_check_ms,
+            shift_open_ms: perfReport.shift_open_ms,
+            receipt_creation_ms: perfReport.receipt_creation_ms,
+            total_ms: perfReport.total_ms,
+            status: errorType,
+            error_details: error.message,
+            api_url: checkboxService.baseUrl
+          }).catch(err => console.error('[LiqPay Callback] Failed to log performance error:', err));
         }
 
         // Гарантовано зберігаємо результат фіскалізації (успіх або опис помилки)
@@ -139,64 +176,52 @@ export async function POST(request) {
 
 
       // 5. Notify n8n with FULL order data
-      const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
-      
-      if (webhookUrl) {
-        console.log('[LiqPay Callback] Notifying n8n webhook:', webhookUrl);
-        try {
-          const n8nPayload = {
-            event: 'new_order_paid',
-            source: 'olivka-store-liqpay-callback',
-            data: {
-              ...orderData,
-              fiscal_receipt_id: receiptId || null,
-              fiscal_receipt_url: receiptUrl || null,
-              final_update_error: finalUpdateErrorObj ? finalUpdateErrorObj.message : null,
-              payment_info: {
-                status: status,
-                amount: amount,
-                currency: currency,
-                timestamp: new Date().toISOString()
-              }
-            },
-            timestamp: new Date().toISOString()
-          };
+    const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+    
+    if (webhookUrl) {
+      try {
+        console.log('[LiqPay Callback] Notifying n8n webhook (Start)');
+        
+        const n8nPayload = {
+          source: 'liqpay_callback',
+          order_id: order_id,
+          order_number: orderData.order_number,
+          status: 'paid',
+          amount: payment.amount,
+          currency: payment.currency,
+          payment_id: payment.payment_id,
+          customer: {
+            email: orderData.email,
+            name: orderData.full_name,
+            phone: orderData.phone
+          },
+          items: orderData.items || [],
+          fiscal_details: receiptId ? {
+            id: receiptId,
+            url: receiptUrl,
+            total_duration: checkboxService.performanceLog.total_ms ? `${(checkboxService.performanceLog.total_ms / 1000).toFixed(1)} сек` : 'н/д'
+          } : null
+        };
 
-          // 5-second timeout for n8n to prevent blocking too long
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-          try {
-            const webhookRes = await fetch(webhookUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(n8nPayload),
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
-            
-            if (!webhookRes.ok) {
-              const errorText = await webhookRes.text();
-              console.error('[LiqPay Callback] n8n error response:', errorText);
-            }
-          } catch (fetchErr) {
-            clearTimeout(timeoutId);
-            if (fetchErr.name === 'AbortError') {
-              console.warn('[LiqPay Callback] n8n webhook timed out (5s)');
-            } else {
-              throw fetchErr;
-            }
-          }
-        } catch (webhookErr) {
-          console.error('[LiqPay Callback] n8n notification error:', webhookErr.message);
-        }
-      } else {
-        console.warn('[LiqPay Callback] n8n webhook URL missing (NEXT_PUBLIC_N8N_WEBHOOK_URL)');
+        // Standard fetch without AbortController for simplicity and reliability in serverless context
+        const webhookRes = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(n8nPayload)
+        });
+        
+        const responseText = await webhookRes.text();
+        console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
+        console.log('[LiqPay Callback] n8n response body:', responseText.substring(0, 100)); // Log first 100 chars
+        
+      } catch (webhookErr) {
+        console.error('[LiqPay Callback] n8n notification error:', webhookErr.message);
       }
+    } else {
+      console.warn('[LiqPay Callback] n8n webhook URL missing (check NEXT_PUBLIC_N8N_WEBHOOK_URL)');
+    }
 
-      return NextResponse.json({ status: 'ok' });
+    return NextResponse.json({ status: 'ok' });
     } else {
       console.warn(`[LiqPay Callback] Unsuccessful payment status: ${status} for order ${order_id}`);
       

@@ -10,6 +10,38 @@ class CheckboxService {
     this.licenseKey = process.env.CHECKBOX_LICENSE_KEY;
     this.cashierName = process.env.CHECKBOX_CASHIER_NAME || 'ФОП';
     this.token = null;
+    this.performanceLog = {
+      auth_ms: 0,
+      shift_check_ms: 0,
+      shift_open_ms: 0,
+      receipt_creation_ms: 0,
+      total_ms: 0,
+      start_time: 0
+    };
+  }
+
+  /**
+   * Reset performance log and start timer
+   */
+  startPerformanceTracking() {
+    this.performanceLog = {
+      auth_ms: 0,
+      shift_check_ms: 0,
+      shift_open_ms: 0,
+      receipt_creation_ms: 0,
+      total_ms: 0,
+      start_time: Date.now()
+    };
+  }
+
+  /**
+   * Get current performance report
+   */
+  getPerformanceReport() {
+    if (this.performanceLog.start_time > 0) {
+      this.performanceLog.total_ms = Date.now() - this.performanceLog.start_time;
+    }
+    return { ...this.performanceLog };
   }
 
   /**
@@ -18,6 +50,7 @@ class CheckboxService {
   async authenticate() {
     console.log(`[Checkbox] Authenticating with ${this.baseUrl}...`);
     try {
+      const authStart = Date.now();
       const response = await fetch(`${this.baseUrl}/cashier/signin`, {
         method: 'POST',
         headers: { 
@@ -30,6 +63,7 @@ class CheckboxService {
         }),
         cache: 'no-store'
       });
+      this.performanceLog.auth_ms += (Date.now() - authStart);
 
       const data = await response.json();
 
@@ -125,11 +159,13 @@ class CheckboxService {
    * Get current cashier shift using /cashier/shift
    */
   async getActiveShift() {
+    const shiftCheckStart = Date.now();
     const response = await fetch(`${this.baseUrl}/cashier/shift`, {
       method: 'GET',
       headers: this.getHeaders(),
       cache: 'no-store'
     });
+    this.performanceLog.shift_check_ms += (Date.now() - shiftCheckStart);
 
     if (response.status === 404) {
       return null;
@@ -149,10 +185,12 @@ class CheckboxService {
    */
   async findActiveShiftInList() {
     console.log('[Checkbox] Fetching recent shifts to find an active one...');
+    const listStart = Date.now();
     const res = await fetch(`${this.baseUrl}/shifts?limit=10&desc=true`, {
       headers: this.getHeaders(),
       cache: 'no-store'
     });
+    this.performanceLog.shift_check_ms += (Date.now() - listStart);
     
     if (!res.ok) {
         console.error('[Checkbox] Failed to fetch shifts list:', res.status);
@@ -186,11 +224,13 @@ class CheckboxService {
    */
   async openShiftAndWait() {
     console.log('[Checkbox] Opening new shift...');
+    const openStart = Date.now();
     const response = await fetch(`${this.baseUrl}/shifts`, {
       method: 'POST',
       headers: this.getHeaders(),
       cache: 'no-store'
     });
+    this.performanceLog.shift_open_ms += (Date.now() - openStart);
 
     const data = await response.json();
     if (!response.ok) {
@@ -217,11 +257,13 @@ class CheckboxService {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       await new Promise(resolve => setTimeout(resolve, delay));
       
+      const pollStart = Date.now();
       const res = await fetch(`${this.baseUrl}/shifts/${shiftId}`, {
         headers: this.getHeaders(),
         cache: 'no-store'
       });
       const shiftData = await res.json();
+      this.performanceLog.shift_open_ms += (Date.now() - pollStart);
       console.log(`[Checkbox] Shift poll attempt ${attempt}/${maxAttempts}: status = ${shiftData.status}`);
 
       if (shiftData.status === 'OPENED') {
@@ -271,6 +313,7 @@ class CheckboxService {
         payments: [
           {
             type: 'CASHLESS', // For LiqPay
+            label: 'Платіж через інтегратора LiqPay',
             value: Math.round(total * 100), // in kopecks
           }
         ],
@@ -287,12 +330,14 @@ class CheckboxService {
         total_kopecks: body.payments[0].value
       }, null, 2));
 
+      const receiptStart = Date.now();
       const response = await fetch(`${this.baseUrl}/receipts/sell`, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(body),
         cache: 'no-store'
       });
+      this.performanceLog.receipt_creation_ms += (Date.now() - receiptStart);
 
       const result = await response.json();
 
