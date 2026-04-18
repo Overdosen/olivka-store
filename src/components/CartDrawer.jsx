@@ -5,6 +5,7 @@ import { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 export default function CartDrawer() {
   const { isCartOpen, setIsCartOpen, cartItems, removeFromCart, updateQuantity } = useCart();
@@ -117,17 +118,19 @@ export default function CartDrawer() {
                            borderRadius: '1rem'
                          }}>
                       <Link href={`/product/${item.id}`} onClick={() => setIsCartOpen(false)}>
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          style={{
-                            width: '90px',
-                            height: '110px',
-                            objectFit: 'cover',
-                            borderRadius: '0.75rem',
-                            backgroundColor: 'white',
-                          }}
-                        />
+                        <div style={{ position: 'relative', width: '90px', height: '110px', flexShrink: 0 }}>
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            style={{
+                              objectFit: 'cover',
+                              borderRadius: '0.75rem',
+                              backgroundColor: 'white',
+                            }}
+                            sizes="90px"
+                          />
+                        </div>
                       </Link>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>

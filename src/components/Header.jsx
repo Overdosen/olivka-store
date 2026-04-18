@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import Image from 'next/image';
 import bearImg from '../assets/teddy_bear.png';
 import TextBorderAnimation from './TextBorderAnimation';
 import { useCart } from '../context/CartContext';
@@ -89,7 +90,7 @@ export default function Header() {
             </button>
             
             <Link href="/" className="logo">
-              <img src={bearImg.src || bearImg} alt="Olivka Bear Logo" className="logo-bear" />
+              <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear" width={45} height={45} priority />
               store.olivka
             </Link>
           </div>

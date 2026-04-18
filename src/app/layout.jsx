@@ -1,6 +1,14 @@
 import '../index.css';
 import '../admin.css';
+import { Inter } from 'next/font/google';
 import ClientProviders from './ClientProviders';
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  weight: ['400', '500', '700'],
+  display: 'swap',
+  variable: '--font-inter',
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
 const normalizedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`;
@@ -30,18 +38,12 @@ export const metadata = {
     type: 'website',
     images: [
       {
-        url: `${normalizedSiteUrl}/opengraph-image.png?v=1.1`,
+        url: '/opengraph-image.png',
         width: 1200,
         height: 630,
         alt: 'Store Olivka Logo',
       },
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Store Olivka | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
-    images: [`${normalizedSiteUrl}/twitter-image.png?v=1.1`],
   },
   robots: {
     index: true,
@@ -64,15 +66,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="uk">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="uk" className={inter.variable}>
       <body>
         <ClientProviders>
           {children}

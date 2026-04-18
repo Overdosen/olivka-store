@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Truck, MapPin, Phone, User, FileText, ChevronRight, Package, ShieldCheck, Lock, CreditCard, Banknote, Wallet, Eraser } from 'lucide-react';
+import Image from 'next/image';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/useAuth';
 import AuthModal from '../../components/AuthModal';
@@ -19,13 +20,13 @@ const DELIVERY_OPTIONS = [
   { 
     id: 'nova_poshta', 
     label: 'Нова Пошта', 
-    icon: <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" style={{ height: '22px', width: 'auto', display: 'block' }} />, 
+    icon: <Image src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" width={26} height={26} style={{ display: 'block' }} />, 
     desc: '1–2 дні' 
   },
   { 
     id: 'ukrposhta',   
     label: 'Укрпошта',   
-    icon: <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" style={{ height: '26px', width: 'auto', display: 'block' }} />, 
+    icon: <Image src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" width={22} height={22} style={{ display: 'block' }} />, 
     desc: '3–4 дні' 
   },
 ];
@@ -35,7 +36,7 @@ const PAYMENT_OPTIONS = [
     id: 'liqpay',           
     label: 'Банківською карткою, Apple Pay, Google Pay', 
     icon: (
-      <img src="/logo-liqpay-symbol.svg" width="28" height="28" alt="LiqPay" style={{ display: 'block' }} />
+      <Image src="/logo-liqpay-symbol.svg" width={28} height={28} alt="LiqPay" style={{ display: 'block' }} />
     ), 
     desc: '' 
   },
@@ -282,7 +283,6 @@ export default function CheckoutPage() {
         }
       }
 
-      clearCart();
       toast.dismiss(loadingToast);
       toast.success(`✅ Замовлення №${shortId} прийнято!`, { duration: 5000 });
       
@@ -370,11 +370,15 @@ export default function CheckoutPage() {
                     {cartItems.map((item, idx) => (
                       <div key={`${item.id}-${item.size}-${idx}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                         {(item.image_url || item.image) && (
-                          <img
-                            src={item.image_url || item.image}
-                            alt={item.name}
-                            style={{ width: '56px', height: '68px', objectFit: 'cover', borderRadius: '8px', background: '#f5f2e9', flexShrink: 0 }}
-                          />
+                          <div style={{ position: 'relative', width: '56px', height: '68px', flexShrink: 0 }}>
+                            <Image
+                              src={item.image_url || item.image}
+                              alt={item.name}
+                              fill
+                              style={{ objectFit: 'cover', borderRadius: '8px', background: '#f5f2e9' }}
+                              sizes="56px"
+                            />
+                          </div>
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 500, color: '#524f25', lineHeight: 1.3 }}>

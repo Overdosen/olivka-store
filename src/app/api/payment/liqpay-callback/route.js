@@ -41,37 +41,46 @@ export async function POST(request) {
     const isSuccess = ['success', 'sandbox', 'wait_accept'].includes(status);
 
     if (isSuccess) {
-      // 3. Update Order Status in Supabase (USING SERVICE ROLE TO BYPASS RLS)
+      // 3. Atomic Update Order Status (ONLY if not already paid)
       console.log(`[LiqPay Callback] Attempting to update order ${order_id} to status 'paid'...`);
       
-      if (!supabaseService) {
-        console.error('[LiqPay Callback] supabaseService is not initialized. Using anon client (this will fail if RLS is on).');
-      }
-      
       const db = supabaseService || supabase;
-
+      
+      // We use .neq('status', 'paid') to ensure we only update if it haven't been processed yet
       const { data: orderData, error: orderError } = await db
         .from('orders')
         .update({ status: 'paid' })
         .eq('id', order_id)
+        .neq('status', 'paid') 
         .select()
         .single();
 
       if (orderError) {
+        // If error is because no rows matched (it was already paid), we just return OK to stop LiqPay retries
+        if (orderError.code === 'PGRST116' || orderError.message?.includes('0 rows')) {
+          console.log(`[LiqPay Callback] Order ${order_id} is already processed (paid). Stopping.`);
+          return NextResponse.json({ status: 'ok' });
+        }
+        
         console.error('[LiqPay Callback] Supabase Update Error:', orderError);
         return NextResponse.json({ status: 'error', message: 'DB update failed', error: orderError.message });
       }
 
-      console.log('[LiqPay Callback] Order status updated to paid for ID:', order_id);
+      console.log('[LiqPay Callback] Order status atomically updated to paid for ID:', order_id);
 
       // 4. Stock Deduction is now handled automatically by a Postgres trigger (trigger_on_order_paid)
       // in the database when status changes to 'paid'.
 
       // 4. Checkbox Fiscalization
+      // DOUBLE CHECK: Even after atomic update, ensure we don't have a receipt yet
       let receiptId = orderData.fiscal_receipt_id;
       let receiptUrl = orderData.fiscal_receipt_url;
 
-      if (!receiptId) {
+      if (!receiptId || receiptId.startsWith('ERROR')) {
+        // If it was an error before, we might want to retry, but if it has a real ID, skip!
+        if (receiptId && !receiptId.startsWith('ERROR')) {
+            console.log('[LiqPay Callback] Order already has a valid fiscal receipt, skipping creation:', receiptId);
+        } else {
         let finalUpdateErrorObj = null;
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);

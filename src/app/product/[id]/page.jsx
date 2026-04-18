@@ -1,5 +1,6 @@
 import { supabase } from '../../../lib/supabase';
 import ProductClient from './ProductClient';
+import Breadcrumbs from '../../../components/Breadcrumbs';
 
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
@@ -43,22 +44,16 @@ export async function generateMetadata({ params }) {
       locale: 'uk_UA',
       type: 'article',
     },
-    twitter: {
-      card: 'summary_large_image',
-      title: fullTitle,
-      description: description,
-      images: imageUrl ? [imageUrl] : [],
-    },
   };
 }
 
 export default async function ProductPage({ params }) {
   const { id } = await params;
   
-  // Fetch product on the server for initial render
+  // Fetch product with category on the server for initial render
   const { data } = await supabase
     .from('products')
-    .select('*')
+    .select('*, categories(id, name)')
     .eq('id', id)
     .single();
 
@@ -99,7 +94,7 @@ export default async function ProductPage({ params }) {
   };
 
   // Structured Data for Google (JSON-LD)
-  const jsonLd = {
+  const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: data.name,
@@ -124,12 +119,50 @@ export default async function ProductPage({ params }) {
     },
   };
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Головна',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: data.categories?.name || 'Каталог',
+        item: `${baseUrl}/category/${data.categories?.id || 'all'}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: data.name,
+        item: `${baseUrl}/product/${id}`,
+      },
+    ],
+  };
+
+  const breadcrumbItems = [
+    { label: 'Каталог', href: '/catalog' },
+    { label: data.categories?.name || 'Категорія', href: `/category/${data.categories?.id}` },
+    { label: data.name }
+  ];
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <div className="container" style={{ paddingTop: '2rem' }}>
+        <Breadcrumbs items={breadcrumbItems} />
+      </div>
       <ProductClient product={productWithParsedData} />
     </>
   );

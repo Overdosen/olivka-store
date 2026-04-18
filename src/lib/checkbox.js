@@ -288,7 +288,8 @@ class CheckboxService {
     try {
       await this.ensureShiftOpened();
 
-      const { items, email, full_name, total } = order;
+      const { items, email, full_name, total, order_number } = order;
+      console.log(`[Checkbox] Creating receipt for Order #${order_number}...`);
 
       // Map items to Checkbox goods
       const goods = items.map(item => {

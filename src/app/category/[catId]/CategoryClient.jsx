@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, X } from 'lucide-react';
@@ -229,10 +230,12 @@ function ProductCard({ product, index }) {
           {!isLoaded && (
             <div className="absolute inset-0 bg-stone-100 animate-pulse z-10" />
           )}
-          <img
-            ref={imgRef}
+          <Image
             src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
             alt={product.name}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+            priority={index < 4}
             onLoad={() => setIsLoaded(true)}
             className={`product-image absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
             style={{ opacity: isAvailable ? undefined : 0.6 }}

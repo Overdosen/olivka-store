@@ -13,7 +13,7 @@ export const metadata = {
     description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka. Естетичний та комфортний одяг для немовлят.',
     siteName: 'Store Olivka',
     images: [{
-      url: '/favicon.svg',
+      url: '/opengraph-image.png',
       width: 1200,
       height: 630,
       alt: 'Store Olivka Logo',
@@ -21,12 +21,6 @@ export const metadata = {
     locale: 'uk_UA',
     type: 'website',
   },
-  twitter: {
-    card: 'summary',
-    title: 'Store Olivka | Ніжний одяг для немовлят',
-    description: 'Натуральний одяг для вашого малюка з любов’ю від Store Olivka.',
-    images: [`${baseUrl}/favicon.svg`],
-  }
 };
 
 export default function HomePage() {

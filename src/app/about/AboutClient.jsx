@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import InfoModal from '../../components/InfoModal';
 
 // Імпорти
@@ -262,10 +263,12 @@ export default function AboutClient() {
                   {typeof sec.icon === 'string' && sec.icon.length < 10 ? (
                     <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{sec.icon}</span>
                   ) : (
-                    <img
+                    <Image
                       src={sec.icon?.src || sec.icon}
-                      alt=""
-                      style={{ height: '65px', width: 'auto', objectFit: 'contain' }}
+                      alt={sec.title}
+                      width={65}
+                      height={65}
+                      style={{ objectFit: 'contain' }}
                     />
                   )}
                 </div>

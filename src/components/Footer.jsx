@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import bearImg from '../assets/teddy_bear.png';
+import Image from 'next/image';
 import ContactModal from './ContactModal';
 
 const FOOTER_CATEGORIES = [
@@ -87,7 +88,7 @@ export default function Footer() {
             <div className="footer-col footer-col-brand">
               <div className="footer-brand-wrap">
                 <Link href="/" className="footer-logo">
-                  <img src={bearImg.src || bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" />
+                  <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" width={38} height={38} />
                   <span>store.olivka</span>
                 </Link>
                 <p className="footer-slogan">З любов'ю до найменших</p>
@@ -230,7 +231,9 @@ export default function Footer() {
         {/* ─── MOBILE VERSION ─── */}
         <div className="footer-mobile-container">
           <Link href="/" className="footer-mobile-logo">
-            <img src={bearImg.src || bearImg} alt="Olivka Logo" />
+            <div style={{ position: 'relative', width: '45px', height: '45px' }}>
+              <Image src={bearImg} alt="Olivka Logo" fill style={{ objectFit: 'contain' }} />
+            </div>
             <span>store.olivka</span>
           </Link>
 

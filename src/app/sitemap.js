@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 export default async function sitemap() {
-  const baseUrl = 'https://olivka.store';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
 
   // 1. Статичні сторінки
   const staticPages = [

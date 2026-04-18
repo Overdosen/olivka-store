@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { supabase } from '../../lib/supabase';
+import Image from 'next/image';
 
 export default function CatalogClient() {
   const [dbCategories, setDbCategories] = useState([]);
@@ -163,18 +164,17 @@ export default function CatalogClient() {
           >
             <Link href={`/category/${cat.id}`} className="category-tile">
               <div className="category-image-wrapper">
-                <img
+                <Image
                   src={getCategoryImage(cat.slug)}
                   alt={cat.name}
+                  fill
                   className="category-image"
-                  style={{ position: 'relative', zIndex: 2 }}
+                  style={{ zIndex: 2 }}
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   onError={(e) => {
-                    e.target.style.opacity = '0';
+                    e.currentTarget.style.opacity = '0';
                   }}
                 />
-                <div className="category-placeholder">
-                  {cat.name}
-                </div>
               </div>
               <h3 className="category-name">{cat.name}</h3>
             </Link>

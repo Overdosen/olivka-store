@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../../context/CartContext';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -85,7 +86,17 @@ export default function ProductClient({ product }) {
     }
 
     addToCart(product, selectedSize, 1);
-    toast.success(`${product.name} додано до кошика!`, { icon: '🛍️' });
+    toast.success(`${product.name} додано до кошика!`, { 
+      icon: <ShoppingBag size={20} style={{ color: '#524f25' }} />,
+      style: {
+        borderRadius: '12px',
+        background: '#fdfcf7',
+        color: '#524f25',
+        fontFamily: 'var(--font-sans)',
+        fontSize: '14px',
+        border: '1px solid rgba(82,79,37,0.1)',
+      }
+    });
   };
 
   return (
@@ -117,13 +128,15 @@ export default function ProductClient({ product }) {
         >
           {galleryImages.map((src, i) => (
             <div key={i} className="snap-center relative bg-stone-50 flex items-center justify-center overflow-hidden" style={{ flex: '0 0 100%', height: '100%' }}>
-              <img
-                ref={i === 0 ? mainImgRef : null}
+              <Image
                 src={src}
+                fill
+                priority={i === 0}
                 onLoad={() => i === 0 && setIsImageLoaded(true)}
                 onError={() => i === 0 && setIsImageLoaded(true)}
                 alt={`${product.name} - ${i === 0 ? 'Головне фото' : `Фото ${i + 1}`} | Дитячий одяг Store Olivka`}
-                className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                className={`transition-opacity duration-300 ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                style={{ objectFit: 'contain' }}
               />
             </div>
           ))}
@@ -185,7 +198,14 @@ export default function ProductClient({ product }) {
                     className="flex items-center justify-center -translate-y-3 hover:scale-110 active:scale-95 transition-transform"
                     style={{ marginLeft: 'calc(1cm - 10px)' }}
                   >
-                    <img src={sizeIcon.src || sizeIcon} alt="Size Guide" className="w-12 h-12 object-contain" />
+                    <div className="w-12 h-12 relative">
+                      <Image 
+                        src={sizeIcon} 
+                        alt="Size Guide" 
+                        fill
+                        style={{ objectFit: 'contain' }} 
+                      />
+                    </div>
                   </button>
                 )}
               </div>

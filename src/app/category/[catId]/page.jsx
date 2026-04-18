@@ -1,6 +1,7 @@
 import React from 'react';
 import { supabase } from '../../../lib/supabase';
 import CategoryClient from './CategoryClient';
+import Breadcrumbs from '../../../components/Breadcrumbs';
 
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }) {
   }
 
   const fullTitle = `${title} | Store Olivka`;
-  const logoUrl = `${baseUrl}/favicon.svg`;
+  const ogImageUrl = '/opengraph-image.png';
 
   return {
     title: title,
@@ -45,16 +46,10 @@ export async function generateMetadata({ params }) {
       title: fullTitle,
       description: description,
       siteName: 'Store Olivka',
-      images: [{ url: logoUrl, width: 800, height: 800, alt: 'Store Olivka Logo' }],
+      images: [{ url: ogImageUrl, width: 1200, height: 630, alt: 'Store Olivka' }],
       locale: 'uk_UA',
       type: 'website',
     },
-    twitter: {
-      card: 'summary',
-      title: fullTitle,
-      description: description,
-      images: [logoUrl],
-    }
   };
 }
 
@@ -95,12 +90,54 @@ export default async function CategoryPage({ params }) {
   const products = (prodData || []).map(p => ({ ...p, image: p.image_url }));
   const categoryWithId = { ...category, id: catId || 'all' };
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
+  
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Головна',
+        item: baseUrl,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Каталог',
+        item: `${baseUrl}/catalog`,
+      },
+    ],
+  };
+
+  if (catId && catId !== 'all') {
+    breadcrumbJsonLd.itemListElement.push({
+      '@type': 'ListItem',
+      position: 3,
+      name: category.name,
+      item: `${baseUrl}/category/${catId}`,
+    });
+  }
+
+  const breadcrumbItems = [
+    { label: 'Каталог', href: '/catalog' },
+    ...(catId && catId !== 'all' ? [{ label: category.name }] : [])
+  ];
+
   return (
     <React.Suspense fallback={
       <div className="container section text-center" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p className="font-serif italic text-[#524f25]/60">Завантаження...</p>
       </div>
     }>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <div className="container" style={{ paddingTop: '2rem' }}>
+        <Breadcrumbs items={breadcrumbItems} />
+      </div>
       <CategoryClient initialCategory={categoryWithId} initialProducts={products} />
     </React.Suspense>
   );
