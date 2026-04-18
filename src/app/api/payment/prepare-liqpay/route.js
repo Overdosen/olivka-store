@@ -29,6 +29,8 @@ export async function POST(request) {
 
   try {
     const { orderId, amount, description, order_number } = await request.json();
+    console.log(`[Prepare LiqPay] Starting request for OrderID: ${orderId}`);
+    const apiStartTime = Date.now();
 
     if (!orderId || !amount) {
       return NextResponse.json({ error: 'Missing orderId or amount' }, { status: 400 });
@@ -55,6 +57,9 @@ export async function POST(request) {
     }
 
     const { data, signature } = liqpay.cnfg_generate(params);
+
+    const apiEndTime = Date.now();
+    console.log(`[Prepare LiqPay] Finished for ${orderId}. Processing took ${apiEndTime - apiStartTime}ms`);
 
     return NextResponse.json({ data, signature });
   } catch (error) {

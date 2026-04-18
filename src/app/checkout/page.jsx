@@ -113,6 +113,39 @@ export default function CheckoutPage() {
     setAddress('');
   }, [delivery]);
 
+  // --- Форма: Збереження та відновлення з localStorage ---
+  useEffect(() => {
+    // Відновлення даних при завантаженні
+    const savedName = localStorage.getItem('checkout_fullName');
+    const savedPhone = localStorage.getItem('checkout_phone');
+    const savedEmail = localStorage.getItem('checkout_email');
+    const savedAddress = localStorage.getItem('checkout_address');
+    const savedNotes = localStorage.getItem('checkout_notes');
+
+    if (savedName && !fullName) setFullName(savedName);
+    if (savedPhone && !phone) setPhone(savedPhone);
+    if (savedEmail && !email) setEmail(savedEmail);
+    if (savedAddress && !address) setAddress(savedAddress);
+    if (savedNotes && !notes) setNotes(savedNotes);
+  }, []);
+
+  useEffect(() => {
+    // Збереження даних при зміні
+    localStorage.setItem('checkout_fullName', fullName);
+    localStorage.setItem('checkout_phone', phone);
+    localStorage.setItem('checkout_email', email);
+    localStorage.setItem('checkout_address', address);
+    localStorage.setItem('checkout_notes', notes || '');
+  }, [fullName, phone, email, address, notes]);
+
+  const clearFormStorage = () => {
+    localStorage.removeItem('checkout_fullName');
+    localStorage.removeItem('checkout_phone');
+    localStorage.removeItem('checkout_email');
+    localStorage.removeItem('checkout_address');
+    localStorage.removeItem('checkout_notes');
+  };
+
   // Показуємо AuthModal якщо не авторизований після завантаження
   // Авторизація тепер необов'язкова
   /* 
@@ -174,6 +207,9 @@ export default function CheckoutPage() {
         user_email: user?.email || 'guest'
       });
 
+      console.log('[Checkout] Starting order submission...');
+      const startTime = performance.now();
+
       const { data: newOrder, error } = await supabase.from('orders').insert({
         id:              newOrderId,
         user_id:         user?.id || null,
@@ -188,6 +224,9 @@ export default function CheckoutPage() {
         payment_method:  payment,
         notes:           notes.trim() || null,
       }).select('order_number').single();
+
+      const dbTime = performance.now();
+      console.log(`[Checkout] DB Insert took ${(dbTime - startTime).toFixed(2)}ms`);
 
       if (error) {
         console.error('Детальна помилка Supabase:', {
@@ -241,6 +280,9 @@ export default function CheckoutPage() {
 
       // --- LiqPay Redirect ---
       if (payment === 'liqpay') {
+        console.log('[Checkout] Preparing LiqPay payment...');
+        const lpStartTime = performance.now();
+        
         const prepRes = await fetch('/api/payment/prepare-liqpay', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -250,6 +292,9 @@ export default function CheckoutPage() {
             description: `Оплата замовлення №${shortId} в Store Olivka`
           })
         });
+        
+        const lpEndTime = performance.now();
+        console.log(`[Checkout] LiqPay preparation took ${(lpEndTime - lpStartTime).toFixed(2)}ms`);
         
         const resData = await prepRes.json();
 
@@ -278,6 +323,10 @@ export default function CheckoutPage() {
           form.appendChild(inputSig);
           
           document.body.appendChild(form);
+          
+          // Очищаємо localStorage безпосередньо перед переходом на LiqPay
+          clearFormStorage();
+          
           form.submit();
           return;
         }
@@ -285,6 +334,9 @@ export default function CheckoutPage() {
 
       toast.dismiss(loadingToast);
       toast.success(`✅ Замовлення №${shortId} прийнято!`, { duration: 5000 });
+      
+      // Очищення даних форми з localStorage після успішного оформлення
+      clearFormStorage();
       
       // Перенаправлення на сторінку успіху для всіх користувачів (щоб бачили реквізити для COD)
       router.push(`/payment/success?order_id=${newOrderId}&orderNo=${newOrder?.order_number || ''}&method=cod`);
