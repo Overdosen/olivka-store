@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ChevronDown, Users, ShoppingBag } from 'lucide-react';
+import { Search, X, ChevronDown, Users, ShoppingBag, ChevronUp, ArrowUpDown, Calendar } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 
 const STATUS_MAP = {
@@ -23,6 +23,8 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'lastOrderDate', direction: 'desc' });
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -76,7 +78,20 @@ export default function CustomersPage() {
       }
     });
 
-    setClients([...allProfiles, ...Object.values(guestProfiles)]);
+    const combinedClients = [...allProfiles, ...Object.values(guestProfiles)].map(client => {
+      const clientOrders = ordersMap[client.id] || [];
+      const lastOrder = clientOrders[0]; // Orders are already sorted by created_at desc
+      const totalAmount = clientOrders.reduce((s, o) => s + (o.total || 0), 0);
+      
+      return {
+        ...client,
+        lastOrderDate: lastOrder ? lastOrder.created_at : null,
+        ordersCount: clientOrders.length,
+        totalAmount
+      };
+    });
+
+    setClients(combinedClients);
     setOrders(ordersMap);
     setLoading(false);
   }, []);
@@ -97,7 +112,26 @@ export default function CustomersPage() {
     };
   }, [fetchData]);
 
-  const filteredClients = clients.filter(c => {
+  const sortedClients = [...clients].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aValue = a[sortConfig.key];
+    let bValue = b[sortConfig.key];
+
+    if (sortConfig.key === 'full_name') {
+      aValue = aValue || a.email || '';
+      bValue = bValue || b.email || '';
+    }
+
+    if (aValue === null || aValue === undefined) return 1;
+    if (bValue === null || bValue === undefined) return -1;
+
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const filteredClients = sortedClients.filter(c => {
     const q = search.toLowerCase();
     return (
       (c.full_name || '').toLowerCase().includes(q) ||
@@ -105,6 +139,31 @@ export default function CustomersPage() {
       (c.phone_ua || '').toLowerCase().includes(q)
     );
   });
+
+  const requestSort = (key) => {
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortConfig.key !== column) return <ArrowUpDown className="w-3.5 h-3.5 text-stone-200 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="w-3.5 h-3.5 text-stone-900" /> 
+      : <ChevronDown className="w-3.5 h-3.5 text-stone-900" />;
+  };
+
+  const formatDate = (dateString, showNever = true) => {
+    if (!dateString) return showNever ? <span className="text-stone-300 italic">немає</span> : '—';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }).replace('.', '');
+  };
 
   async function updateOrderStatus(orderId, newStatus) {
     await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
@@ -184,9 +243,22 @@ export default function CustomersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-stone-100">
-                {['Клієнт', 'Email', 'Телефон', 'Дата реєстрації', 'Замовлень', 'Сума'].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-stone-400 uppercase tracking-wider">
-                    {h}
+                {[
+                  { label: 'Клієнт', key: 'full_name' },
+                  { label: 'Email', key: 'email' },
+                  { label: 'Телефон', key: 'phone_ua' },
+                  { label: 'Дата замовлення', key: 'lastOrderDate' },
+                  { label: 'Замовлень', key: 'ordersCount' },
+                  { label: 'Сума', key: 'totalAmount' }
+                ].map(h => (
+                  <th 
+                    key={h.key} 
+                    className="px-5 py-4 text-left text-[10px] font-semibold text-stone-400 uppercase tracking-wider cursor-pointer hover:text-stone-800 transition-colors group"
+                    onClick={() => requestSort(h.key)}
+                  >
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      {h.label} <SortIcon column={h.key} />
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -204,7 +276,7 @@ export default function CustomersPage() {
                     onClick={() => openClient(client)}
                     className="border-b border-stone-50 hover:bg-stone-50 cursor-pointer transition-colors"
                   >
-                    <td className="px-5 py-4">
+                    <td className={`px-5 py-4 ${sortConfig.key === 'full_name' ? 'bg-stone-50/40' : ''}`}>
                       <div className="flex items-center gap-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-600'}`}>
                           {(client.full_name || client.email || '?')[0].toUpperCase()}
@@ -216,17 +288,19 @@ export default function CustomersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-stone-500">{client.email}</td>
-                    <td className="px-5 py-4 text-stone-500">{client.phone_ua || co[0]?.phone || '—'}</td>
-                    <td className="px-5 py-4 text-stone-400 text-xs">
-                      {new Date(client.created_at).toLocaleDateString('uk-UA')}
+                    <td className={`px-5 py-4 text-stone-500 ${sortConfig.key === 'email' ? 'bg-stone-50/40' : ''}`}>{client.email}</td>
+                    <td className={`px-5 py-4 text-stone-500 ${sortConfig.key === 'phone_ua' ? 'bg-stone-50/40' : ''}`}>{client.phone_ua || orders[client.id]?.[0]?.phone || '—'}</td>
+                    <td className={`px-5 py-4 text-stone-400 text-xs whitespace-nowrap ${sortConfig.key === 'lastOrderDate' ? 'bg-stone-50/40' : ''}`}>
+                      {formatDate(client.lastOrderDate)}
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-xs font-semibold">
-                        <ShoppingBag size={11} /> {co.length}
+                    <td className={`px-5 py-4 ${sortConfig.key === 'ordersCount' ? 'bg-stone-50/40' : ''}`}>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold uppercase tracking-tight">
+                        <ShoppingBag size={11} /> {client.ordersCount}
                       </span>
                     </td>
-                    <td className="px-5 py-4 font-semibold text-stone-700">{total > 0 ? `${total} грн` : '—'}</td>
+                    <td className={`px-5 py-4 font-semibold text-stone-700 ${sortConfig.key === 'totalAmount' ? 'bg-stone-50/40' : ''}`}>
+                      {client.totalAmount > 0 ? `${client.totalAmount} грн` : '—'}
+                    </td>
                   </motion.tr>
                 );
               })}

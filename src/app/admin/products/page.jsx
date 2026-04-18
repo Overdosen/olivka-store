@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Plus, Edit2, Trash2, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,8 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
+
 
   useEffect(() => {
     fetchProducts();
@@ -54,10 +56,53 @@ export default function AdminProducts() {
     }
   }
 
-  const filteredProducts = products.filter(product => 
+  const sortedProducts = [...products].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aValue = a[sortConfig.key];
+    let bValue = b[sortConfig.key];
+
+    // Handling nested category names for sorting if needed
+    if (sortConfig.key === 'category') {
+      aValue = a.categories?.name || '';
+      bValue = b.categories?.name || '';
+    }
+
+    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const filteredProducts = sortedProducts.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const requestSort = (key) => {
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const SortIcon = ({ column }) => {
+    if (sortConfig.key !== column) return <ArrowUpDown className="w-3 h-3 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="w-3.5 h-3.5 text-stone-900" /> 
+      : <ChevronDown className="w-3.5 h-3.5 text-stone-900" />;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '—';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('uk-UA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    }).replace('.', '');
+  };
+
 
   return (
     <div className="space-y-8 pb-10">
@@ -91,24 +136,53 @@ export default function AdminProducts() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-stone-50/50 border-b border-stone-200/60">
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider w-32">Фото</th>
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider">Назва</th>
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider">Категорія</th>
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider">Ціна</th>
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider text-center">Статус</th>
-                <th className="p-5 font-semibold text-stone-600 text-xs uppercase tracking-wider text-right">Дії</th>
+                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider w-32">Фото</th>
+                <th 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  onClick={() => requestSort('name')}
+                >
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    Назва <SortIcon column="name" />
+                  </div>
+                </th>
+                <th 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  onClick={() => requestSort('category')}
+                >
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    Категорія <SortIcon column="category" />
+                  </div>
+                </th>
+                <th 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  onClick={() => requestSort('price')}
+                >
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    Ціна <SortIcon column="price" />
+                  </div>
+                </th>
+                <th 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  onClick={() => requestSort('created_at')}
+                >
+                  <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    Дата додавання <SortIcon column="created_at" />
+                  </div>
+                </th>
+                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-center">Статус</th>
+                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-right">Дії</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="p-12 text-center text-stone-400 animate-pulse font-medium">
+                  <td colSpan="7" className="p-12 text-center text-stone-400 animate-pulse font-medium">
                     Завантаження товарів...
                   </td>
                 </tr>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="p-12 text-center text-stone-500">
+                  <td colSpan="7" className="p-12 text-center text-stone-500">
                     <Package className="w-12 h-12 mx-auto text-stone-300 mb-3" />
                     <p className="font-medium">Товарів не знайдено.</p>
                     <p className="text-sm mt-1">Спробуйте змінити запит пошуку або додати новий товар.</p>
@@ -130,12 +204,19 @@ export default function AdminProducts() {
                         )}
                       </div>
                     </td>
-                    <td className="p-5">
+                    <td className={`p-5 ${sortConfig.key === 'name' ? 'bg-stone-50/40' : ''}`}>
                       <div className="font-medium text-stone-800">{product.name}</div>
-                      {product.sku && <div className="text-xs text-stone-500 mt-1">Арт: {product.sku}</div>}
+                      {product.sku && <div className="text-[10px] text-stone-400 mt-1 uppercase tracking-tight">Арт: {product.sku}</div>}
                     </td>
-                    <td className="p-5 text-stone-500">{product.categories?.name || (product.category_id === 'fullset' ? 'Готові рішення' : '—')}</td>
-                    <td className="p-5 font-semibold text-stone-800">{product.price} ₴</td>
+                    <td className={`p-5 text-stone-500 ${sortConfig.key === 'category' ? 'bg-stone-50/40' : ''}`}>
+                      {product.categories?.name || (product.category_id === 'fullset' ? 'Готові рішення' : '—')}
+                    </td>
+                    <td className={`p-5 font-semibold text-stone-800 ${sortConfig.key === 'price' ? 'bg-stone-50/40' : ''}`}>
+                      {product.price} ₴
+                    </td>
+                    <td className={`p-5 text-stone-400 text-xs whitespace-nowrap ${sortConfig.key === 'created_at' ? 'bg-stone-50/40' : ''}`}>
+                      {formatDate(product.created_at)}
+                    </td>
                     <td className="p-5 text-center">
                       <span className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide ${
                         product.is_published 
