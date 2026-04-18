@@ -29,16 +29,24 @@ export async function POST(request) {
     const payment = liqpay.decode_data(data);
     console.log('[LiqPay Callback] Payment Data Received:', payment);
 
-    const { status, order_id, amount, currency } = payment;
+    if (!payment) {
+      console.error('[LiqPay Callback] Failed to decode payment data');
+      return NextResponse.json({ error: 'Failed to decode data' }, { status: 400 });
+    }
+
+    const { status, order_id } = payment;
     const isSuccess = ['success', 'sandbox', 'wait_accept'].includes(status);
 
     if (isSuccess) {
       console.log(`[LiqPay Callback] Processing successful payment for order ${order_id}...`);
       
+      if (!supabaseService) {
+        console.warn('[LiqPay Callback] WARNING: supabaseService is MISSING. Using anonymous client (may fail due to RLS).');
+      }
+      
       const db = supabaseService || supabase;
       
       // 3. Atomic Update: Try to mark as 'paid' and get the full order data
-      // We use select() to get all data needed for n8n in one trip
       const { data: orderData, error: orderError } = await db
         .from('orders')
         .update({ 
@@ -51,16 +59,21 @@ export async function POST(request) {
         .single();
 
       if (orderError) {
-        // CASE: Order was already marked 'paid' (e.g. LiqPay retry)
+        // CASE: Order was already marked 'paid' (PGRST116 returned by .single() when no rows match criteria or filter)
         if (orderError.code === 'PGRST116' || orderError.message?.includes('0 rows')) {
-          console.log(`[LiqPay Callback] Order ${order_id} already marked as paid. Fetching current data for n8n...`);
+          console.log(`[LiqPay Callback] Order ${order_id} already marked as paid or not found. Fetching current data for n8n...`);
           
-          const { data: existingOrder } = await db
+          const { data: existingOrder, error: fetchError } = await db
             .from('orders')
             .select()
             .eq('id', order_id)
             .single();
             
+          if (fetchError) {
+             console.error('[LiqPay Callback] Failed to fetch existing order:', fetchError);
+             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+          }
+
           if (existingOrder) {
             await notifyN8n(existingOrder, payment);
           }
@@ -69,7 +82,7 @@ export async function POST(request) {
         }
         
         console.error('[LiqPay Callback] Database Update Error:', orderError);
-        return NextResponse.json({ status: 'error', error: orderError.message }, { status: 500 });
+        return NextResponse.json({ status: 'error', error: orderError.message, code: orderError.code }, { status: 500 });
       }
 
       console.log('[LiqPay Callback] Order status updated to paid:', order_id);
@@ -85,7 +98,11 @@ export async function POST(request) {
       const db = supabaseService || supabase;
       await db
         .from('orders')
-        .update({ status: 'payment_error' })
+        .update({ 
+          status: 'payment_error',
+          payment_details: payment,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', order_id);
 
       return NextResponse.json({ status: 'unsuccessful', paymentStatus: status });
@@ -109,7 +126,7 @@ async function notifyN8n(order, payment) {
   }
 
   try {
-    console.log(`[LiqPay Callback] Notifying n8n for Order #${order.order_number}...`);
+    console.log(`[LiqPay Callback] Notifying n8n for Order #${order.order_number}... Webhook: ${webhookUrl}`);
     
     // Construct rich payload for n8n
     const n8nPayload = {
@@ -131,6 +148,8 @@ async function notifyN8n(order, payment) {
         method: order.delivery_method,
         address: order.address
       },
+      notes: order.notes,
+      created_at: order.created_at,
       timestamp: new Date().toISOString()
     };
 
