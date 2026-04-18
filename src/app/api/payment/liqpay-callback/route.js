@@ -78,10 +78,6 @@ export async function POST(request) {
 
       if (!receiptId || receiptId.startsWith('ERROR')) {
         // If it was an error before, we might want to retry, but if it has a real ID, skip!
-        if (receiptId && !receiptId.startsWith('ERROR')) {
-            console.log('[LiqPay Callback] Order already has a valid fiscal receipt, skipping creation:', receiptId);
-        } else {
-        let finalUpdateErrorObj = null;
         try {
           console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
           
@@ -97,7 +93,6 @@ export async function POST(request) {
             return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
           };
 
-          // Wrap the entire fiscalization flow in a 8-second timeout (Vercel max is usually 10s on Hobby)
           const receipt = await withTimeout(
             (async () => {
               const shift = await checkboxService.ensureShiftOpened();
@@ -117,7 +112,6 @@ export async function POST(request) {
             receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
             console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}`);
 
-            // Log performance on success
             await db.from('fiscal_performance_logs').insert({
               order_id: order_id,
               order_number: orderData.order_number,
@@ -150,7 +144,6 @@ export async function POST(request) {
             console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
           }
 
-          // Log performance even on error
           await db.from('fiscal_performance_logs').insert({
             order_id: order_id,
             order_number: orderData.order_number,
@@ -165,7 +158,6 @@ export async function POST(request) {
           }).catch(err => console.error('[LiqPay Callback] Failed to log performance error:', err));
         }
 
-        // Гарантовано зберігаємо результат фіскалізації (успіх або опис помилки)
         console.log(`[LiqPay Callback] Updating order ${order_id} with fiscal status: ${receiptId}`);
         const { error: finalUpdateError } = await db
           .from('orders')
@@ -176,7 +168,6 @@ export async function POST(request) {
           .eq('id', order_id);
           
         if (finalUpdateError) {
-          finalUpdateErrorObj = finalUpdateError;
           console.error('[LiqPay Callback] Failed to save final receipt info to DB:', finalUpdateError);
         }
       } else {
