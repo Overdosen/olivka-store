@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { LiqPay } from '../../../../lib/liqpay';
 import { supabase, supabaseService } from '../../../../lib/supabase';
-import { checkboxService } from '../../../../lib/checkbox';
-
 
 const liqpay = new LiqPay(
   process.env.LIQPAY_PUBLIC_KEY,
@@ -27,205 +25,63 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
-    if (isTestBypass) {
-      console.log('[LiqPay Callback] SIGNATURE BYPASS ENABLED for testing');
-    }
-
-    // 2. Decode and Analyze Data
+    // 2. Decode Payment Data
     const payment = liqpay.decode_data(data);
-    console.log('[LiqPay Callback] Payment Data:', payment);
+    console.log('[LiqPay Callback] Payment Data Received:', payment);
 
     const { status, order_id, amount, currency } = payment;
-
-    // LiqPay Success statuses: 'success', 'sandbox', 'wait_accept'
     const isSuccess = ['success', 'sandbox', 'wait_accept'].includes(status);
 
     if (isSuccess) {
-      // 3. Atomic Update Order Status (ONLY if not already paid)
-      console.log(`[LiqPay Callback] Attempting to update order ${order_id} to status 'paid'...`);
+      console.log(`[LiqPay Callback] Processing successful payment for order ${order_id}...`);
       
       const db = supabaseService || supabase;
       
-      // We use .neq('status', 'paid') to ensure we only update if it haven't been processed yet
+      // 3. Atomic Update: Try to mark as 'paid' and get the full order data
+      // We use select() to get all data needed for n8n in one trip
       const { data: orderData, error: orderError } = await db
         .from('orders')
-        .update({ status: 'paid' })
+        .update({ 
+          status: 'paid',
+          payment_details: payment,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', order_id)
-        .neq('status', 'paid') 
         .select()
         .single();
 
       if (orderError) {
-        // If error is because no rows matched (it was already paid), we just return OK to stop LiqPay retries
+        // CASE: Order was already marked 'paid' (e.g. LiqPay retry)
         if (orderError.code === 'PGRST116' || orderError.message?.includes('0 rows')) {
-          console.log(`[LiqPay Callback] Order ${order_id} is already processed (paid). Stopping.`);
-          return NextResponse.json({ status: 'ok' });
-        }
-        
-        console.error('[LiqPay Callback] Supabase Update Error:', orderError);
-        return NextResponse.json({ status: 'error', message: 'DB update failed', error: orderError.message });
-      }
-
-      console.log('[LiqPay Callback] Order status atomically updated to paid for ID:', order_id);
-
-      // 4. Stock Deduction is now handled automatically by a Postgres trigger (trigger_on_order_paid)
-      // in the database when status changes to 'paid'.
-
-      // 4. Checkbox Fiscalization
-      // DOUBLE CHECK: Even after atomic update, ensure we don't have a receipt yet
-      let receiptId = orderData.fiscal_receipt_id;
-      let receiptUrl = orderData.fiscal_receipt_url;
-
-      if (!receiptId || receiptId.startsWith('ERROR')) {
-        // If it was an error before, we might want to retry, but if it has a real ID, skip!
-        try {
-          console.log(`[LiqPay Callback] Starting Checkbox fiscalization for Order #${orderData.order_number}...`);
+          console.log(`[LiqPay Callback] Order ${order_id} already marked as paid. Fetching current data for n8n...`);
           
-          // Reset and start performance tracking
-          checkboxService.startPerformanceTracking();
-
-          // Helper function for timeout
-          const withTimeout = (promise, ms, timeoutErrorMsg) => {
-            let timeoutId;
-            const timeout = new Promise((_, reject) => {
-              timeoutId = setTimeout(() => reject(new Error(timeoutErrorMsg)), ms);
-            });
-            return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
-          };
-
-          const receipt = await withTimeout(
-            (async () => {
-              const shift = await checkboxService.ensureShiftOpened();
-              console.log(`[LiqPay Callback] Shift confirmed: ${shift?.id} (${shift?.status})`);
-              
-              console.log(`[LiqPay Callback] Creating receipt for ${orderData.items?.length} items...`);
-              return await checkboxService.createReceipt(orderData);
-            })(),
-            8000,
-            'CHECKBOX_TIMEOUT'
-          );
-
-          const perfReport = checkboxService.getPerformanceReport();
-
-          if (receipt && receipt.id) {
-            receiptId = receipt.id;
-            receiptUrl = `https://check.checkbox.ua/${receipt.id}`;
-            console.log(`[LiqPay Callback] Checkbox receipt created: ${receiptId}`);
-
-            await db.from('fiscal_performance_logs').insert({
-              order_id: order_id,
-              order_number: orderData.order_number,
-              auth_ms: perfReport.auth_ms,
-              shift_check_ms: perfReport.shift_check_ms,
-              shift_open_ms: perfReport.shift_open_ms,
-              receipt_creation_ms: perfReport.receipt_creation_ms,
-              total_ms: perfReport.total_ms,
-              status: 'success',
-              api_url: checkboxService.baseUrl,
-              cashier_name: checkboxService.cashierName
-            }).catch(err => console.error('[LiqPay Callback] Failed to log success performance:', err));
-          } else {
-            console.error('[LiqPay Callback] Checkbox returned no receipt ID');
-            receiptId = "ERROR_EMPTY";
-            receiptUrl = "БЕЗ ЧЕКА: Сервіс Checkbox повернув порожній ID";
+          const { data: existingOrder } = await db
+            .from('orders')
+            .select()
+            .eq('id', order_id)
+            .single();
+            
+          if (existingOrder) {
+            await notifyN8n(existingOrder, payment);
           }
-        } catch (error) {
-          const perfReport = checkboxService.getPerformanceReport();
-          let errorType = 'error';
-
-          if (error.message === 'CHECKBOX_TIMEOUT') {
-            receiptId = "ERROR_TIMEOUT";
-            receiptUrl = "БЕЗ ЧЕКА: Таймаут 8с (Checkbox не відповів)";
-            console.warn('[LiqPay Callback] Fiscalization timed out.');
-            errorType = 'timeout';
-          } else {
-            receiptId = "ERROR_API";
-            receiptUrl = `БЕЗ ЧЕКА: Checkbox API помилка: ${error.message}`;
-            console.error('[LiqPay Callback] Checkbox Fiscalization Failed:', error.message);
-          }
-
-          await db.from('fiscal_performance_logs').insert({
-            order_id: order_id,
-            order_number: orderData.order_number,
-            auth_ms: perfReport.auth_ms,
-            shift_check_ms: perfReport.shift_check_ms,
-            shift_open_ms: perfReport.shift_open_ms,
-            receipt_creation_ms: perfReport.receipt_creation_ms,
-            total_ms: perfReport.total_ms,
-            status: errorType,
-            error_details: error.message,
-            api_url: checkboxService.baseUrl
-          }).catch(err => console.error('[LiqPay Callback] Failed to log performance error:', err));
-        }
-
-        console.log(`[LiqPay Callback] Updating order ${order_id} with fiscal status: ${receiptId}`);
-        const { error: finalUpdateError } = await db
-          .from('orders')
-          .update({ 
-            fiscal_receipt_id: receiptId,
-            fiscal_receipt_url: receiptUrl
-          })
-          .eq('id', order_id);
           
-        if (finalUpdateError) {
-          console.error('[LiqPay Callback] Failed to save final receipt info to DB:', finalUpdateError);
+          return NextResponse.json({ status: 'ok', message: 'Already processed' });
         }
-      } else {
-        console.log('[LiqPay Callback] Order already has a fiscal receipt:', receiptId);
+        
+        console.error('[LiqPay Callback] Database Update Error:', orderError);
+        return NextResponse.json({ status: 'error', error: orderError.message }, { status: 500 });
       }
 
+      console.log('[LiqPay Callback] Order status updated to paid:', order_id);
 
-      // 5. Notify n8n with FULL order data
-    const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
-    
-    if (webhookUrl) {
-      try {
-        console.log('[LiqPay Callback] Notifying n8n webhook (Start)');
-        
-        const n8nPayload = {
-          source: 'liqpay_callback',
-          order_id: order_id,
-          order_number: orderData.order_number,
-          status: 'paid',
-          amount: payment.amount,
-          currency: payment.currency,
-          payment_id: payment.payment_id,
-          customer: {
-            email: orderData.email,
-            name: orderData.full_name,
-            phone: orderData.phone
-          },
-          items: orderData.items || [],
-          fiscal_details: receiptId ? {
-            id: receiptId,
-            url: receiptUrl,
-            total_duration: checkboxService.performanceLog.total_ms ? `${(checkboxService.performanceLog.total_ms / 1000).toFixed(1)} сек` : 'н/д'
-          } : null
-        };
+      // 4. Notify n8n Webhook
+      await notifyN8n(orderData, payment);
 
-        // Standard fetch without AbortController for simplicity and reliability in serverless context
-        const webhookRes = await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(n8nPayload)
-        });
-        
-        const responseText = await webhookRes.text();
-        console.log('[LiqPay Callback] n8n response status:', webhookRes.status);
-        console.log('[LiqPay Callback] n8n response body:', responseText.substring(0, 100)); // Log first 100 chars
-        
-      } catch (webhookErr) {
-        console.error('[LiqPay Callback] n8n notification error:', webhookErr.message);
-      }
-    } else {
-      console.warn('[LiqPay Callback] n8n webhook URL missing (check NEXT_PUBLIC_N8N_WEBHOOK_URL)');
-    }
+      return NextResponse.json({ status: 'ok' });
 
-    return NextResponse.json({ status: 'ok' });
     } else {
       console.warn(`[LiqPay Callback] Unsuccessful payment status: ${status} for order ${order_id}`);
       
-      // Update status to payment_error
       const db = supabaseService || supabase;
       await db
         .from('orders')
@@ -236,7 +92,58 @@ export async function POST(request) {
     }
 
   } catch (error) {
-    console.error('[LiqPay Callback] General Error:', error);
+    console.error('[LiqPay Callback] Critical Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+/**
+ * Sends order data to n8n webhook
+ */
+async function notifyN8n(order, payment) {
+  const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
+    console.warn('[LiqPay Callback] n8n webhook URL missing. Skipping notification.');
+    return;
+  }
+
+  try {
+    console.log(`[LiqPay Callback] Notifying n8n for Order #${order.order_number}...`);
+    
+    // Construct rich payload for n8n
+    const n8nPayload = {
+      source: 'liqpay_callback',
+      event: 'payment_success',
+      order_id: order.id,
+      order_number: order.order_number,
+      status: 'paid',
+      amount: payment.amount || order.total,
+      currency: payment.currency || 'UAH',
+      payment_id: payment.payment_id,
+      customer: {
+        email: order.email,
+        name: order.full_name,
+        phone: order.phone
+      },
+      items: order.items || [],
+      delivery: {
+        method: order.delivery_method,
+        address: order.address
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(n8nPayload)
+    });
+    
+    const responseText = await response.text();
+    console.log(`[LiqPay Callback] n8n response: ${response.status} ${responseText.substring(0, 50)}`);
+    
+  } catch (error) {
+    console.error('[LiqPay Callback] n8n notification failed:', error.message);
   }
 }
