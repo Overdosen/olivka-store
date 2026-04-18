@@ -118,7 +118,7 @@ export async function POST(request) {
  * Sends order data to n8n webhook
  */
 async function notifyN8n(order, payment) {
-  const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+  const webhookUrl = process.env.N8N_WEBHOOK_URL || process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
   
   if (!webhookUrl) {
     console.warn('[LiqPay Callback] n8n webhook URL missing. Skipping notification.');
@@ -126,10 +126,9 @@ async function notifyN8n(order, payment) {
   }
 
   try {
-    console.log(`[LiqPay Callback] Notifying n8n for Order #${order.order_number}... Webhook: ${webhookUrl}`);
-    
     // Construct rich payload for n8n
-    const n8nPayload = {
+    // Ensure all values are JSON-safe (handle BigInt if any)
+    const n8nPayload = JSON.parse(JSON.stringify({
       source: 'liqpay_callback',
       event: 'payment_success',
       order_id: order.id,
@@ -151,8 +150,11 @@ async function notifyN8n(order, payment) {
       notes: order.notes,
       created_at: order.created_at,
       timestamp: new Date().toISOString()
-    };
+    }, (_, v) => typeof v === 'bigint' ? v.toString() : v));
 
+    console.log(`[LiqPay Callback] Notifying n8n for Order #${order.order_number}... Webhook: ${webhookUrl}`);
+    console.log('[LiqPay Callback] n8n Payload:', JSON.stringify(n8nPayload));
+    
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -160,7 +162,8 @@ async function notifyN8n(order, payment) {
     });
     
     const responseText = await response.text();
-    console.log(`[LiqPay Callback] n8n response: ${response.status} ${responseText.substring(0, 50)}`);
+    console.log(`[LiqPay Callback] n8n response status: ${response.status}`);
+    console.log(`[LiqPay Callback] n8n response body: ${responseText}`);
     
   } catch (error) {
     console.error('[LiqPay Callback] n8n notification failed:', error.message);
