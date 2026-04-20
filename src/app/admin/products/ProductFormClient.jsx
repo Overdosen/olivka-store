@@ -338,22 +338,22 @@ export default function ProductFormClient({ id }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-20">
-      <div className="flex items-center space-x-6">
-        <Link href="/admin/products" className="p-3 !text-stone-400 hover:!text-stone-900 hover:bg-white rounded-md transition-all shadow-sm border border-stone-200/50">
+    <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 pb-20 px-4 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+        <Link href="/admin/products" className="p-2 sm:p-3 !text-stone-400 hover:!text-stone-900 hover:bg-white rounded-md transition-all shadow-sm border border-stone-200/50 w-fit">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">
+          <h1 className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800 tracking-tight">
             {isEditing ? 'Редагування товару' : 'Новий товар'}
           </h1>
-          <p className="text-stone-500 mt-2 font-medium">
-            {isEditing ? 'Оновіть інформацію, ціну або фото товару.' : 'Заповніть деталі для створення нового товару в каталозі.'}
+          <p className="text-stone-500 mt-1 md:mt-2 font-medium text-sm md:text-base">
+            {isEditing ? 'Оновіть інформацію, ціну або фото товару.' : 'Заповніть деталі для створення нового товару.'}
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-10 rounded-md shadow-sm border border-stone-200/60 space-y-10">
+      <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-5 md:p-10 rounded-md shadow-sm border border-stone-200/60 space-y-8 md:space-y-10">
         
         {/* Basic Info */}
         <div className="space-y-6">
@@ -441,10 +441,10 @@ export default function ProductFormClient({ id }) {
             <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Заміри виробу (Markdown)</label>
               <textarea
-                rows={2}
+                rows={4}
                 value={formData.measurements}
                 onChange={(e) => setFormData({...formData, measurements: e.target.value})}
-                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar font-mono text-sm"
+                className="w-full px-5 py-3.5 bg-stone-50/50 rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none custom-scrollbar font-mono text-xs md:text-sm"
                 placeholder="Заміри виробу..."
               />
               <p className="text-[10px] text-stone-400 mt-2 italic">Підтримує форматування: **жирний**, нові рядки.</p>
@@ -542,7 +542,7 @@ export default function ProductFormClient({ id }) {
                 className="w-full sm:w-auto bg-stone-200 hover:bg-stone-300 text-stone-800 px-4 py-2 rounded-lg font-semibold tracking-wide transition-all shadow-sm whitespace-nowrap disabled:opacity-50"
                 disabled={!sizeInput}
               >
-                Додати +
+                Додати
               </button>
             </div>
             {formData.sizes.length > 0 && (
@@ -770,11 +770,11 @@ export default function ProductFormClient({ id }) {
         </div>
 
         {/* Submit */}
-        <div className="pt-8 mb-10 flex justify-end">
+        <div className="pt-8 flex justify-end">
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-4 rounded-md font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center text-lg shadow-black/30"
+            className="w-full sm:w-auto px-8 py-4 rounded-md font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center justify-center text-lg shadow-black/30"
             style={{ backgroundColor: '#1c1917', color: '#ffffff' }}
           >
             {saving ? (

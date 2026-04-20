@@ -194,17 +194,17 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      {/* Заголовок */}
-      <div>
-        <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Клієнти</h1>
-        <p className="text-stone-500 mt-2 font-medium">Перегляд клієнтської бази та замовлень.</p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+        <div>
+          <h1 className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Клієнти</h1>
+          <p className="text-stone-500 mt-1 md:mt-2 font-medium text-sm md:text-base">База клієнтів та замовлень.</p>
+        </div>
       </div>
 
-      {/* Статистика */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <StatCard label="Всього клієнтів" value={clients.length} />
         <StatCard
-          label="Нових цього тижня"
+          label="Нових за тиждень"
           value={clients.filter(c => {
             const d = new Date(c.created_at);
             const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
@@ -214,99 +214,150 @@ export default function CustomersPage() {
         <StatCard
           label="Всього замовлень"
           value={Object.values(orders).reduce((s, arr) => s + arr.length, 0)}
+          className="sm:col-span-2 lg:col-span-1"
         />
       </div>
 
-      {/* Пошук */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 w-4 h-4" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Пошук за іменем, email або телефоном..."
-          className="w-full pl-11 pr-4 py-3 bg-white border border-stone-200 rounded-md text-stone-700 text-sm focus:outline-none focus:border-stone-400 transition"
-        />
-        {search && (
-          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600">
-            <X size={16} />
-          </button>
-        )}
-      </div>
+      {/* Main Table Card */}
+      <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden flex flex-col">
+        {/* Toolbar */}
+        <div className="p-4 border-b border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative w-full sm:max-w-xs md:max-w-sm">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+            <input
+              type="text"
+              placeholder="Пошук (ім'я, email, телефон)..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-10 py-2 bg-stone-50 rounded-md border border-stone-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm font-medium placeholder-stone-400"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+          <div className="text-xs font-medium text-stone-400 whitespace-nowrap">
+            Знайдено: {filteredClients.length}
+          </div>
+        </div>
 
-      {/* Таблиця */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm border border-stone-200/60 overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-stone-400 text-sm">Завантаження...</div>
-        ) : filteredClients.length === 0 ? (
-          <div className="p-12 text-center text-stone-400 text-sm">Клієнтів не знайдено</div>
-        ) : (
-          <table className="w-full text-sm">
+        {/* Table */}
+        <div className="overflow-x-auto min-h-[400px]">
+          <table className="w-full text-left border-collapse text-sm min-w-[600px] md:min-w-full">
             <thead>
-              <tr className="border-b border-stone-100">
+              <tr className="bg-stone-50/80 border-b border-stone-200">
                 {[
-                  { label: 'Клієнт', key: 'full_name' },
-                  { label: 'Email', key: 'email' },
-                  { label: 'Телефон', key: 'phone_ua' },
-                  { label: 'Дата замовлення', key: 'lastOrderDate' },
-                  { label: 'Замовлень', key: 'ordersCount' },
-                  { label: 'Сума', key: 'totalAmount' }
+                  { label: 'Клієнт', key: 'full_name', className: '' },
+                  { label: 'Email', key: 'email', className: 'hidden lg:table-cell' },
+                  { label: 'Телефон', key: 'phone_ua', className: 'hidden md:table-cell' },
+                  { label: 'Дата', key: 'lastOrderDate', className: 'hidden sm:table-cell' },
+                  { label: 'З-нь', key: 'ordersCount', className: 'w-20' },
+                  { label: 'Сума', key: 'totalAmount', className: 'text-right pr-8' }
                 ].map(h => (
                   <th 
                     key={h.key} 
-                    className="px-5 py-4 text-left text-[10px] font-semibold text-stone-400 uppercase tracking-wider cursor-pointer hover:text-stone-800 transition-colors group"
+                    className={`py-4 px-5 font-semibold text-stone-500 text-xs cursor-pointer hover:text-stone-900 transition-colors group whitespace-nowrap ${h.className}`}
                     onClick={() => requestSort(h.key)}
                   >
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                    <div className={`flex items-center gap-1.5 list-none ${h.className.includes('text-right') ? 'justify-end' : ''}`}>
                       {h.label} <SortIcon column={h.key} />
                     </div>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody>
-              {filteredClients.map((client, i) => {
-                const co = orders[client.id] || [];
-                const total = co.reduce((s, o) => s + (o.total || 0), 0);
-                return (
-                  <motion.tr
-                    key={client.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    onClick={() => openClient(client)}
-                    className="border-b border-stone-50 hover:bg-stone-50 cursor-pointer transition-colors"
-                  >
-                    <td className={`px-5 py-4 ${sortConfig.key === 'full_name' ? 'bg-stone-50/40' : ''}`}>
+            <tbody className="divide-y divide-stone-100">
+              {loading ? (
+                // Skeleton loading state
+                [...Array(5)].map((_, i) => (
+                  <tr key={i} className="animate-pulse bg-white border-b border-stone-100">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-600'}`}>
-                          {(client.full_name || client.email || '?')[0].toUpperCase()}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-medium text-stone-800">{client.full_name || '—'}</span>
-                          {client.isGuest && <span className="text-[10px] uppercase tracking-tighter text-amber-600 font-bold">Гість</span>}
-                          {client.isMissingProfile && <span className="text-[10px] uppercase tracking-tighter text-rose-500 font-bold">Без профілю</span>}
+                        <div className="w-8 h-8 bg-stone-100 rounded-full flex-shrink-0"></div>
+                        <div className="flex flex-col gap-1 w-full max-w-[120px]">
+                          <div className="h-4 bg-stone-100 rounded w-full"></div>
                         </div>
                       </div>
                     </td>
-                    <td className={`px-5 py-4 text-stone-500 ${sortConfig.key === 'email' ? 'bg-stone-50/40' : ''}`}>{client.email}</td>
-                    <td className={`px-5 py-4 text-stone-500 ${sortConfig.key === 'phone_ua' ? 'bg-stone-50/40' : ''}`}>{client.phone_ua || orders[client.id]?.[0]?.phone || '—'}</td>
-                    <td className={`px-5 py-4 text-stone-400 text-xs whitespace-nowrap ${sortConfig.key === 'lastOrderDate' ? 'bg-stone-50/40' : ''}`}>
-                      {formatDate(client.lastOrderDate)}
-                    </td>
-                    <td className={`px-5 py-4 ${sortConfig.key === 'ordersCount' ? 'bg-stone-50/40' : ''}`}>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-bold uppercase tracking-tight">
-                        <ShoppingBag size={11} /> {client.ordersCount}
-                      </span>
-                    </td>
-                    <td className={`px-5 py-4 font-semibold text-stone-700 ${sortConfig.key === 'totalAmount' ? 'bg-stone-50/40' : ''}`}>
-                      {client.totalAmount > 0 ? `${client.totalAmount} грн` : '—'}
-                    </td>
-                  </motion.tr>
-                );
-              })}
+                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-32"></div></td>
+                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-28"></div></td>
+                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-24"></div></td>
+                    <td className="px-5 py-4"><div className="h-5 bg-stone-100 rounded-full w-16"></div></td>
+                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-20"></div></td>
+                  </tr>
+                ))
+              ) : filteredClients.length === 0 ? (
+                // Empty state
+                <tr>
+                  <td colSpan="6" className="py-20 px-4 text-center bg-white">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-stone-50 flex items-center justify-center rounded-lg border border-stone-100 mb-4 shadow-sm">
+                        <Users className="w-8 h-8 text-stone-400" />
+                      </div>
+                      <h3 className="text-base font-semibold text-stone-900">Немає клієнтів</h3>
+                      <p className="text-sm text-stone-500 mt-1 max-w-sm">
+                        Спробуйте змінити критерії пошуку.
+                      </p>
+                      {search && (
+                        <button 
+                          onClick={() => setSearch('')} 
+                          className="mt-4 px-4 py-2 bg-stone-100/50 hover:bg-stone-100 rounded-md text-sm font-medium text-stone-700 transition-colors"
+                        >
+                          Скинути пошук
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredClients.map((client, i) => {
+                  const co = orders[client.id] || [];
+                  const total = co.reduce((s, o) => s + (o.total || 0), 0);
+                  return (
+                    <motion.tr
+                      key={client.id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => openClient(client)}
+                      className="border-b border-stone-100 hover:bg-stone-50/50 cursor-pointer transition-colors bg-white group"
+                    >
+                      <td className={`px-5 py-3 ${sortConfig.key === 'full_name' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-semibold text-[10px] md:text-sm flex-shrink-0 ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-600'}`}>
+                            {(client.full_name || client.email || '?')[0].toUpperCase()}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="font-medium text-stone-900 truncate max-w-[120px] md:max-w-none">{client.full_name || '—'}</span>
+                            {client.isGuest && <span className="text-[9px] uppercase tracking-tighter text-amber-600 font-bold mt-0.5">Гість</span>}
+                            {client.isMissingProfile && <span className="text-[9px] uppercase tracking-tighter text-rose-500 font-bold mt-0.5">Без профілю</span>}
+                            <div className="md:hidden mt-0.5 opacity-60 text-[10px] truncate max-w-[120px]">
+                              {client.phone_ua || orders[client.id]?.[0]?.phone || ''}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`px-5 py-3 text-stone-600 hidden lg:table-cell ${sortConfig.key === 'email' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>{client.email}</td>
+                      <td className={`px-5 py-3 text-stone-600 hidden md:table-cell ${sortConfig.key === 'phone_ua' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>{client.phone_ua || orders[client.id]?.[0]?.phone || '—'}</td>
+                      <td className={`px-5 py-3 text-stone-500 text-[11px] whitespace-nowrap hidden sm:table-cell ${sortConfig.key === 'lastOrderDate' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                        {formatDate(client.lastOrderDate)}
+                      </td>
+                      <td className={`px-5 py-3 ${sortConfig.key === 'ordersCount' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200/60 text-stone-700 text-[9px] md:text-[10px] font-bold uppercase tracking-tight shadow-xs">
+                          {client.ordersCount}
+                        </span>
+                      </td>
+                      <td className={`px-5 py-3 font-semibold text-stone-900 text-sm md:text-base text-right pr-8 ${sortConfig.key === 'totalAmount' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                        {client.totalAmount > 0 ? `${client.totalAmount}₴` : '—'}
+                      </td>
+                    </motion.tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
 
       {/* Модальне вікно клієнта */}
@@ -325,11 +376,11 @@ export default function CustomersPage() {
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
 
-function StatCard({ label, value }) {
+function StatCard({ label, value, className = "" }) {
   return (
-    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow">
-      <p className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
-      <p className="text-4xl font-cormorant font-bold text-stone-800">{value}</p>
+    <div className={`bg-white/80 backdrop-blur-sm p-4 md:p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow ${className}`}>
+      <p className="text-[10px] md:text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
+      <p className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800">{value}</p>
     </div>
   );
 }
@@ -385,14 +436,14 @@ function ClientModal({ client, onClose, onUpdateStatus }) {
         </div>
 
         {/* Контакти */}
-        <div className="p-6 grid grid-cols-2 gap-4 border-b border-stone-100">
+        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-stone-100">
           <InfoItem label="Телефон" value={client.phone_ua || clientOrders[0]?.phone || '—'} />
-          <InfoItem label="Дата реєстрації" value={new Date(client.created_at).toLocaleDateString('uk-UA')} />
+          <InfoItem label="Реєстрація" value={new Date(client.created_at).toLocaleDateString('uk-UA')} />
         </div>
 
         {/* Замовлення */}
-        <div className="p-6">
-          <h4 className="text-sm font-semibold uppercase tracking-wider text-stone-400 mb-4">
+        <div className="p-4 md:p-6">
+          <h4 className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-stone-400 mb-4">
             Замовлення ({clientOrders.length})
           </h4>
           {clientOrders.length === 0 ? (

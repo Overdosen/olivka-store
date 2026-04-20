@@ -34,34 +34,38 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-md shadow-xl overflow-hidden p-8 space-y-8">
+    <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-6">
+      <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-xl shadow-2xl shadow-stone-200/50 border border-stone-200/60 overflow-hidden p-8 md:p-10 space-y-10">
         
         <div className="text-center">
-          <h2 className="text-3xl font-cormorant font-bold text-stone-800">Store Olivka</h2>
-          <p className="text-stone-500 mt-2 font-inter">Вхід в панель керування</p>
+          <h2 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Olivka<span className="text-stone-400 font-light">Admin</span></h2>
+          <div className="mt-4 flex items-center justify-center space-x-2">
+            <div className="h-px w-8 bg-stone-200"></div>
+            <p className="text-stone-400 text-xs uppercase tracking-[0.2em] font-semibold">Вхід до панелі</p>
+            <div className="h-px w-8 bg-stone-200"></div>
+          </div>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-700 block text-left">Email</label>
+            <label className="text-xs font-bold text-stone-600 uppercase tracking-wider ml-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all font-medium text-stone-800"
               placeholder="admin@olivka.store"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-stone-700 block text-left">Пароль</label>
+            <label className="text-xs font-bold text-stone-600 uppercase tracking-wider ml-1">Пароль</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3.5 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all font-medium text-stone-800"
               placeholder="••••••••"
               required
             />
@@ -70,18 +74,22 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-stone-800 hover:bg-stone-900 text-white font-medium py-3 px-4 rounded transition-colors flex justify-center items-center space-x-2 disabled:opacity-70"
+            className="w-full bg-stone-800 hover:bg-stone-900 text-white font-bold py-4 px-4 rounded-lg transition-all duration-300 flex justify-center items-center space-x-3 shadow-lg shadow-stone-200 disabled:opacity-70 group"
           >
             {loading ? (
-              <span className="animate-pulse">Перевірка...</span>
+              <span className="animate-pulse">Перевірка доступу...</span>
             ) : (
               <>
-                <span>Увійти</span>
-                <LogIn className="w-5 h-5 ml-2" />
+                <span className="tracking-wide">Увійти в систему</span>
+                <LogIn className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </>
             )}
           </button>
         </form>
+
+        <div className="text-center">
+          <p className="text-stone-400 text-[10px] uppercase tracking-widest font-medium">© 2024 Olivka Store • Захищена зона</p>
+        </div>
         
       </div>
     </div>

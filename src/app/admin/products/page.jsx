@@ -105,40 +105,41 @@ export default function AdminProducts() {
 
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex justify-between items-end flex-wrap gap-6">
-        <div className="flex-1 min-w-[300px]">
-          <div className="flex items-center gap-6 mb-2">
-            <h1 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight whitespace-nowrap">Керування товарами</h1>
-            <div className="relative flex-1 max-w-md">
-              <input
-                type="text"
-                placeholder="Пошук за назвою або артикулом..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2.5 bg-white rounded-md border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm font-medium"
-              />
-            </div>
-          </div>
-          <p className="text-stone-500 font-medium">Керуйте своїм асортиментом, цінами та наявністю.</p>
+    <div className="space-y-6 md:space-y-8 pb-10">
+      <div className="flex flex-col gap-4 md:gap-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+          <h1 className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800 tracking-tight whitespace-nowrap">Товари</h1>
+          <Link 
+            href="/admin/products/new"
+            className="bg-stone-900 !text-white hover:bg-stone-800 px-5 py-2.5 rounded-md flex items-center justify-center space-x-2 transition-all shadow-md shadow-stone-200 hover:shadow-lg font-medium tracking-wide w-full sm:w-auto"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Додати товар</span>
+          </Link>
         </div>
-        <Link 
-          href="/admin/products/new"
-          className="bg-stone-900 !text-white hover:bg-stone-800 px-5 py-2.5 rounded-md flex items-center space-x-2 transition-all shadow-md shadow-stone-200 hover:shadow-lg hover:-translate-y-0.5 font-medium tracking-wide h-fit"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Додати товар</span>
-        </Link>
+        
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="relative w-full md:max-w-md">
+            <input
+              type="text"
+              placeholder="Пошук за назвою або артикулом..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2.5 bg-white rounded-md border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm font-medium"
+            />
+          </div>
+          <p className="text-stone-500 font-medium text-sm hidden md:block">Керуйте своїм асортиментом, цінами та наявністю.</p>
+        </div>
       </div>
 
       <div className="bg-white/80 backdrop-blur-sm rounded-md shadow-sm border border-stone-200/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[500px] md:min-w-full">
             <thead>
               <tr className="bg-stone-50/50 border-b border-stone-200/60">
-                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider w-32">Фото</th>
+                <th className="p-3 md:p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider w-20 md:w-32">Фото</th>
                 <th 
-                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  className="p-3 md:p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
                   onClick={() => requestSort('name')}
                 >
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
@@ -146,7 +147,7 @@ export default function AdminProducts() {
                   </div>
                 </th>
                 <th 
-                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group hidden lg:table-cell" 
                   onClick={() => requestSort('category')}
                 >
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
@@ -154,7 +155,7 @@ export default function AdminProducts() {
                   </div>
                 </th>
                 <th 
-                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  className="p-3 md:p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
                   onClick={() => requestSort('price')}
                 >
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
@@ -162,15 +163,15 @@ export default function AdminProducts() {
                   </div>
                 </th>
                 <th 
-                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group" 
+                  className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider cursor-pointer hover:text-stone-900 transition-colors group hidden md:table-cell" 
                   onClick={() => requestSort('created_at')}
                 >
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
-                    Дата додавання <SortIcon column="created_at" />
+                    Дата <SortIcon column="created_at" />
                   </div>
                 </th>
-                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-center">Статус</th>
-                <th className="p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-right">Дії</th>
+                <th className="p-3 md:p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-center hidden sm:table-cell">Статус</th>
+                <th className="p-3 md:p-5 font-semibold text-stone-600 text-[10px] uppercase tracking-wider text-right">Дії</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
@@ -185,14 +186,13 @@ export default function AdminProducts() {
                   <td colSpan="7" className="p-12 text-center text-stone-500">
                     <Package className="w-12 h-12 mx-auto text-stone-300 mb-3" />
                     <p className="font-medium">Товарів не знайдено.</p>
-                    <p className="text-sm mt-1">Спробуйте змінити запит пошуку або додати новий товар.</p>
                   </td>
                 </tr>
               ) : (
                 filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-stone-50/80 transition-colors group">
-                    <td className="p-5">
-                      <div className="w-24 h-24 rounded-md overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200/50 shadow-sm">
+                    <td className="p-3 md:p-5">
+                      <div className="w-12 h-12 md:w-24 md:h-24 rounded-md overflow-hidden bg-stone-100 flex items-center justify-center border border-stone-200/50 shadow-sm">
                         {product.image_url ? (
                           <img 
                             src={product.image_url?.startsWith('http') ? product.image_url : `/images/${product.image_url}`} 
@@ -200,45 +200,46 @@ export default function AdminProducts() {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
                         ) : (
-                          <Package className="w-8 h-8 text-stone-300" />
+                          <Package className="w-6 h-6 md:w-8 md:h-8 text-stone-300" />
                         )}
                       </div>
                     </td>
-                    <td className={`p-5 ${sortConfig.key === 'name' ? 'bg-stone-50/40' : ''}`}>
-                      <div className="font-medium text-stone-800">{product.name}</div>
+                    <td className={`p-3 md:p-5 ${sortConfig.key === 'name' ? 'bg-stone-50/40' : ''}`}>
+                      <div className="font-medium text-stone-800 text-sm md:text-base line-clamp-2 md:line-clamp-none">{product.name}</div>
                       {product.sku && <div className="text-[10px] text-stone-400 mt-1 uppercase tracking-tight">Арт: {product.sku}</div>}
+                      <div className="lg:hidden text-[10px] text-stone-500 mt-1">
+                        {product.categories?.name || (product.category_id === 'fullset' ? 'Готові рішення' : '—')}
+                      </div>
                     </td>
-                    <td className={`p-5 text-stone-500 ${sortConfig.key === 'category' ? 'bg-stone-50/40' : ''}`}>
+                    <td className={`p-5 text-stone-500 hidden lg:table-cell ${sortConfig.key === 'category' ? 'bg-stone-50/40' : ''}`}>
                       {product.categories?.name || (product.category_id === 'fullset' ? 'Готові рішення' : '—')}
                     </td>
-                    <td className={`p-5 font-semibold text-stone-800 ${sortConfig.key === 'price' ? 'bg-stone-50/40' : ''}`}>
+                    <td className={`p-3 md:p-5 font-semibold text-stone-800 text-sm md:text-base ${sortConfig.key === 'price' ? 'bg-stone-50/40' : ''}`}>
                       {product.price} ₴
                     </td>
-                    <td className={`p-5 text-stone-400 text-xs whitespace-nowrap ${sortConfig.key === 'created_at' ? 'bg-stone-50/40' : ''}`}>
+                    <td className={`p-5 text-stone-400 text-xs whitespace-nowrap hidden md:table-cell ${sortConfig.key === 'created_at' ? 'bg-stone-50/40' : ''}`}>
                       {formatDate(product.created_at)}
                     </td>
-                    <td className="p-5 text-center">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide ${
+                    <td className="p-3 md:p-5 text-center hidden sm:table-cell">
+                      <span className={`px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-xs font-semibold tracking-wide ${
                         product.is_published 
                           ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200/50' 
                           : 'bg-stone-100 text-stone-500 border border-stone-200/50'
                       }`}>
-                        {product.is_published ? 'Опубліковано' : 'Приховано'}
+                        {product.is_published ? 'OK' : 'OFF'}
                       </span>
                     </td>
-                    <td className="p-5 text-right">
-                      <div className="flex items-center justify-end space-x-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <td className="p-3 md:p-5 text-right">
+                      <div className="flex items-center justify-end space-x-1">
                         <Link 
                           href={`/admin/products/${product.id}`}
-                          className="p-2.5 text-stone-500 hover:text-stone-900 hover:bg-white rounded-md shadow-sm hover:shadow transition-all"
-                          title="Редагувати"
+                          className="p-2 md:p-2.5 text-stone-500 hover:text-stone-900 hover:bg-white rounded-md shadow-sm hover:shadow transition-all"
                         >
                           <Edit2 className="w-4 h-4" />
                         </Link>
                         <button 
                           onClick={() => handleDelete(product.id)}
-                          className="p-2.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                          title="Видалити"
+                          className="p-2 md:p-2.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-all hidden sm:block"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
