@@ -44,6 +44,12 @@ export async function generateMetadata({ params }) {
       locale: 'uk_UA',
       type: 'article',
     },
+    twitter: {
+      card: 'summary_large_image',
+      title: fullTitle,
+      description: description,
+      images: imageUrl ? [imageUrl] : [],
+    },
   };
 }
 
