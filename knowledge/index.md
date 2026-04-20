@@ -11,3 +11,4 @@
 | [[concepts/deployment-protection-secrets]] | Vercel Deployment Protection та дії при витоку секретів | daily/2026-04-17.md | 2026-04-17 |
 | [[concepts/checkbox-fiscalization-robustness]] | Надійна фіскалізація Checkbox: таймаути та діагностика | daily/2026-04-17.md | 2026-04-17 |
 | [[concepts/nextjs-env-variable-mapping]] | Мапінг VITE_ -> NEXT_PUBLIC_ зміних у Next.js | daily/2026-04-17.md | 2026-04-17 |
+| [[concepts/agent-skills-management]] | Управління навичками агентів (npx skills) та автоматизація | daily/2026-04-20.md | 2026-04-20 |
