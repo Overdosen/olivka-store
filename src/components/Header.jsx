@@ -17,7 +17,7 @@ export default function Header() {
   const { cartCount, setIsCartOpen } = useCart();
   const { user, profile } = useAuth();
   const router = useRouter();
-  
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -88,7 +88,7 @@ export default function Header() {
             <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            
+
             <Link href="/" className="logo">
               <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear" width={45} height={45} priority />
               store.olivka
@@ -100,7 +100,7 @@ export default function Header() {
             <Link href="/" className="nav-link">
               <TextBorderAnimation text="Головна" />
             </Link>
-            
+
             <div className="dropdown-container">
               <Link href="/catalog" className="nav-link dropdown-trigger">
                 <TextBorderAnimation text="Каталог" />
@@ -116,7 +116,7 @@ export default function Header() {
                 </Link>
               </div>
             </div>
-            
+
             <Link href="/about" className="nav-link">
               <TextBorderAnimation text="Про нас" />
             </Link>
@@ -143,7 +143,7 @@ export default function Header() {
                 <User size={24} color="var(--color-stone-600)" />
               )}
             </button>
-            
+
             <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
               <ShoppingBag size={24} color="var(--color-stone-600)" />
               <AnimatePresence>
@@ -153,7 +153,7 @@ export default function Header() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1, rotate: [0, -10, 10, -10, 10, 0] }}
                     exit={{ scale: 0 }}
-                    transition={{ 
+                    transition={{
                       scale: { type: 'spring', stiffness: 500, damping: 15 },
                       rotate: { duration: 0.5, ease: "easeInOut" }
                     }}
@@ -185,7 +185,7 @@ export default function Header() {
       {/* Мобільне меню - тепер поза тегом header */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -195,7 +195,7 @@ export default function Header() {
               <Link href="/" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Головна</Link>
               <Link href="/catalog" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Каталог</Link>
               <Link href="/about" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Про нас</Link>
-              
+
               <div style={{ fontWeight: 600, color: 'var(--color-stone-400)', marginTop: '1rem', fontSize: '0.9rem', textTransform: 'uppercase' }}>Категорії:</div>
               {categories.map(cat => (
                 <Link key={cat.id} href={`/category/${cat.id}`} className="nav-link" style={{ paddingLeft: '1rem' }} onClick={() => setIsMobileMenuOpen(false)}>

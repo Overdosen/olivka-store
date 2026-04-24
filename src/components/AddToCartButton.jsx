@@ -43,8 +43,8 @@ export default function AddToCartButton({
     status === "loading"
       ? null
       : status === "added"
-      ? addedLabel
-      : label;
+        ? addedLabel
+        : label;
 
   return (
     <button

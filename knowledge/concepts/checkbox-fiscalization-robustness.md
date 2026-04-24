@@ -32,4 +32,4 @@ const receipt = await withTimeout(
 
 ## Sources
 
-- [[daily/2026-04-17.md]] - Рефакторинг liqpay-callback для Olivka Store.
+- [[daily/2026-04-17.md]] - Рефакторинг liqpay-callback для Store Olivka.

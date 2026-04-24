@@ -175,6 +175,125 @@ function CodView({ shortId, copyToClipboard }) {
 
 // ─── LiqPay View (Strictly based on screenshot 2) ─────────────────────────────
 
+function IbanView({ order, shortId, copyToClipboard }) {
+  const [copiedIban, setCopiedIban] = useState(false);
+  const [copiedRecipient, setCopiedRecipient] = useState(false);
+  const [copiedEdrpou, setCopiedEdrpou] = useState(false);
+
+  const handleCopy = (text, type) => {
+    copyToClipboard(text);
+    if (type === 'iban') {
+      setCopiedIban(true);
+      setTimeout(() => setCopiedIban(false), 2000);
+    } else if (type === 'recipient') {
+      setCopiedRecipient(true);
+      setTimeout(() => setCopiedRecipient(false), 2000);
+    } else if (type === 'edrpou') {
+      setCopiedEdrpou(true);
+      setTimeout(() => setCopiedEdrpou(false), 2000);
+    }
+  };
+
+  const CopyIcon = ({ copied }) => (
+    <div className="text-[#524f25]/40 group-hover:text-[#524f25] transition-colors flex-shrink-0">
+      {copied ? (
+        <span className="text-[10px] text-green-700 font-semibold tracking-wider uppercase">Скопійовано</span>
+      ) : (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+        </svg>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#fdfcf7] flex flex-col items-center px-6 text-center" style={{ fontFamily: 'var(--font-sans)', paddingTop: '5vh' }}>
+      <AnimatedCheckmark />
+
+      <h1 className="text-[28px] md:text-[32px] font-medium text-[#524f25] mt-8 mb-5 tracking-tight leading-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+        Замовлення №{shortId} прийнято та чекає на оплату!
+      </h1>
+
+      <div className="max-w-2xl text-[#524f25] text-[16px] md:text-[17px] leading-relaxed mb-10 space-y-1">
+        <p>Ми вже отримали ваші дані та готуємо пакунок до відправки.</p>
+        <p>
+          Щоб ми могли якнайшвидше надіслати ваше замовлення, будь ласка,<br className="hidden md:block" />
+          оплатіть повну вартість замовлення у розмірі <span className="font-semibold">{order?.total || 0} грн</span> за реквізитами нижче:
+        </p>
+      </div>
+
+      <div className="w-full max-w-[480px] bg-[#fcfbf7] border border-[#524f25]/20 rounded-md overflow-hidden mb-10 text-left">
+        <div className="py-4 px-6 border-b border-[#524f25]/10 text-center">
+          <span className="text-[#524f25]/50 text-[12px] uppercase tracking-[0.2em] font-semibold">Реквізити для оплати</span>
+        </div>
+
+        <div className="p-6 md:p-8 space-y-7">
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Отримувач</span>
+            <div
+              onClick={() => handleCopy(' ФОП Сопіна Вікторія Іванівна', 'recipient')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[15px] font-normal"> ФОП Сопіна Вікторія Іванівна</p>
+              <CopyIcon copied={copiedRecipient} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold"> ЄДРПОУ</span>
+            <div
+              onClick={() => handleCopy('3522303066', 'edrpou')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[17px] font-normal tracking-wide"> 3522303066</p>
+              <CopyIcon copied={copiedEdrpou} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Банк</span>
+            <p className="text-[#524f25] text-[17px] font-normal pl-4 py-2">АТ КБ "ПРИВАТБАНК"</p>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <span className="text-[#524f25]/50 text-[11px] uppercase tracking-[0.15em] font-semibold">Рахунок IBAN</span>
+            <div
+              onClick={() => handleCopy(' UA203052990000026002043900812', 'iban')}
+              className="mt-1 flex items-center justify-between bg-white border border-[#524f25]/20 rounded px-4 py-3 cursor-pointer group hover:border-[#524f25]/40 transition-colors"
+            >
+              <p className="text-[#524f25] text-[14px] md:text-[15px] font-normal break-all pr-4">UA203052990000026002043900812</p>
+              <CopyIcon copied={copiedIban} />
+            </div>
+            <div className="mt-4 p-4 bg-[#524f25]/5 rounded border border-[#524f25]/10 flex gap-3 items-start text-left">
+              <svg className="w-5 h-5 text-[#524f25] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-[12.5px] text-[#524f25] leading-relaxed font-normal italic">
+                В призначенні обов'язково вкажіть <span className="font-semibold">«Сплата за товар»</span> та ваше прізвище або номер замовлення. Враховуйте комісію банку.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-[#524f25] text-[16px] md:text-[17px] space-y-1 mb-12">
+        <p>Щойно оплата надійде — ваше замовлення вирушить у дорогу.</p>
+        <p>Дякуємо, що довіряєте нам піклування про комфорт вашого малюка!</p>
+      </div>
+
+      <Link
+        href="/catalog"
+        className="mt-32 text-[#524f25] text-[15px] font-bold tracking-[0.2em] uppercase hover:opacity-70 transition-opacity"
+        style={{ textDecoration: 'none' }}
+      >
+        До каталогу
+      </Link>
+    </div>
+  );
+}
+
+// ─── LiqPay View (Strictly based on screenshot 2) ─────────────────────────────
+
 function LiqPayView({ order, shortId }) {
   const isPaid = order?.status === 'paid';
 
@@ -354,18 +473,25 @@ function SuccessContent() {
     order?.payment_method?.toLowerCase().includes('liqpay') ||
     order?.status === 'pending_payment';
 
+  const isIban =
+    method?.toLowerCase() === 'iban' ||
+    order?.payment_method?.toLowerCase() === 'iban';
+
   console.log("SUCCESS_PAGE: Rendering.", {
     orderId,
     method,
     dbMethod: order?.payment_method,
     dbStatus: order?.status,
-    isLiqPay
+    isLiqPay,
+    isIban
   });
 
   return (
     <div>
       {isLiqPay ? (
         <LiqPayView order={order} shortId={shortId} />
+      ) : isIban ? (
+        <IbanView order={order} shortId={shortId} copyToClipboard={copyToClipboard} />
       ) : (
         <CodView shortId={shortId} copyToClipboard={copyToClipboard} />
       )}

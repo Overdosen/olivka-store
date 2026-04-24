@@ -11,6 +11,7 @@ export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Close sidebar on navigation (mobile)
   useEffect(() => {
@@ -23,15 +24,24 @@ export default function AdminLayout({ children }) {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/admin/login');
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      router.push('/admin/login');
+    } catch (err) {
+      console.warn('[AdminLayout] Logout technical error:', err);
+      router.push('/admin/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   const navItems = [
     { name: 'Статистика', path: '/admin', icon: LayoutDashboard },
-    { name: 'Товари',     path: '/admin/products', icon: Package },
-    { name: 'Категорії',  path: '/admin/categories', icon: Package }, 
-    { name: 'Клієнти',    path: '/admin/customers', icon: Users },
+    { name: 'Товари', path: '/admin/products', icon: Package },
+    { name: 'Категорії', path: '/admin/categories', icon: Package },
+    { name: 'Клієнти', path: '/admin/customers', icon: Users },
   ];
 
   const SidebarContent = () => (
@@ -40,28 +50,27 @@ export default function AdminLayout({ children }) {
         <h2 className="text-3xl font-cormorant font-bold text-stone-800 tracking-tight">
           Olivka<span className="text-stone-400 font-light">Admin</span>
         </h2>
-        <button 
+        <button
           onClick={() => setIsSidebarOpen(false)}
           className="md:hidden p-2 text-stone-400 hover:text-stone-600 transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
       </div>
-      
+
       <nav className="flex-1 p-5 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
-          
+
           return (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center space-x-4 p-3.5 rounded-md transition-all duration-300 ${
-                isActive 
-                  ? '!bg-stone-900 !text-white shadow-md shadow-stone-200' 
+              className={`flex items-center space-x-4 p-3.5 rounded-md transition-all duration-300 ${isActive
+                  ? '!bg-stone-900 !text-white shadow-md shadow-stone-200'
                   : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900'
-              }`}
+                }`}
             >
               <Icon className={`w-5 h-5 ${isActive ? '!text-stone-300' : ''}`} />
               <span className="font-medium tracking-wide text-sm">{item.name}</span>
@@ -71,12 +80,19 @@ export default function AdminLayout({ children }) {
       </nav>
 
       <div className="p-5 border-t border-stone-200/60">
-        <button 
+        <button
           onClick={handleLogout}
-          className="group flex items-center justify-center space-x-2 text-stone-500 hover:bg-red-50 hover:text-red-600 p-3.5 rounded-md transition-all duration-300 w-full font-medium"
+          disabled={isLoggingOut}
+          className={`group flex items-center justify-center space-x-2 text-stone-500 hover:bg-red-50 hover:text-red-600 p-3.5 rounded-md transition-all duration-300 w-full font-medium ${isLoggingOut ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm tracking-wide">Вийти</span>
+          {isLoggingOut ? (
+            <span className="text-sm tracking-wide">Вихід...</span>
+          ) : (
+            <>
+              <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm tracking-wide">Вийти</span>
+            </>
+          )}
         </button>
       </div>
     </>
@@ -85,13 +101,13 @@ export default function AdminLayout({ children }) {
   return (
     <ProtectedRoute>
       <div className="flex flex-col md:flex-row h-screen bg-[#FDFBF7] font-inter text-stone-900 selection:bg-stone-200 overflow-hidden">
-        
+
         {/* Mobile Header */}
         <header className="md:hidden h-16 shrink-0 bg-white/80 backdrop-blur-md border-b border-stone-200/60 flex items-center justify-between px-6 z-20">
           <h2 className="text-xl font-cormorant font-bold text-stone-800 tracking-tight">
             Olivka<span className="text-stone-400 font-light">Admin</span>
           </h2>
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-2 text-stone-600 hover:bg-stone-100 rounded-md transition-all"
           >
@@ -101,7 +117,7 @@ export default function AdminLayout({ children }) {
 
         {/* Sidebar Overlay (Mobile Only) */}
         {isSidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-stone-900/40 backdrop-blur-[2px] z-30 md:hidden transition-opacity duration-300"
             onClick={() => setIsSidebarOpen(false)}
           />

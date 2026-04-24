@@ -25,6 +25,7 @@ export default function AccountClient() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving]   = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [isSignOutLoading, setIsSignOutLoading] = useState(false);
 
   // Поля редагування
   const [firstName, setFirstName] = useState('');
@@ -98,9 +99,20 @@ export default function AccountClient() {
   }
 
   async function handleSignOut() {
-    await signOut();
-    router.push('/');
-    toast.success('Ви вийшли з акаунту');
+    if (isSignOutLoading) return;
+    setIsSignOutLoading(true);
+    try {
+      await signOut();
+      toast.success('Ви вийшли з акаунту');
+      router.push('/');
+    } catch (err) {
+      console.warn('Sign out technical error (ignoring and redirecting):', err);
+      router.push('/');
+    } finally {
+      // Навіть якщо десь була помилка, ми принаймні приберемо лоадер
+      // хоча редірект зазвичай вже спрацює
+      setIsSignOutLoading(false);
+    }
   }
 
   if (loading) {
@@ -274,21 +286,30 @@ export default function AccountClient() {
         {/* Вихід */}
         <button
           onClick={handleSignOut}
+          disabled={isSignOutLoading}
           style={{
             width: '100%', marginTop: '0.5rem',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
             padding: '0.875rem', border: '1px solid rgba(82,79,37,0.12)',
-            borderRadius: '16px', cursor: 'pointer',
-            background: 'transparent', color: 'rgba(82,79,37,0.45)',
+            borderRadius: '16px', cursor: isSignOutLoading ? 'not-allowed' : 'pointer',
+            background: isSignOutLoading ? 'rgba(82,79,37,0.05)' : 'transparent', 
+            color: 'rgba(82,79,37,0.45)',
             fontFamily: 'var(--font-sans)', fontSize: '0.8rem',
             letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 500,
             transition: 'all 0.2s',
+            opacity: isSignOutLoading ? 0.7 : 1,
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#fdf1e8'; e.currentTarget.style.color = '#8a5c2a'; e.currentTarget.style.borderColor = '#e0b98a'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(82,79,37,0.45)'; e.currentTarget.style.borderColor = 'rgba(82,79,37,0.12)'; }}
+          onMouseEnter={e => { if (!isSignOutLoading) { e.currentTarget.style.background = '#fdf1e8'; e.currentTarget.style.color = '#8a5c2a'; e.currentTarget.style.borderColor = '#e0b98a'; } }}
+          onMouseLeave={e => { if (!isSignOutLoading) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(82,79,37,0.45)'; e.currentTarget.style.borderColor = 'rgba(82,79,37,0.12)'; } }}
         >
-          <LogOut size={15} />
-          Вийти з акаунту
+          {isSignOutLoading ? (
+            'Вихід...'
+          ) : (
+            <>
+              <LogOut size={15} />
+              Вийти з акаунту
+            </>
+          )}
         </button>
       </div>
     </motion.main>

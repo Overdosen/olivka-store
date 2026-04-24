@@ -88,7 +88,7 @@ export default function Login() {
         </form>
 
         <div className="text-center">
-          <p className="text-stone-400 text-[10px] uppercase tracking-widest font-medium">© 2024 Olivka Store • Захищена зона</p>
+          <p className="text-stone-400 text-[10px] uppercase tracking-widest font-medium">© 2024 Store Olivka • Захищена зона</p>
         </div>
         
       </div>

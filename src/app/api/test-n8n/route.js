@@ -20,7 +20,7 @@ export async function GET(request) {
     const testPayload = {
       source: 'test_route',
       timestamp: new Date().toISOString(),
-      message: 'This is a diagnostic test from Olivka Store',
+      message: 'This is a diagnostic test from Store Olivka',
       debug_info: {
         environment: process.env.NODE_ENV,
         vercel_region: process.env.VERCEL_REGION || 'local'

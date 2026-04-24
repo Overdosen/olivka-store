@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { LiqPay } from '../../../../lib/liqpay';
 import { supabase, supabaseService } from '../../../../lib/supabase';
+import { sendOrderConfirmationEmail } from '../../../../lib/email-service';
+
 
 const liqpay = new LiqPay(
   process.env.LIQPAY_PUBLIC_KEY,
@@ -75,6 +77,7 @@ export async function POST(request) {
           }
 
           if (existingOrder) {
+            console.log(`[LiqPay Callback] Notifying n8n for existing order: ${order_id}`);
             await notifyN8n(existingOrder, payment);
           }
           
@@ -87,8 +90,18 @@ export async function POST(request) {
 
       console.log('[LiqPay Callback] Order status updated to paid:', order_id);
 
-      // 4. Notify n8n Webhook
+      // 4. Send Confirmation Email
+      console.log(`[LiqPay Callback] Triggering email for order: ${order_id}`);
+      const emailResult = await sendOrderConfirmationEmail(order_id);
+      if (emailResult.success) {
+        console.log(`[LiqPay Callback] Email sent successfully for order: ${order_id}`);
+      } else {
+        console.error(`[LiqPay Callback] Email failed for order: ${order_id}. Error: ${emailResult.error}`);
+      }
+
+      // 5. Notify n8n Webhook
       await notifyN8n(orderData, payment);
+
 
       return NextResponse.json({ status: 'ok' });
 

@@ -43,14 +43,14 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
 
     const query = params.toString();
     const url = query ? `${pathname}?${query}` : pathname;
-    
+
     router.replace(url, { scroll: false });
   }, [filters, pathname, router]);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   // Options
   const filterOptions = {
-    sizes: ['56', '56-62', '62', '62-68', '74', '80', '86', '92', '100*80 см', '100*75 см', '75*50 см'],
+    sizes: ['56', '56-62', '62', '62-68', '68', '74', '80', '86', '92', '100*80 см', '100*75 см', '75*50 см'],
     ages: ['0-1 місяць', '0-3 місяці', '1-3 місяці', '3-6 місяців', '6-9 місяців', '9-12 місяців', '12-18 місяців', '2 роки'],
     materials: ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча', 'Інтерлок', 'Футер', 'Перфорація'],
     features: [

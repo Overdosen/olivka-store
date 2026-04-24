@@ -47,15 +47,22 @@ export function AuthProvider({ children }) {
       setLoading(false);
     };
 
+    // Додаємо "запобіжник": якщо ініціалізація затягнулася — примусово вимикаємо лоадер через 2.5с
+    const safetyTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('[AuthContext] Loading timed out, forcing loading=false');
+        setLoading(false);
+      }
+    }, 2500);
+
     // Отримуємо початкову сесію
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (!mounted) return;
+      clearTimeout(safetyTimer); // Якщо отримали дані швидше — чистимо таймер
 
       if (error) {
-        // Застарілий токен або інша помилка сесії
         console.warn('[AuthContext] getSession error:', error.message);
         
-        // Якщо токен не знайдено — примусово чистимо локальний стан
         if (error.message.includes('Refresh Token Not Found') || error.status === 400) {
           supabase.auth.signOut({ scope: 'local' }).finally(() => {
             if (mounted) {
@@ -73,6 +80,9 @@ export function AuthProvider({ children }) {
         return;
       }
       syncAuth(session);
+    }).catch(err => {
+      console.error('[AuthContext] getSession unexpected error:', err);
+      if (mounted) setLoading(false);
     });
 
     // Підписуємось на зміни
@@ -81,19 +91,14 @@ export function AuthProvider({ children }) {
         setUser(null);
         setProfile(null);
         setLoading(false);
-      } else if (event === 'TOKEN_REFRESHED') {
-        syncAuth(session);
-      } else if (event === 'USER_UPDATED') {
-        syncAuth(session);
-      } else if (event === 'SIGNED_IN') {
+      } else if (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'SIGNED_IN') {
         syncAuth(session);
       } else {
-        // Невідомий event або помилка refresh — перевіряємо сесію
-        if (!session) {
+        if (!session && mounted) {
           setUser(null);
           setProfile(null);
           setLoading(false);
-        } else {
+        } else if (session) {
           syncAuth(session);
         }
       }
@@ -101,6 +106,7 @@ export function AuthProvider({ children }) {
 
     return () => {
       mounted = false;
+      clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
@@ -154,7 +160,23 @@ export function AuthProvider({ children }) {
 
   /** Вихід */
   async function signOut() {
-    await supabase.auth.signOut();
+    // Встановлюємо тайм-аут 1.5 сек на вихід, щоб не блокувати UI
+    const signOutPromise = supabase.auth.signOut();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('TIMEOUT')), 1500)
+    );
+
+    try {
+      await Promise.race([signOutPromise, timeoutPromise]);
+    } catch (err) {
+      console.warn('[AuthContext] signOut failed or timed out:', err.message);
+      // Якщо основний вихід застряг — хоча б чистимо локально і йдемо далі
+      supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+    } finally {
+      // Гарантовано чистимо стан у контексті
+      setUser(null);
+      setProfile(null);
+    }
   }
 
   /** Оновлення профілю */

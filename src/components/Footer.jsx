@@ -77,197 +77,197 @@ export default function Footer() {
   return (
     <>
       <footer className="footer">
-      <div className="container">
+        <div className="container">
 
-        {/* ─── Main grid ─── */}
-        {/* ─── DESKTOP VERSION ─── */}
-        <div className="footer-desktop-container">
-          <div className="footer-grid">
+          {/* ─── Main grid ─── */}
+          {/* ─── DESKTOP VERSION ─── */}
+          <div className="footer-desktop-container">
+            <div className="footer-grid">
 
-            {/* Col 1 — Brand */}
-            <div className="footer-col footer-col-brand">
-              <div className="footer-brand-wrap">
-                <Link href="/" className="footer-logo">
-                  <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" width={38} height={38} />
-                  <span>store.olivka</span>
-                </Link>
-                <p className="footer-slogan">З любов'ю до найменших</p>
+              {/* Col 1 — Brand */}
+              <div className="footer-col footer-col-brand">
+                <div className="footer-brand-wrap">
+                  <Link href="/" className="footer-logo">
+                    <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear-footer" width={38} height={38} />
+                    <span>store.olivka</span>
+                  </Link>
+                  <p className="footer-slogan">З любов'ю до найменших</p>
+                </div>
+              </div>
+
+              {/* Col 2 — Categories */}
+              <div className="footer-col">
+                <h3 className="footer-col-title">Категорії</h3>
+                <ul className="footer-links">
+                  {FOOTER_CATEGORIES.map(cat => (
+                    <li key={cat.slug}>
+                      <Link href={`/category/${cat.slug}`} className="footer-link">
+                        {cat.name}
+                      </Link>
+                    </li>
+                  ))}
+                  <li>
+                    <Link href="/catalog" className="footer-link footer-link-more">
+                      Всі категорії →
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Col 3 — For buyers */}
+              <div className="footer-col">
+                <h3 className="footer-col-title">Покупцям</h3>
+                <ul className="footer-links">
+                  <li><Link href="/about#delivery" className="footer-link">Оплата і доставка</Link></li>
+                  <li><Link href="/about#delivery" className="footer-link">Обмін та повернення</Link></li>
+                  <li><Link href="/about#oferta" className="footer-link">Публічна оферта</Link></li>
+                  <li><Link href="/about#consumer" className="footer-link">Захист персональних даних</Link></li>
+                </ul>
+              </div>
+
+              {/* Col 4 — Contacts */}
+              <div className="footer-col">
+                <h3 className="footer-col-title">Контакти</h3>
+                <ul className="footer-links">
+                  <li>
+                    <a href={`mailto:${EMAIL}`} className="footer-link footer-contact-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect width="20" height="16" x="2" y="4" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      </svg>
+                      {EMAIL}
+                    </a>
+                  </li>
+                  <li>
+                    <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-link footer-contact-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+                      </svg>
+                      store.olivka
+                    </a>
+                  </li>
+                  <li>
+                    <Link href="/about" className="footer-link footer-contact-item">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 16v-4M12 8h.01" />
+                      </svg>
+                      Про нас
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => setIsContactOpen(true)}
+                      className="footer-email-btn"
+                      style={{ marginTop: '0.5rem', cursor: 'pointer', background: 'transparent' }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect width="20" height="16" x="2" y="4" rx="2" />
+                        <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                      </svg>
+                      Написати нам
+                    </button>
+                  </li>
+                </ul>
               </div>
             </div>
 
-            {/* Col 2 — Categories */}
-            <div className="footer-col">
-              <h3 className="footer-col-title">Категорії</h3>
-              <ul className="footer-links">
-                {FOOTER_CATEGORIES.map(cat => (
-                  <li key={cat.slug}>
-                    <Link href={`/category/${cat.slug}`} className="footer-link">
-                      {cat.name}
-                    </Link>
-                  </li>
-                ))}
-                <li>
-                  <Link href="/catalog" className="footer-link footer-link-more">
-                    Всі категорії →
-                  </Link>
-                </li>
-              </ul>
-            </div>
+            {/* ─── Logos + Copyright row ─── */}
+            <div className="footer-badges-row">
 
-            {/* Col 3 — For buyers */}
-            <div className="footer-col">
-              <h3 className="footer-col-title">Покупцям</h3>
-              <ul className="footer-links">
-                <li><Link href="/about" className="footer-link">Оплата і доставка</Link></li>
-                <li><Link href="/about" className="footer-link">Обмін та повернення</Link></li>
-                <li><Link href="/about" className="footer-link">Публічна оферта</Link></li>
-                <li><Link href="/about" className="footer-link">Захист персональних даних</Link></li>
-              </ul>
-            </div>
+              {/* Ліва частина — логотипи оплати і доставки */}
+              <div className="footer-all-logos">
 
-            {/* Col 4 — Contacts */}
-            <div className="footer-col">
-              <h3 className="footer-col-title">Контакти</h3>
-              <ul className="footer-links">
-                <li>
-                  <a href={`mailto:${EMAIL}`} className="footer-link footer-contact-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect width="20" height="16" x="2" y="4" rx="2" />
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                    {EMAIL}
-                  </a>
-                </li>
-                <li>
-                  <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-link footer-contact-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-                    </svg>
-                    store.olivka
-                  </a>
-                </li>
-                <li>
-                  <Link href="/about" className="footer-link footer-contact-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 16v-4M12 8h.01" />
-                    </svg>
-                    Про нас
-                  </Link>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setIsContactOpen(true)}
-                    className="footer-email-btn"
-                    style={{ marginTop: '0.5rem', cursor: 'pointer', background: 'transparent' }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect width="20" height="16" x="2" y="4" rx="2" />
-                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-                    </svg>
-                    Написати нам
-                  </button>
-                </li>
-              </ul>
+                {/* LiqPay */}
+                <LogoBadge alt="LiqPay">
+                  <img src="/footerlogos/logo_liqpay_for black.svg" alt="LiqPay" className="footer-svg-logo" />
+                </LogoBadge>
+
+                {/* 24Pay */}
+                <LogoBadge>
+                  <img src="/footerlogos/24-pay-mark_border.svg" alt="24Pay" className="footer-svg-logo footer-svg-logo--no-blend" />
+                </LogoBadge>
+
+                {/* Visa */}
+                <LogoBadge alt="Visa">
+                  <VisaSVG />
+                </LogoBadge>
+
+                {/* Mastercard */}
+                <LogoBadge alt="Mastercard">
+                  <MastercardSVG />
+                </LogoBadge>
+
+                {/* Apple Pay */}
+                <LogoBadge alt="Apple Pay">
+                  <ApplePaySVG />
+                </LogoBadge>
+
+                {/* Google Pay */}
+                <LogoBadge alt="Google Pay">
+                  <GooglePaySVG />
+                </LogoBadge>
+
+                {/* Нова Пошта */}
+                <LogoBadge wide>
+                  <img src="/footerlogos/novapost.svg" alt="Нова Пошта" className="footer-svg-logo footer-svg-logo--no-blend" />
+                </LogoBadge>
+
+                {/* Укрпошта */}
+                <LogoBadge wide bottom>
+                  <img src="/footerlogos/Ukrposhta-ua.svg" alt="Укрпошта" className="footer-svg-logo footer-svg-logo--no-blend" />
+                </LogoBadge>
+              </div>
+
+              {/* Права частина — copyright */}
+              <p className="footer-copyright">
+                © {new Date().getFullYear()} store.olivka · Всі права захищені
+              </p>
             </div>
           </div>
 
-          {/* ─── Logos + Copyright row ─── */}
-          <div className="footer-badges-row">
+          {/* ─── MOBILE VERSION ─── */}
+          <div className="footer-mobile-container">
+            <Link href="/" className="footer-mobile-logo">
+              <div style={{ position: 'relative', width: '45px', height: '45px' }}>
+                <Image src={bearImg} alt="Olivka Logo" fill style={{ objectFit: 'contain' }} />
+              </div>
+              <span>store.olivka</span>
+            </Link>
 
-            {/* Ліва частина — логотипи оплати і доставки */}
-            <div className="footer-all-logos">
+            <p className="footer-mobile-slogan">
+              З любов'ю до найменших
+            </p>
 
-              {/* LiqPay */}
-              <LogoBadge alt="LiqPay">
-                <img src="/footerlogos/logo_liqpay_for black.svg" alt="LiqPay" className="footer-svg-logo" />
-              </LogoBadge>
+            <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-mobile-insta">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+              </svg>
+              <span>Instagram</span>
+            </a>
 
-              {/* 24Pay */}
-              <LogoBadge>
-                <img src="/footerlogos/24-pay-mark_border.svg" alt="24Pay" className="footer-svg-logo footer-svg-logo--no-blend" />
-              </LogoBadge>
+            <button onClick={() => setIsContactOpen(true)} className="footer-mobile-contact">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect width="20" height="16" x="2" y="4" rx="2" />
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              <span>Написати нам</span>
+            </button>
 
-              {/* Visa */}
-              <LogoBadge alt="Visa">
-                <VisaSVG />
-              </LogoBadge>
-
-              {/* Mastercard */}
-              <LogoBadge alt="Mastercard">
-                <MastercardSVG />
-              </LogoBadge>
-
-              {/* Apple Pay */}
-              <LogoBadge alt="Apple Pay">
-                <ApplePaySVG />
-              </LogoBadge>
-
-              {/* Google Pay */}
-              <LogoBadge alt="Google Pay">
-                <GooglePaySVG />
-              </LogoBadge>
-
-              {/* Нова Пошта */}
-              <LogoBadge wide>
-                <img src="/footerlogos/novapost.svg" alt="Нова Пошта" className="footer-svg-logo footer-svg-logo--no-blend" />
-              </LogoBadge>
-
-              {/* Укрпошта */}
-              <LogoBadge wide bottom>
-                <img src="/footerlogos/Ukrposhta-ua.svg" alt="Укрпошта" className="footer-svg-logo footer-svg-logo--no-blend" />
-              </LogoBadge>
-            </div>
-
-            {/* Права частина — copyright */}
-            <p className="footer-copyright">
+            <p className="footer-mobile-copyright">
               © {new Date().getFullYear()} store.olivka · Всі права захищені
             </p>
           </div>
         </div>
-
-        {/* ─── MOBILE VERSION ─── */}
-        <div className="footer-mobile-container">
-          <Link href="/" className="footer-mobile-logo">
-            <div style={{ position: 'relative', width: '45px', height: '45px' }}>
-              <Image src={bearImg} alt="Olivka Logo" fill style={{ objectFit: 'contain' }} />
-            </div>
-            <span>store.olivka</span>
-          </Link>
-
-          <p className="footer-mobile-slogan">
-            З любов'ю до найменших
-          </p>
-
-          <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer" className="footer-mobile-insta">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-            </svg>
-            <span>Instagram</span>
-          </a>
-
-          <button onClick={() => setIsContactOpen(true)} className="footer-mobile-contact">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect width="20" height="16" x="2" y="4" rx="2" />
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-            </svg>
-            <span>Написати нам</span>
-          </button>
-
-          <p className="footer-mobile-copyright">
-            © {new Date().getFullYear()} store.olivka · Всі права захищені
-          </p>
-        </div>
-      </div>
       </footer>
 
-      <ContactModal 
-        isOpen={isContactOpen} 
-        onClose={() => setIsContactOpen(false)} 
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
       />
     </>
   );

@@ -5,32 +5,43 @@ export default async function sitemap() {
 
   // 1. Статичні сторінки
   const staticPages = [
-    '',
-    '/catalog',
-    '/about',
-  ].map((route) => ({
+    { route: '', priority: 1, changeFrequency: 'daily' },
+    { route: '/catalog', priority: 0.9, changeFrequency: 'daily' },
+    { route: '/about', priority: 0.6, changeFrequency: 'monthly' },
+  ].map(({ route, priority, changeFrequency }) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency,
+    priority,
   }));
 
-  // 2. Отримуємо всі категорії з бази
-  const { data: categories } = await supabase.from('categories').select('id');
+  // 2. Отримуємо всі категорії з бази (з датою оновлення)
+  const { data: categories } = await supabase
+    .from('categories')
+    .select('id, created_at');
+
   const categoryPages = (categories || []).map((cat) => ({
     url: `${baseUrl}/category/${cat.id}`,
-    lastModified: new Date(),
+    lastModified: cat.created_at ? new Date(cat.created_at) : new Date(),
     changeFrequency: 'weekly',
-    priority: 0.7,
+    priority: 0.8,
   }));
 
-  // 3. Отримуємо всі товари з бази
-  const { data: products } = await supabase.from('products').select('id');
+  // 3. Отримуємо всі товари z бази (з датою останнього оновлення)
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, updated_at, created_at')
+    .eq('is_published', true);
+
   const productPages = (products || []).map((prod) => ({
     url: `${baseUrl}/product/${prod.id}`,
-    lastModified: new Date(),
+    lastModified: prod.updated_at
+      ? new Date(prod.updated_at)
+      : prod.created_at
+        ? new Date(prod.created_at)
+        : new Date(),
     changeFrequency: 'weekly',
-    priority: 0.6,
+    priority: 0.7,
   }));
 
   return [...staticPages, ...categoryPages, ...productPages];

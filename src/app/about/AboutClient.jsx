@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import InfoModal from '../../components/InfoModal';
@@ -140,7 +140,30 @@ const formatText = (text) => {
 export default function AboutClient() {
   const [activeModal, setActiveModal] = useState(null);
 
-  const handleClose = () => setActiveModal(null);
+  // Відкриття модального вікна за хешем в URL
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        const section = sections.find(s => s.id === hash);
+        if (section) {
+          setActiveModal(section);
+        }
+      }
+    };
+
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  const handleClose = () => {
+    setActiveModal(null);
+    // Очищуємо хеш при закритті (опціонально, але краще для UX)
+    if (window.location.hash) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
 
   return (
     <motion.main
@@ -218,6 +241,7 @@ export default function AboutClient() {
               style={{ display: 'flex' }}
             >
               <button
+                id={sec.id}
                 type="button"
                 onClick={() => setActiveModal(sec)}
                 style={{

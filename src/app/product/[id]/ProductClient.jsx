@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingBag, Star } from 'lucide-react';
 import { useCart } from '../../../context/CartContext';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -273,6 +273,8 @@ export default function ProductClient({ product }) {
             ))}
           </ul>
         )}
+
+
       </motion.div>
 
       <InfoModal

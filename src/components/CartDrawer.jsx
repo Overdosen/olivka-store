@@ -120,7 +120,7 @@ export default function CartDrawer() {
                       <Link href={`/product/${item.id}`} onClick={() => setIsCartOpen(false)}>
                         <div style={{ position: 'relative', width: '90px', height: '110px', flexShrink: 0 }}>
                           <Image
-                            src={item.image}
+                            src={item.image || '/placeholder-product.png'}
                             alt={item.name}
                             fill
                             style={{

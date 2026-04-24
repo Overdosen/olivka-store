@@ -130,10 +130,10 @@ export default function AdminCategories() {
                     <td className="p-4 md:p-5 text-right">
                       <button 
                         onClick={() => setEditingCategory(cat)}
-                        className="p-1.5 md:p-2 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-md transition-all"
+                        className="p-2.5 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-md transition-all"
                         title="Редагувати"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={21} />
                       </button>
                     </td>
                   </tr>

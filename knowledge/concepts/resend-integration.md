@@ -26,7 +26,7 @@ updated: 2026-04-15
 \`\`\`javascript
 const resend = new Resend(process.env.RESEND_API_KEY);
 const { data, error } = await resend.emails.send({
-  from: 'Olivka Store <onboarding@resend.dev>',
+  from: 'Store Olivka <onboarding@resend.dev>',
   to: ['target@email.com'],
   subject: 'Нове повідомлення з сайту',
   replyTo: userEmail,

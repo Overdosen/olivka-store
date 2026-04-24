@@ -44,26 +44,4 @@ export const supabaseService = (supabaseUrl && serviceKey)
     }) 
   : null;
 
-// Перехоплюємо застарілий refresh токен та виконуємо signOut
-if (typeof window !== 'undefined') {
-  let isSigningOut = false;
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    // Якщо токен не вдалося оновити або сесія явно недійсна
-    if ((event === 'TOKEN_REFRESHED' && !session) || (event === 'SIGNED_OUT' && !session)) {
-      if (isSigningOut) return;
-      isSigningOut = true;
-      
-      try {
-        // Використовуємо локальний scope, якщо ми вже знаємо, що сесія недійсна
-        // Це запобігає зайвим помилкам "Refresh Token Not Found" при спробі 
-        // деактивувати сесію на сервері з невалідним токеном.
-        await supabase.auth.signOut({ scope: 'local' });
-      } catch (err) {
-        console.warn('[supabase] error during local sign out:', err.message);
-      } finally {
-        isSigningOut = false;
-      }
-    }
-  });
-}

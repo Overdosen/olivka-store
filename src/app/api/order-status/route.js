@@ -29,7 +29,7 @@ export async function GET(request) {
 
   const { data, error } = await supabaseService
     .from('orders')
-    .select('id, order_number, status, payment_method')
+    .select('id, order_number, status, payment_method, total')
     .eq('id', id)
     .single();
 

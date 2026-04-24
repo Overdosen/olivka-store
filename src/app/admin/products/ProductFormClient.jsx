@@ -11,7 +11,7 @@ export default function ProductFormClient({ id }) {
   const isEditing = Boolean(id);
   const router = useRouter();
 
-  const SIZE_OPTIONS = ['56', '56-62', '62', '62-68', '74', '80', '86', '92'];
+  const SIZE_OPTIONS = ['56', '56-62', '62', '62-68', '68', '74', '80', '86', '92'];
 
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditing);

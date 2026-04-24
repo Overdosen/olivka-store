@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
+import Image from 'next/image';
 import cottonIcon from '../assets/icons/cotton.png';
 import motherIcon from '../assets/icons/mother.png';
 import deliveryIcon from '../assets/icons/deliveryandpay.png';
 import giftIcon from '../assets/icons/gift.png';
 import InfoModal from '../components/InfoModal';
+import BlogPreviewSection from '../components/blog/BlogPreviewSection';
+import StoreReviews from '../components/StoreReviews';
 
 function ProductCard({ product }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -26,17 +29,21 @@ function ProductCard({ product }) {
   return (
     <div className="popular-card" style={{ scrollSnapAlign: 'start' }}>
       <Link href={`/product/${product.id}`} className="popular-card-inner">
-        <div className="product-image-wrapper" style={{ position: 'relative' }}>
+        <div className="product-image-wrapper" style={{ position: 'relative', aspectRatio: '3 / 4' }}>
           {!isLoaded && (
             <div className="absolute inset-0 bg-stone-100 animate-pulse z-10" />
           )}
-          <img
-            ref={imgRef}
+          <Image
             src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
             alt={product.name}
+            fill
             onLoad={() => setIsLoaded(true)}
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
             className={`product-image ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
-            style={{ opacity: isAvailable ? (isLoaded ? 1 : 0) : 0.6 }}
+            style={{
+              objectFit: 'cover',
+              opacity: isAvailable ? (isLoaded ? 1 : 0) : 0.6
+            }}
           />
           {!isAvailable && (
             <div style={{
@@ -55,7 +62,7 @@ function ProductCard({ product }) {
   );
 }
 
-export default function HomeClient() {
+export default function HomeClient({ blogPosts = [] }) {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const carouselRef = useRef(null);
   const [activeFeature, setActiveFeature] = useState(null);
@@ -132,12 +139,12 @@ export default function HomeClient() {
       {/* Головна секція (Hero) */}
       <section className="hero" style={{
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'visible', /* Тепер дівчинка не буде обрізана знизу */
         height: 'auto',
         backgroundColor: '#fdfbf7'
       }}>
 
-        <div className="mobile-only" style={{ width: '100%' }}>
+        <div className="mobile-only">
           <img
             src="/images/bannermobile.png"
             alt="Store Olivka Mobile Banner"
@@ -150,62 +157,65 @@ export default function HomeClient() {
         </div>
 
         <div className="desktop-only" style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
-          <motion.img
-            src="/images/emptybanner.png"
-            alt="Hero Background"
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              minHeight: '300px',
-              objectFit: 'cover',
-              objectPosition: 'center'
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 1.5 }}
-          />
-
-          <div className="cloud-layer cloud-1" style={{ top: '10%', left: 0, width: '260px', opacity: 0.5, zIndex: 1 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1920 / 600' }}>
+            <Image
+              src="/images/emptybanner.png"
+              alt="Hero Background"
+              fill
+              priority
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+            />
           </div>
 
-          <div className="cloud-layer cloud-2" style={{ top: '35%', left: 0, width: '180px', opacity: 0.4, zIndex: 2 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div className="cloud-layer cloud-1" style={{ top: '10%', left: 0, width: '260px', height: '150px', opacity: 0.5, zIndex: 1 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
           </div>
 
-          <div className="cloud-layer cloud-3" style={{ top: '55%', left: 0, width: '310px', opacity: 0.35, zIndex: 3 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div className="cloud-layer cloud-2" style={{ top: '35%', left: 0, width: '180px', height: '100px', opacity: 0.4, zIndex: 2 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
           </div>
 
-          <div className="cloud-layer cloud-4" style={{ top: '15%', left: 0, width: '200px', opacity: 0.45, zIndex: 1 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div className="cloud-layer cloud-3" style={{ top: '55%', left: 0, width: '310px', height: '180px', opacity: 0.35, zIndex: 3 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
           </div>
 
-          <div className="cloud-layer cloud-5" style={{ top: '42%', left: 0, width: '240px', opacity: 0.3, zIndex: 2 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div className="cloud-layer cloud-4" style={{ top: '15%', left: 0, width: '200px', height: '120px', opacity: 0.45, zIndex: 1 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
           </div>
 
-          <div className="cloud-layer cloud-6" style={{ top: '28%', left: 0, width: '150px', opacity: 0.4, zIndex: 1 }}>
-            <img src="/images/oblako.png" alt="Cloud" style={{ width: '100%' }} />
+          <div className="cloud-layer cloud-5" style={{ top: '42%', left: 0, width: '240px', height: '140px', opacity: 0.3, zIndex: 2 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
           </div>
 
-          <motion.img
-            src="/images/girl.png"
-            alt="Girl"
-            style={{
-              position: 'absolute',
-              left: '50%',
-              x: '-50%',
-              bottom: '-5%',
-              width: '23%',
-              zIndex: 10,
-              pointerEvents: 'none'
-            }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-          />
+          <div className="cloud-layer cloud-6" style={{ top: '28%', left: 0, width: '150px', height: '90px', opacity: 0.4, zIndex: 1 }}>
+            <Image src="/images/oblako.png" alt="Cloud" fill style={{ objectFit: 'contain' }} />
+          </div>
+
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: '-22%', /* Тепер вона рівно сидить на панелі */
+            width: '23%',
+            aspectRatio: '1 / 1.5',
+            zIndex: 10,
+            pointerEvents: 'none'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, delay: 0.3 }}
+              style={{ width: '100%', height: '100%', position: 'relative' }}
+            >
+              <Image
+                src="/images/girl.png"
+                alt="Girl"
+                fill
+                priority
+                style={{ objectFit: 'contain' }}
+              />
+            </motion.div>
+          </div>
 
           <div
             className="stork-float"
@@ -214,18 +224,25 @@ export default function HomeClient() {
               right: '10%',
               top: '12%',
               width: '25%',
+              aspectRatio: '1 / 1',
               zIndex: 11,
               pointerEvents: 'none'
             }}
           >
-            <motion.img
-              src="/images/leleka.png"
-              alt="Stork"
-              style={{ width: '100%', display: 'block' }}
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1.2, delay: 0.3 }}
-            />
+              style={{ width: '100%', height: '100%', position: 'relative' }}
+            >
+              <Image
+                src="/images/leleka.png"
+                alt="Stork"
+                fill
+                priority
+                style={{ objectFit: 'contain' }}
+              />
+            </motion.div>
           </div>
 
         </div>
@@ -254,7 +271,7 @@ export default function HomeClient() {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="hero-buttons"
           >
-            <Link href="/category/fullset" className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', backgroundColor: '#524f25', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Link href="/category/sets" className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', backgroundColor: '#524f25', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
               Обрати набір
             </Link>
             <Link href="/catalog" className="btn btn-outline" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', borderColor: '#524f25', color: '#524f25' }}>
@@ -264,30 +281,24 @@ export default function HomeClient() {
         </div>
       </section>
 
-      <div style={{
-        marginTop: '-3px',
-        height: '40px',
-        background: 'linear-gradient(to bottom, rgba(240,237,228,0) 0%, rgba(240,237,228,0.6) 40%, rgba(240,237,228,0.95) 100%)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        pointerEvents: 'none',
-        position: 'relative',
-        zIndex: 5
-      }} />
-
       <div className="mb-12 w-full">
-        <nav className="bg-[#f0ede4]/90 px-4 sm:px-10 py-5 sm:py-6 shadow-[0_10px_40px_rgba(82,79,37,0.12)] border-y border-[#524f25]/10 backdrop-blur-md w-full">
+        <nav className="bg-[#f0ede4]/90 px-4 sm:px-10 py-5 sm:py-6 shadow-[0_10px_40px_rgba(82,79,37,0.12)] border-b border-[#524f25]/10 backdrop-blur-md w-full">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
             {features.map((item) => (
-              <button 
-                key={item.id} 
-                onClick={() => setActiveFeature(item)} 
-                type="button" 
+              <button
+                key={item.id}
+                onClick={() => setActiveFeature(item)}
+                type="button"
                 className="bg-transparent border-none p-0 m-0 outline-none block"
               >
                 <div className="relative group flex items-center space-x-3 px-4 py-3 rounded-2xl cursor-pointer active:scale-95 transition-transform duration-100">
-                  <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
-                    <img src={item.icon?.src || item.icon} alt={item.title} className="w-full h-full object-contain" />
+                  <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center relative">
+                    <Image
+                      src={item.icon?.src || item.icon}
+                      alt={item.title}
+                      fill
+                      style={{ objectFit: 'contain' }}
+                    />
                   </div>
 
                   <div className="flex flex-col text-left">
@@ -300,6 +311,7 @@ export default function HomeClient() {
           </div>
         </nav>
       </div>
+
 
       <section id="catalog" className="section container">
         <h2 className="section-title">Популярні товари</h2>
@@ -327,6 +339,10 @@ export default function HomeClient() {
           )}
         </div>
       </section>
+
+      <BlogPreviewSection posts={blogPosts} />
+
+      <StoreReviews />
 
       <InfoModal
         isOpen={!!activeFeature}

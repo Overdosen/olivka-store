@@ -1,4 +1,5 @@
 import HomeClient from './HomeClient';
+import { getAllPosts } from '../lib/blog';
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';
 
@@ -38,13 +39,16 @@ export default function HomePage() {
     }
   };
 
+  // Завантажуємо пости на сервері (статично, без API запитів)
+  const blogPosts = getAllPosts().slice(0, 3);
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <HomeClient />
+      <HomeClient blogPosts={blogPosts} />
     </>
   );
 }

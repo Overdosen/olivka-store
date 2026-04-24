@@ -20,6 +20,16 @@
       "source": "patricio0312rev/skills",
       "sourceType": "github",
       "computedHash": "22a8401fab0cdf32d5c153b98aba5e95435a479810896879535dc7ac3710efbe"
+    },
+    "google-merchant-center": {
+      "source": "membranedev/application-skills",
+      "sourceType": "github",
+      "computedHash": "cc8bf219db4c5f1b025910e46c478077d257291864670c8b966feb12289f742c"
+    },
+    "programmatic-seo": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "computedHash": "c6384f24bb0203f8aa98b23b55d35b9e6721b94532a0e7965215c340ae96f1e0"
     }
   }
 }
