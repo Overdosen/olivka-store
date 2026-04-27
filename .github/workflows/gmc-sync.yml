@@ -1,0 +1,38 @@
+name: Daily GMC Sync
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Щодня о 03:00 UTC (06:00 за Києвом)
+  workflow_dispatch: # Дозволяє запускати вручну
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Membrane CLI
+        run: npm install -g @membranehq/cli@latest
+
+      - name: Setup Membrane credentials
+        run: |
+          mkdir -p ~/.membrane
+          echo '${{ secrets.MEMBRANE_CREDENTIALS }}' > ~/.membrane/credentials.json
+
+      - name: Run GMC Sync
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Додаємо інші необхідні змінні, якщо вони потрібні скрипту
+        run: node scripts/sync-gmc-all.js
