@@ -11,9 +11,21 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const merchantId = '5774679836';
-const connectionId = '69eb73be0fdd4707beb7cb25';
-const insertProductActionId = '6976672484c4e21ccc8d65da';
+
+// ───────────────────────────────────────────────
+// Ідентифікатори Membrane / GMC
+// ───────────────────────────────────────────────
+const merchantId         = '5774679836';
+const connectionId       = '69eb73be0fdd4707beb7cb25';
+const insertProductAction = '6976672484c4e21ccc8d65da'; // Insert/Update Product
+const deleteProductAction = '6976672484c4e21ccc8d65d6'; // Delete Product
+
+// ───────────────────────────────────────────────
+// Категорія Google для ВСІХ товарів
+// 182 = Apparel & Accessories > Clothing > Baby & Toddler Clothing
+// (Одяг для немовлят)
+// ───────────────────────────────────────────────
+const GOOGLE_CATEGORY_ID = '182';
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Помилка: Відсутні SUPABASE_URL або SUPABASE_SERVICE_ROLE_KEY в змінних оточення.');
@@ -22,25 +34,84 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Мапінг категорій Google
-const googleCategoryMap = {
-  'pants': '540',    // Штанці
-  'caps': '548',     // Чепчики, шапочки
-  'cap': '541',      // Пісочники, ромпери
-  'swaddles': '576', // Текстиль (пелюшки, пледи)
-  'socks': '545',    // Шкарпетки
-  'body': '541',     // Боді
-  'suits': '537',    // Костюми, сукні
-  'fullset': '537',  // Готові рішення
-  'cocoons': '582',  // Кокони
-  'men': '541',      // Чоловічки
-  'sets': '537'      // Комплекти
+// ───────────────────────────────────────────────
+// Допоміжна функція: виклик Membrane CLI
+// ───────────────────────────────────────────────
+function runAction(actionId, inputObj) {
+  const inputJson = JSON.stringify(inputObj).replace(/"/g, '\\"');
+  const command = `membrane action run ${actionId} --connectionId ${connectionId} --input "${inputJson}" --json`;
+  return execSync(command, { encoding: 'utf-8' });
+}
+
+// ───────────────────────────────────────────────
+// Маппінг статі
+// ───────────────────────────────────────────────
+const GENDER_MAP = {
+  'Унісекс' : 'unisex',
+  'Хлопчик' : 'male',
+  'Дівчинка': 'female',
 };
 
-async function syncAllProducts() {
-  console.log('🚀 Починаємо повну синхронізацію товарів з Google Merchant Center...');
+// ───────────────────────────────────────────────
+// Маппінг вікової групи за категорією
+// ───────────────────────────────────────────────
+function getAgeGroup(categoryId) {
+  const newborn = ['swaddles', 'cocoons'];
+  return newborn.includes(categoryId) ? 'newborn' : 'infant';
+}
 
-  // Отримуємо всі опубліковані товари, що є в наявності
+// ───────────────────────────────────────────────
+// КРОК 1: Видалити з GMC товари, яких немає в наявності
+// ───────────────────────────────────────────────
+async function deleteOutOfStockFromGmc() {
+  console.log('\n🗑️  Крок 1: Видалення товарів без наявності з GMC...');
+
+  // Отримуємо опубліковані товари із stock = 0
+  const { data: outOfStock, error } = await supabase
+    .from('products')
+    .select('id, sku, name')
+    .eq('is_published', true)
+    .eq('stock', 0);
+
+  if (error) {
+    console.error('❌ Помилка отримання товарів без наявності:', error);
+    return;
+  }
+
+  if (!outOfStock || outOfStock.length === 0) {
+    console.log('✅ Немає товарів для видалення.');
+    return;
+  }
+
+  console.log(`📦 Знайдено товарів для видалення: ${outOfStock.length}`);
+
+  for (const product of outOfStock) {
+    const offerId = product.sku || product.id;
+    try {
+      console.log(`  🔸 Видаляємо: ${product.name} (offerId: ${offerId})`);
+      runAction(deleteProductAction, {
+        merchantId,
+        productId: `online:uk:UA:${offerId}`,
+      });
+      console.log(`  ✅ Видалено.`);
+    } catch (err) {
+      // Якщо товару вже не було в GMC — це не критична помилка
+      const msg = err.message || '';
+      if (msg.includes('404') || msg.includes('not found') || msg.toLowerCase().includes('does not exist')) {
+        console.log(`  ℹ️  Товар вже відсутній у GMC — пропускаємо.`);
+      } else {
+        console.error(`  ❌ Помилка видалення (${offerId}):`, msg);
+      }
+    }
+  }
+}
+
+// ───────────────────────────────────────────────
+// КРОК 2: Завантажити / оновити товари з наявністю > 0
+// ───────────────────────────────────────────────
+async function syncInStockProducts() {
+  console.log('\n📤 Крок 2: Синхронізація товарів у наявності з GMC...');
+
   const { data: products, error } = await supabase
     .from('products')
     .select('*, categories(name, id)')
@@ -52,84 +123,95 @@ async function syncAllProducts() {
     return;
   }
 
-  console.log(`📦 Знайдено товарів для синхронізації: ${products.length}`);
+  if (!products || products.length === 0) {
+    console.log('ℹ️  Немає товарів у наявності для синхронізації.');
+    return;
+  }
+
+  console.log(`📦 Знайдено товарів для завантаження: ${products.length}`);
 
   for (const product of products) {
-    try {
-      const categoryId = product.categories?.id;
-      const categoryName = product.categories?.name || 'Одяг';
-      
-      console.log(`\n🔹 Обробка товару: ${product.name} (Категорія: ${categoryName}, арт. ${product.sku || product.id})`);
+    const offerId     = product.sku || product.id;
+    const categoryId  = product.categories?.id  || '';
+    const categoryName = product.categories?.name || 'Одяг';
 
-      // Готуємо дані для GMC
+    console.log(`\n  🔹 Обробка: ${product.name} (арт. ${offerId})`);
+
+    try {
+      // ── Формуємо об'єкт товару для GMC ──
       const gmcProduct = {
         merchantId,
-        offerId: product.sku || product.id,
-        title: product.name,
+        offerId,
+        title      : product.name,
         description: product.description || product.name,
-        link: `https://olivka.store/product/${product.id}`,
-        imageLink: product.image_url,
+        link       : `https://olivka.store/product/${product.id}`,
+        imageLink  : product.image_url,
         contentLanguage: 'uk',
-        targetCountry: 'UA',
-        channel: 'online',
-        brand: 'Store Olivka',
-        condition: 'new',
-        availability: 'in stock',
+        targetCountry  : 'UA',
+        channel        : 'online',
+        brand          : 'Store Olivka',
+        condition      : 'new',
+        availability   : 'in stock',      // stock > 0 — гарантовано в наявності
         price: {
-          value: product.price.toString(),
-          currency: 'UAH'
+          value   : product.price.toString(),
+          currency: 'UAH',
         },
-        googleProductCategory: googleCategoryMap[categoryId] || '537',
+        // Єдина категорія Google для всіх товарів
+        // 182 = Apparel & Accessories > Clothing > Baby & Toddler Clothing
+        googleProductCategory: GOOGLE_CATEGORY_ID,
         productTypes: [categoryName],
       };
 
-      // Додаємо галерею
+      // Додаткові зображення з галереї
       if (product.gallery && product.gallery.length > 0) {
         gmcProduct.additionalImageLinks = product.gallery;
       }
 
-      // Додаємо колір
+      // Колір (перший в масиві)
       if (product.color && product.color.length > 0) {
         gmcProduct.color = product.color[0];
       }
 
-      // Додаємо матеріал
+      // Матеріал (перший в масиві)
       if (product.material && product.material.length > 0) {
         gmcProduct.material = product.material[0];
       }
 
-      // Додаємо розмір (тільки один, щоб уникнути помилки "Too many values [size]")
+      // Розмір (перший в масиві; Google дозволяє лише один)
       if (product.sizes && product.sizes.length > 0) {
         gmcProduct.sizes = [product.sizes[0].name];
       }
 
-      // Мапінг статі
+      // Стать
       if (product.gender) {
-        const genderMap = {
-          'Унісекс': 'unisex',
-          'Хлопчик': 'male',
-          'Дівчинка': 'female'
-        };
-        gmcProduct.gender = genderMap[product.gender] || 'unisex';
+        gmcProduct.gender = GENDER_MAP[product.gender] || 'unisex';
       }
 
       // Вікова група
-      gmcProduct.ageGroup = (categoryId === 'swaddles' || categoryId === 'cocoons') ? 'newborn' : 'infant';
+      gmcProduct.ageGroup = getAgeGroup(categoryId);
 
-      // Викликаємо Membrane CLI
-      const inputJson = JSON.stringify(gmcProduct).replace(/"/g, '\\"');
-      const command = `membrane action run ${insertProductActionId} --connectionId ${connectionId} --input "${inputJson}" --json`;
-      
-      console.log(`📤 Відправляємо в GMC...`);
-      execSync(command);
-      console.log(`✅ Успішно!`);
+      // ── Відправляємо в GMC ──
+      console.log(`  📤 Відправляємо в GMC...`);
+      runAction(insertProductAction, gmcProduct);
+      console.log(`  ✅ Успішно завантажено!`);
 
     } catch (err) {
-      console.error(`❌ Помилка завантаження товару ${product.id}:`, err.message);
+      console.error(`  ❌ Помилка завантаження товару ${offerId}:`, err.message);
     }
   }
-
-  console.log('\n✨ Повна синхронізація завершена!');
 }
 
-syncAllProducts();
+// ───────────────────────────────────────────────
+// ГОЛОВНА ФУНКЦІЯ
+// ───────────────────────────────────────────────
+async function main() {
+  console.log('🚀 Починаємо нічну синхронізацію з Google Merchant Center...');
+  console.log(`📅 ${new Date().toLocaleString('uk-UA', { timeZone: 'Europe/Kiev' })}`);
+
+  await deleteOutOfStockFromGmc();
+  await syncInStockProducts();
+
+  console.log('\n✨ Синхронізацію завершено!');
+}
+
+main();
