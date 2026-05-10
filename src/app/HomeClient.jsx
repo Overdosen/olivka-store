@@ -283,7 +283,7 @@ export default function HomeClient({ blogPosts = [] }) {
 
       <div className="mb-12 w-full">
         <nav className="bg-[#f0ede4]/90 px-4 sm:px-10 py-5 sm:py-6 shadow-[0_10px_40px_rgba(82,79,37,0.12)] border-b border-[#524f25]/10 backdrop-blur-md w-full">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
+          <div className="grid grid-cols-2 sm:flex sm:flex-row items-center justify-center gap-3 sm:gap-12">
             {features.map((item) => (
               <button
                 key={item.id}
@@ -291,8 +291,8 @@ export default function HomeClient({ blogPosts = [] }) {
                 type="button"
                 className="bg-transparent border-none p-0 m-0 outline-none block"
               >
-                <div className="relative group flex items-center space-x-3 px-4 py-3 rounded-2xl cursor-pointer active:scale-95 transition-transform duration-100">
-                  <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center relative">
+                <div className="relative group flex flex-col sm:flex-row items-center sm:space-x-3 px-2 sm:px-4 py-3 rounded-2xl cursor-pointer active:scale-95 transition-transform duration-100 text-center sm:text-left">
+                  <div className="flex-shrink-0 w-10 h-10 sm:w-14 sm:h-14 flex items-center justify-center relative mb-2 sm:mb-0">
                     <Image
                       src={item.icon?.src || item.icon}
                       alt={item.title}
@@ -301,9 +301,9 @@ export default function HomeClient({ blogPosts = [] }) {
                     />
                   </div>
 
-                  <div className="flex flex-col text-left">
-                    <span className="font-serif text-[#524f25] text-sm sm:text-base font-bold leading-tight">{item.title}</span>
-                    <span className="font-sans text-[#524f25]/70 text-[8px] sm:text-[10px] uppercase tracking-widest mt-0.5">{item.desc}</span>
+                  <div className="flex flex-col text-center sm:text-left w-full">
+                    <span className="font-serif text-[#524f25] text-xs sm:text-base font-bold leading-tight" style={{ fontSize: 'clamp(0.75rem, 3vw, 1rem)' }}>{item.title}</span>
+                    <span className="font-sans text-[#524f25]/70 text-[8px] sm:text-[10px] uppercase tracking-widest mt-1 sm:mt-0.5">{item.desc}</span>
                   </div>
                 </div>
               </button>

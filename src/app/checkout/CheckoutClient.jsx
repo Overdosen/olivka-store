@@ -498,7 +498,6 @@ export default function CheckoutClient() {
                       label="ПІБ"
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
-                      placeholder="Іваненко Іван Іванович"
                       required
                     />
                     <CheckoutInput

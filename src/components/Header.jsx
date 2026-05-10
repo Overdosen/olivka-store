@@ -34,6 +34,7 @@ export default function Header() {
   }, [isMobileMenuOpen]);
 
   function handleUserClick() {
+    setIsMobileMenuOpen(false);
     if (user) router.push('/account');
     else setIsAuthOpen(true);
   }
@@ -144,7 +145,7 @@ export default function Header() {
               )}
             </button>
 
-            <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => setIsCartOpen(true)}>
+            <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}>
               <ShoppingBag size={24} color="var(--color-stone-600)" />
               <AnimatePresence>
                 {cartCount > 0 && (

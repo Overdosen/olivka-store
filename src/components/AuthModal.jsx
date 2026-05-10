@@ -117,6 +117,22 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     setMounted(true);
   }, []);
 
+  // Lock body scroll when AuthModal is open
+  useEffect(() => {
+    if (isOpen && mounted) {
+      document.body.style.overflow = 'hidden';
+      // Prevent background from shifting on touch devices
+      document.body.style.touchAction = 'none';
+    } else if (mounted) {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [isOpen, mounted]);
+
   function parseError(msg) {
     const message = msg?.toString() || '';
     if (message.includes('already registered') || message.includes('already exists') || message.includes('User already'))
