@@ -177,7 +177,7 @@ export default function StoreReviews() {
                   <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
                 ))}
               </div>
-              <span className="rating-text">4.6/5 • 60+ відгуків</span>
+              <span className="rating-text">5/5 • 120+ відгуків</span>
             </div>
           </div>
         </div>
@@ -238,8 +238,8 @@ export default function StoreReviews() {
             "logo": "https://olivka.store/logo.png",
             "aggregateRating": {
               "@type": "AggregateRating",
-              "ratingValue": "4.6",
-              "reviewCount": "64"
+              "ratingValue": "5.0",
+              "reviewCount": "120"
             },
             "review": sortedReviews.map(r => ({
               "@type": "Review",
