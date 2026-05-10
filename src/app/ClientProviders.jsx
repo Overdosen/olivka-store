@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
+import ScrollToTop from '../components/ScrollToTop';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 
@@ -38,6 +39,7 @@ export default function ClientProviders({ children }) {
           <div className="min-h-screen flex flex-col">
             <Header />
             <CartDrawer />
+            <ScrollToTop />
             <main className="flex-grow" style={{ position: 'relative' }}>
               {children}
             </main>
