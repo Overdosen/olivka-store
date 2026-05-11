@@ -186,7 +186,7 @@ export default function ProductClient({ product }) {
 
         {(hasSizes || product.measurements) && (
           <div className="size-selector">
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-3">
               <div />
               {hasSizes ? (
                 <h3 className="m-0 leading-none text-center">
@@ -247,6 +247,7 @@ export default function ProductClient({ product }) {
             onAdd={handleAddToCart}
             label="Додати до кошика"
             addedLabel="Додано до кошика"
+            style={{ marginTop: '0.5rem' }}
           />
         ) : (
           <button
@@ -263,7 +264,7 @@ export default function ProductClient({ product }) {
               letterSpacing: '0.05em',
               textTransform: 'uppercase',
               cursor: 'not-allowed',
-              marginTop: '1rem',
+              marginTop: '0.5rem',
             }}
           >
             Немає в наявності
