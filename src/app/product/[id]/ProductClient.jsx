@@ -184,19 +184,23 @@ export default function ProductClient({ product }) {
         )}
         <div className="price">{product.price} грн</div>
 
-        {hasSizes && (
+        {(hasSizes || product.measurements) && (
           <div className="size-selector">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-6">
               <div />
-              <h3 className="m-0 leading-none text-center">
-                Розмір <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>(Оберіть доступний)</span>
-              </h3>
-              <div className="flex items-center">
+              {hasSizes ? (
+                <h3 className="m-0 leading-none text-center">
+                  Розмір <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>(Оберіть доступний)</span>
+                </h3>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center justify-end">
                 {product.measurements && (
                   <button
                     onClick={() => setIsSizeGuideOpen(true)}
                     className="flex items-center justify-center -translate-y-3 hover:scale-110 active:scale-95 transition-transform"
-                    style={{ marginLeft: 'calc(1cm - 10px)' }}
+                    style={{ marginLeft: hasSizes ? 'calc(1cm - 10px)' : '0' }}
                   >
                     <div className="w-12 h-12 relative">
                       <Image 
@@ -210,29 +214,31 @@ export default function ProductClient({ product }) {
                 )}
               </div>
             </div>
-            <div className="size-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-              {product.sizes.map(size => {
-                const isOutOfStock = size.quantity <= 0;
-                return (
-                  <button
-                    key={size.name}
-                    className={`size-btn ${selectedSize === size.name ? 'active' : ''}`}
-                    onClick={() => !isOutOfStock && setSelectedSize(size.name)}
-                    disabled={isOutOfStock}
-                    style={{
-                      opacity: isOutOfStock ? 0.4 : 1,
-                      textDecoration: isOutOfStock ? 'line-through' : 'none',
-                      cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                      backgroundColor: isOutOfStock ? '#f5f5f5' : undefined,
-                      color: isOutOfStock ? '#999' : undefined
-                    }}
-                    title={isOutOfStock ? "Немає в наявності" : "В наявності"}
-                  >
-                    {size.name}
-                  </button>
-                )
-              })}
-            </div>
+            {hasSizes && (
+              <div className="size-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {product.sizes.map(size => {
+                  const isOutOfStock = size.quantity <= 0;
+                  return (
+                    <button
+                      key={size.name}
+                      className={`size-btn ${selectedSize === size.name ? 'active' : ''}`}
+                      onClick={() => !isOutOfStock && setSelectedSize(size.name)}
+                      disabled={isOutOfStock}
+                      style={{
+                        opacity: isOutOfStock ? 0.4 : 1,
+                        textDecoration: isOutOfStock ? 'line-through' : 'none',
+                        cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                        backgroundColor: isOutOfStock ? '#f5f5f5' : undefined,
+                        color: isOutOfStock ? '#999' : undefined
+                      }}
+                      title={isOutOfStock ? "Немає в наявності" : "В наявності"}
+                    >
+                      {size.name}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
