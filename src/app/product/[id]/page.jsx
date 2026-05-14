@@ -27,11 +27,12 @@ export async function generateMetadata({ params }) {
         : `${baseUrl}/images/${product.image_url}`)
     : '';
 
-  const fullTitle = `${product.name} | Store Olivka`;
+  const pageTitle = product.seo_title || product.name;
+  const fullTitle = `${pageTitle} | Store Olivka`;
   const description = product.meta_description || product.description || '';
 
   return {
-    title: product.name,
+    title: pageTitle,
     description: description,
     keywords: product.meta_keywords || 'Store Olivka, дитячий одяг, купити',
     alternates: {
@@ -109,7 +110,7 @@ export default async function ProductPage({ params }) {
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
-    name: data.name,
+    name: data.seo_title || data.name,
     image: mainImageUrl,
     description: data.meta_description || data.description,
     sku: data.sku || String(data.id),
@@ -196,7 +197,7 @@ export default async function ProductPage({ params }) {
       {
         '@type': 'ListItem',
         position: 3,
-        name: data.name,
+        name: data.seo_title || data.name,
         item: `${baseUrl}/product/${id}`,
       },
     ],

@@ -2045,7 +2045,7 @@ html:has(body.no-scroll) {
 
 .reviews-title {
   font-family: var(--font-sans);
-  font-weight: bold;
+  font-weight: 400;
   font-size: 2rem;
   color: #524f25;
   margin: 0;

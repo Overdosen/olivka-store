@@ -17,14 +17,14 @@ const insertProductActionId = '6976672484c4e21ccc8d65da';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function syncBodies() {
-  console.log('🚀 Починаємо синхронізацію категорії "Боді"...');
+async function syncSets() {
+  console.log('🚀 Починаємо синхронізацію категорії "Комплекти"...');
 
-  // 1. Отримуємо товари категорії 'body'
+  // 1. Отримуємо товари категорії 'sets'
   const { data: products, error } = await supabase
     .from('products')
     .select('*, categories(name)')
-    .eq('category_id', 'body')
+    .eq('category_id', 'sets')
     .eq('is_published', true)
     .gt('stock', 0);
 
@@ -58,7 +58,7 @@ async function syncBodies() {
           currency: 'UAH'
         },
         googleProductCategory: '537', // Apparel & Accessories > Clothing > Baby & Toddler Clothing > Baby & Toddler Outfits
-        productTypes: [product.categories?.name || 'Боді'],
+        productTypes: [product.categories?.name || 'Комплекти'],
       };
 
       // Додаємо галерею
@@ -76,9 +76,8 @@ async function syncBodies() {
         gmcProduct.material = product.material[0];
       }
 
-      // Додаємо розмір
+      // Додаємо розмір (тільки один, щоб уникнути помилки "Too many values [size]")
       if (product.sizes && product.sizes.length > 0) {
-        // Використовуємо перший доступний розмір для фіда (або можна розширити до варіантів)
         gmcProduct.sizes = [product.sizes[0].name];
       }
 
@@ -93,7 +92,7 @@ async function syncBodies() {
       }
 
       // Вікова група
-      gmcProduct.ageGroup = 'newborn'; // Для категорії боді зазвичай це newborn або infant
+      gmcProduct.ageGroup = 'infant'; // Комплекти зазвичай для немовлят/дітей
 
       // Викликаємо Membrane CLI
       const inputJson = JSON.stringify(gmcProduct).replace(/"/g, '\\"');
@@ -111,4 +110,4 @@ async function syncBodies() {
   console.log('\n✨ Синхронізація завершена!');
 }
 
-syncBodies();
+syncSets();

@@ -36,7 +36,8 @@ export default function ProductFormClient({ id }) {
     age: [],
     material: [],
     color: [],
-    features: []
+    features: [],
+    seo_title: ''
   });
   
   const [sizeInput, setSizeInput] = useState('');
@@ -94,7 +95,8 @@ export default function ProductFormClient({ id }) {
         age: data.age || [],
         material: data.material || [],
         color: data.color || [],
-        features: data.features || []
+        features: data.features || [],
+        seo_title: data.seo_title || ''
       });
       
       const fetchedImages = [];
@@ -269,7 +271,8 @@ export default function ProductFormClient({ id }) {
         age: formData.age,
         material: formData.material,
         color: formData.color,
-        features: formData.features
+        features: formData.features,
+        seo_title: formData.seo_title
       };
 
       if (!isEditing) {
@@ -745,6 +748,30 @@ export default function ProductFormClient({ id }) {
           <label className="block text-xs uppercase tracking-wider font-semibold text-stone-500 mb-4">SEO Налаштування (Пошукова оптимізація)</label>
           <div className="grid grid-cols-1 gap-6 p-6 bg-stone-50/50 rounded-md border border-stone-100">
             <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400">SEO Заголовок (Title)</label>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const colorSuffix = formData.color && formData.color.length > 0 ? ` (${formData.color[0]})` : '';
+                    setFormData({...formData, seo_title: `${formData.name}${colorSuffix}`});
+                    toast.success('Заголовок згенеровано');
+                  }}
+                  className="text-[10px] uppercase font-bold text-amber-600 hover:text-amber-700 underline"
+                >
+                  Згенерувати автоматично
+                </button>
+              </div>
+              <input
+                type="text"
+                value={formData.seo_title}
+                onChange={(e) => setFormData({...formData, seo_title: e.target.value})}
+                className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium"
+                placeholder="Назва товару (Колір)"
+              />
+              <p className="text-[10px] text-stone-400 mt-2 italic">Це головний заголовок для Google. Має бути унікальним для кожного товару.</p>
+            </div>
+            <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Ключові слова (через кому)</label>
               <input
                 type="text"
@@ -753,10 +780,10 @@ export default function ProductFormClient({ id }) {
                 className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium"
                 placeholder="напр., дитячий одяг, боді для малюка, подарунок"
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Допомагає Google зрозуміти тематику товару. Пишіть слова, за якими клієнт може шукати такий товар.</p>
+              <p className="text-[10px] text-stone-400 mt-2 italic">Допомагає Google зрозуміти тематику товару.</p>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Опис (якщо порожній - буде використано звичайний опис)</label>
+              <label className="block text-xs uppercase tracking-wider font-semibold text-stone-400 mb-2">SEO Опис (Description)</label>
               <textarea
                 rows="3"
                 value={formData.meta_description}
@@ -764,7 +791,7 @@ export default function ProductFormClient({ id }) {
                 className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 resize-none"
                 placeholder="Короткий привабливий текст для результатів пошуку..."
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Цей текст користувач бачить у Google під назвою сайту. Рекомендується до 160 символів.</p>
+              <p className="text-[10px] text-stone-400 mt-2 italic">Відображається під назвою в Google. Рекомендується до 160 символів.</p>
             </div>
           </div>
         </div>

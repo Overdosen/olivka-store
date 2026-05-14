@@ -14,3 +14,6 @@
 | [[concepts/agent-skills-management]] | Управління навичками агентів (npx skills) | daily/2026-04-20.md | 2026-04-20 |
 | [[concepts/store-olivka-branding]] | Офіційний брендинг, неймінг та слоган магазину | daily/2026-04-21.md | 2026-04-21 |
 | [[concepts/legal-payment-details]] | Реквізити ФОП та правила оформлення платежу | daily/2026-04-21.md | 2026-04-21 |
+| [[concepts/google-merchant-sync]] | Синхронізація товарів з Google Merchant Center через Membrane | daily/2026-05-14.md | 2026-05-14 |
+| [[concepts/store-reviews-polishing]] | Стратегія курації та стилізації відгуків магазину | daily/2026-05-14.md | 2026-05-14 |
+| [[concepts/vercel-image-optimization-bypass]] | Тимчасовий обхід лімітів Vercel на оптимізацію зображень | daily/2026-05-14.md | 2026-05-14 |

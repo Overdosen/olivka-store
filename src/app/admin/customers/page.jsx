@@ -23,6 +23,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedClient, setSelectedClient] = useState(null);
+  const [enlargedImage, setEnlargedImage] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: 'lastOrderDate', direction: 'desc' });
 
 
@@ -367,7 +368,41 @@ export default function CustomersPage() {
             client={selectedClient}
             onClose={() => setSelectedClient(null)}
             onUpdateStatus={updateOrderStatus}
+            onImageClick={(url) => setEnlargedImage(url)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Просмотр увеличенного изображения */}
+      <AnimatePresence>
+        {enlargedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setEnlargedImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-4xl max-h-full"
+            >
+              <img 
+                src={enlargedImage} 
+                alt="Enlarged product" 
+                className="rounded-lg shadow-2xl max-h-[90vh] object-contain"
+              />
+              <button 
+                onClick={() => setEnlargedImage(null)}
+                className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 transition-colors"
+              >
+                <span className="text-sm font-medium">Закрити</span>
+                <X size={24} />
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -387,7 +422,7 @@ function StatCard({ label, value, className = "" }) {
 
 // ─── ClientModal ──────────────────────────────────────────────────────────────
 
-function ClientModal({ client, onClose, onUpdateStatus }) {
+function ClientModal({ client, onClose, onUpdateStatus, onImageClick }) {
   const clientOrders = client._orders || [];
 
   return (
@@ -451,7 +486,7 @@ function ClientModal({ client, onClose, onUpdateStatus }) {
           ) : (
             <div className="flex flex-col gap-3">
               {clientOrders.map(order => (
-                <OrderRow key={order.id} order={order} onUpdateStatus={onUpdateStatus} />
+                <OrderRow key={order.id} order={order} onUpdateStatus={onUpdateStatus} onImageClick={onImageClick} />
               ))}
             </div>
           )}
@@ -463,7 +498,7 @@ function ClientModal({ client, onClose, onUpdateStatus }) {
 
 // ─── OrderRow ─────────────────────────────────────────────────────────────────
 
-function OrderRow({ order, onUpdateStatus }) {
+function OrderRow({ order, onUpdateStatus, onImageClick }) {
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
   const status = STATUS_MAP[order.status] || STATUS_MAP.new;
@@ -519,12 +554,38 @@ function OrderRow({ order, onUpdateStatus }) {
           >
             <div className="px-4 pb-4 pt-2 border-t border-stone-100 bg-stone-50 text-sm">
               {items.map((item, i) => (
-                <div key={i} className="flex justify-between py-1.5 text-stone-600 border-b border-stone-100 last:border-0 items-baseline">
-                  <div className="flex flex-col">
-                    <span className="font-medium">{item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}</span>
-                    {item.sku && <span className="text-[10px] text-stone-400 font-mono mt-0.5 tracking-wider">Артикул: {item.sku}</span>}
+                <div key={i} className="flex gap-3 py-2 text-stone-600 border-b border-stone-100 last:border-0 items-center">
+                  <div 
+                    className="w-12 h-12 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50 cursor-zoom-in hover:opacity-80 transition-opacity"
+                    onClick={() => item.image_url && onImageClick(item.image_url)}
+                  >
+                    {item.image_url ? (
+                      <img 
+                        src={item.image_url} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5 text-stone-400" />
+                      </div>
+                    )}
                   </div>
-                  <span className="text-stone-500 font-medium">{item.price * item.qty} грн</span>
+                  <div className="flex-1 flex justify-between items-baseline min-w-0">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-medium text-stone-800 leading-snug truncate">
+                        {item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}
+                      </span>
+                      {item.sku && (
+                        <span className="text-[10px] text-stone-400 font-mono mt-0.5 tracking-wider">
+                          Артикул: {item.sku}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-stone-500 font-semibold whitespace-nowrap ml-4">
+                      {item.price * item.qty} грн
+                    </span>
+                  </div>
                 </div>
               ))}
               <div className="mt-3 pt-3 border-t border-stone-200/60 flex flex-col gap-2">
