@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '../../../../../lib/supabase';
+import { sendShippingUpdateEmail } from '../../../../../lib/email-service';
 
 /**
  * Nova Poshta Manual Sync API
@@ -75,6 +76,11 @@ export async function POST(req) {
       .single();
 
     if (error) throw error;
+
+    // 4. Відправляємо лист, якщо статус підходящий
+    if (['shipped', 'arrived', 'delivered'].includes(newStatus)) {
+      await sendShippingUpdateEmail(orderId, newStatus);
+    }
 
     return NextResponse.json({ 
       success: true, 

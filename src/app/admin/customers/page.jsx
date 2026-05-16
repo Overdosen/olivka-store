@@ -543,8 +543,40 @@ function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
   const timeStr = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
 
   async function handleStatusChange(e) {
+    const newStatus = e.target.value;
     setUpdating(true);
-    await onUpdateStatus(order.id, e.target.value);
+    await onUpdateStatus(order.id, newStatus);
+    
+    const isShippingStatus = ['shipped', 'arrived', 'delivered'].includes(newStatus);
+    
+    if (isShippingStatus) {
+      if (!order.tracking_number) {
+        toast.custom((t) => (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg shadow-lg flex items-start gap-3 max-w-sm">
+            <span className="text-xl leading-none">⚠️</span>
+            <div>
+              <p className="font-semibold text-sm">Статус оновлено</p>
+              <p className="text-xs mt-1">Лист клієнту <b>не відправлено</b>, оскільки не вказано ТТН.</p>
+            </div>
+          </div>
+        ), { duration: 5000 });
+      } else {
+        try {
+          const res = await fetch('/api/admin/orders/shipping-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: order.id, newStatus })
+          });
+          const data = await res.json();
+          if (data.success && !data.skipped) {
+            toast.success('Лист про доставку успішно відправлено клієнту');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
+    
     setUpdating(false);
   }
 
