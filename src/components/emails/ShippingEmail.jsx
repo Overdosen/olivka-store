@@ -75,7 +75,9 @@ export const getShippingEmailHtml = (order, status) => {
               <tr>
                 <td align="center" style="background-color: #f9f7f0; padding: 30px 20px; border-bottom: 1px solid rgba(82, 79, 37, 0.05);" class="header">
                   <h1 style="margin: 0; color: ${brandColor}; font-size: 22px; font-weight: 700; letter-spacing: -0.01em;">${statusTitle}</h1>
-                  <p style="margin: 8px 0 0; color: #9a866a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600;">Замовлення №${order_number || id.slice(0, 8)}</p>
+                  <div style="margin-top: 12px;">
+                    <span style="display: inline-block; background-color: #f0ebd8; color: ${brandColor}; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(82, 79, 37, 0.1);">Замовлення №${order_number || id.slice(0, 8)}</span>
+                  </div>
                 </td>
               </tr>
 
