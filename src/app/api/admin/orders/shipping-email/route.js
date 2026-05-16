@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { sendShippingUpdateEmail } from '../../../../../../lib/email-service';
-import { supabaseService } from '../../../../../../lib/supabase';
+import { sendShippingUpdateEmail } from '../../../../../lib/email-service';
+import { supabaseService } from '../../../../../lib/supabase';
 
 export async function POST(req) {
   try {
