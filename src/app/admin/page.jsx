@@ -33,14 +33,32 @@ export default function Dashboard() {
           .select('*', { count: 'exact', head: true })
           .gte('created_at', sevenDaysAgo.toISOString());
 
-        const { count: clientsCount } = await supabase
+        const { data: profiles } = await supabase
           .from('profiles')
-          .select('*', { count: 'exact', head: true });
+          .select('email, created_at');
 
-        const { count: newClientsCount } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', sevenDaysAgo.toISOString());
+        const { data: orders } = await supabase
+          .from('orders')
+          .select('email, created_at, user_id');
+
+        const customerFirstSeen = {};
+        
+        profiles?.forEach(p => {
+          const email = p.email?.toLowerCase();
+          if (email) customerFirstSeen[email] = new Date(p.created_at);
+        });
+
+        orders?.forEach(o => {
+          if (!o.email) return;
+          const email = o.email.toLowerCase();
+          const date = new Date(o.created_at);
+          if (!customerFirstSeen[email] || date < customerFirstSeen[email]) {
+            customerFirstSeen[email] = date;
+          }
+        });
+
+        const totalClientsCount = Object.keys(customerFirstSeen).length;
+        const newClientsCount = Object.values(customerFirstSeen).filter(date => date >= sevenDaysAgo).length;
 
         const { count: ordersCount } = await supabase
           .from('orders')
@@ -56,8 +74,8 @@ export default function Dashboard() {
           totalProducts:    productsCount || 0,
           activeCategories: categoriesCount || 0,
           recentProducts:   recentCount || 0,
-          totalClients:     clientsCount || 0,
-          newClients:       newClientsCount || 0,
+          totalClients:     totalClientsCount,
+          newClients:       newClientsCount,
           totalOrders:      ordersCount || 0,
           totalUnits:       totalStockUnits
         });
@@ -104,7 +122,7 @@ export default function Dashboard() {
           <p className="text-3xl md:text-4xl font-cormorant font-bold text-stone-800">{stats.totalClients}</p>
         </div>
         <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow">
-          <p className="text-[10px] md:text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">Нових клієнтів</p>
+          <p className="text-[10px] md:text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">Нових за 7 днів</p>
           <p className="text-3xl md:text-4xl font-cormorant font-bold text-stone-800">{stats.newClients}</p>
         </div>
         <div className="bg-white/80 backdrop-blur-sm p-5 md:p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow">

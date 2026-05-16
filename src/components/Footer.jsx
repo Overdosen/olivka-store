@@ -118,8 +118,8 @@ export default function Footer() {
               <div className="footer-col">
                 <h3 className="footer-col-title">Покупцям</h3>
                 <ul className="footer-links">
-                  <li><Link href="/about#delivery" className="footer-link">Оплата і доставка</Link></li>
-                  <li><Link href="/about#delivery" className="footer-link">Обмін та повернення</Link></li>
+                  <li><Link href="/delivery-and-returns" className="footer-link">Оплата і доставка</Link></li>
+                  <li><Link href="/delivery-and-returns#returns" className="footer-link">Обмін та повернення</Link></li>
                   <li><Link href="/about#oferta" className="footer-link">Публічна оферта</Link></li>
                   <li><Link href="/about#consumer" className="footer-link">Захист персональних даних</Link></li>
                 </ul>

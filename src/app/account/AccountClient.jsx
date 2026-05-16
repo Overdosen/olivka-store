@@ -450,7 +450,9 @@ function ActionBtn({ onClick, label }) {
 const STATUS_MAP = {
   new:             { label: 'Нове',         color: '#b5880b', bg: '#fef9e7' },
   shipped:         { label: 'Відправлено',  color: '#e65100', bg: '#fff3e0' },
+  arrived:         { label: 'Прибуло у відділення', color: '#1e40af', bg: '#eff6ff' },
   delivered:       { label: 'Доставлено',   color: '#2e7d32', bg: '#e8f5e9' },
+  returned:        { label: 'Повернуто клієнтом', color: '#7c2d12', bg: '#fff7ed' },
   cancelled:       { label: 'Скасовано',    color: '#c62828', bg: '#ffebee' },
   paid:            { label: 'Сплачено',     color: '#10b981', bg: '#ecfdf5' },
   payment_error:   { label: 'Помилка оплати', color: '#dc2626', bg: '#fef2f2' },

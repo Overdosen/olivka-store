@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ChevronDown, Users, ShoppingBag, ChevronUp, ArrowUpDown, Calendar } from 'lucide-react';
+import { Search, X, ChevronDown, Users, ShoppingBag, ChevronUp, ArrowUpDown, Calendar, RefreshCw, ExternalLink, Check } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
+import toast from 'react-hot-toast';
 
 const STATUS_MAP = {
-  new:       { label: 'Нове',         color: '#b5880b', bg: '#fef9e7' },
-  shipped:   { label: 'Відправлено',  color: '#e65100', bg: '#fff3e0' },
-  delivered: { label: 'Доставлено',   color: '#2e7d32', bg: '#e8f5e9' },
-  cancelled: { label: 'Скасовано',    color: '#c62828', bg: '#ffebee' },
-  paid:      { label: 'Сплачено',     color: '#10b981', bg: '#ecfdf5' },
-  payment_error: { label: 'Помилка оплати', color: '#dc2626', bg: '#fef2f2' },
-  pending_payment: { label: 'Очікує оплати', color: '#7c3aed', bg: '#f5f3ff' },
+  new:             { label: 'Нове',            color: '#b5880b', bg: '#fef9e7' },
+  pending_payment: { label: 'Очікує оплати',   color: '#7c3aed', bg: '#f5f3ff' },
+  paid:            { label: 'Сплачено',        color: '#10b981', bg: '#ecfdf5' },
+  shipped:         { label: 'Відправлено',     color: '#e65100', bg: '#fff3e0' },
+  arrived:         { label: 'Прибуло',         color: '#1d4ed8', bg: '#eff6ff' },
+  delivered:       { label: 'Доставлено',      color: '#2e7d32', bg: '#e8f5e9' },
+  returned:        { label: 'Повернуто',       color: '#9d174d', bg: '#fdf2f8' },
+  payment_error:   { label: 'Помилка оплати',  color: '#dc2626', bg: '#fef2f2' },
+  cancelled:       { label: 'Скасовано',       color: '#c62828', bg: '#ffebee' },
 };
 
 const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([id, v]) => ({ id, ...v }));
@@ -184,6 +187,29 @@ export default function CustomersPage() {
         ...c,
         _orders: (c._orders || []).map(o =>
           o.id === orderId ? { ...o, status: newStatus } : o
+        ),
+      }));
+    }
+  }
+
+  async function updateOrderTracking(orderId, trackingNumber) {
+    await supabase.from('orders').update({ tracking_number: trackingNumber }).eq('id', orderId);
+    // Оновлюємо локально
+    setOrders(prev => {
+      const updated = { ...prev };
+      for (const uid in updated) {
+        updated[uid] = updated[uid].map(o =>
+          o.id === orderId ? { ...o, tracking_number: trackingNumber } : o
+        );
+      }
+      return updated;
+    });
+    // Оновлюємо вибраного клієнта
+    if (selectedClient) {
+      setSelectedClient(c => ({
+        ...c,
+        _orders: (c._orders || []).map(o =>
+          o.id === orderId ? { ...o, tracking_number: trackingNumber } : o
         ),
       }));
     }
@@ -368,6 +394,7 @@ export default function CustomersPage() {
             client={selectedClient}
             onClose={() => setSelectedClient(null)}
             onUpdateStatus={updateOrderStatus}
+            onUpdateTracking={updateOrderTracking}
             onImageClick={(url) => setEnlargedImage(url)}
           />
         )}
@@ -422,7 +449,7 @@ function StatCard({ label, value, className = "" }) {
 
 // ─── ClientModal ──────────────────────────────────────────────────────────────
 
-function ClientModal({ client, onClose, onUpdateStatus, onImageClick }) {
+function ClientModal({ client, onClose, onUpdateStatus, onUpdateTracking, onImageClick }) {
   const clientOrders = client._orders || [];
 
   return (
@@ -486,7 +513,13 @@ function ClientModal({ client, onClose, onUpdateStatus, onImageClick }) {
           ) : (
             <div className="flex flex-col gap-3">
               {clientOrders.map(order => (
-                <OrderRow key={order.id} order={order} onUpdateStatus={onUpdateStatus} onImageClick={onImageClick} />
+                <OrderRow 
+                  key={order.id} 
+                  order={order} 
+                  onUpdateStatus={onUpdateStatus} 
+                  onUpdateTracking={onUpdateTracking} 
+                  onImageClick={onImageClick} 
+                />
               ))}
             </div>
           )}
@@ -498,9 +531,11 @@ function ClientModal({ client, onClose, onUpdateStatus, onImageClick }) {
 
 // ─── OrderRow ─────────────────────────────────────────────────────────────────
 
-function OrderRow({ order, onUpdateStatus, onImageClick }) {
+function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
   const [expanded, setExpanded] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [ttn, setTtn] = useState(order.tracking_number || '');
+  const [isTtnChanged, setIsTtnChanged] = useState(false);
   const status = STATUS_MAP[order.status] || STATUS_MAP.new;
   const items = Array.isArray(order.items) ? order.items : [];
   const dateObj = new Date(order.created_at);
@@ -511,6 +546,41 @@ function OrderRow({ order, onUpdateStatus, onImageClick }) {
     setUpdating(true);
     await onUpdateStatus(order.id, e.target.value);
     setUpdating(false);
+  }
+
+  async function handleTtnSave() {
+    setUpdating(true);
+    await onUpdateTracking(order.id, ttn);
+    setIsTtnChanged(false);
+    setUpdating(false);
+  }
+
+  async function handleSyncStatus() {
+    if (!order.tracking_number) return;
+    setUpdating(true);
+    try {
+      const res = await fetch('/api/admin/nova-poshta/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: order.id, trackingNumber: order.tracking_number })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.error || 'Помилка отримання даних з Нової Пошти');
+        return;
+      }
+      const data = await res.json();
+      if (data.success) {
+        await onUpdateStatus(order.id, data.newStatus);
+        toast.success(`Статус оновлено: ${data.npStatus}`);
+      } else {
+        toast.error(data.error || 'Помилка синхронізації');
+      }
+    } catch (err) {
+      toast.error('Помилка запиту');
+    } finally {
+      setUpdating(false);
+    }
   }
 
   return (
@@ -531,6 +601,44 @@ function OrderRow({ order, onUpdateStatus, onImageClick }) {
           </div>
           <span className="ml-auto font-semibold text-stone-700 text-sm">{order.total} грн</span>
         </button>
+
+        {/* ТТН Поле */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="ТТН"
+              value={ttn}
+              onChange={(e) => {
+                setTtn(e.target.value);
+                setIsTtnChanged(e.target.value !== (order.tracking_number || ''));
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && isTtnChanged && handleTtnSave()}
+              className="text-[10px] md:text-xs font-mono px-2 py-1.5 w-28 md:w-32 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 transition"
+            />
+            {isTtnChanged && (
+              <button
+                onClick={handleTtnSave}
+                disabled={updating}
+                className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-all hover:scale-110 active:scale-95 z-10"
+              >
+                <Check size={14} strokeWidth={3} />
+              </button>
+            )}
+          </div>
+          {order.tracking_number && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleSyncStatus}
+                disabled={updating}
+                className={`p-1.5 text-stone-400 hover:text-stone-800 transition-all ${updating ? 'animate-spin opacity-50' : ''}`}
+                title="Оновити статус з Нової Пошти"
+              >
+                <RefreshCw size={14} />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Dropdown статусу */}
         <select
