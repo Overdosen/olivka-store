@@ -1,0 +1,22 @@
+.agents
+.claude
+.codex
+.membrane
+.venv
+_backup_store_olivka_
+daily
+dist
+docs/brain
+knowledge/.obsidian
+reports
+scratch
+wiki
+временный контент
+
+*.log
+*.mjs
+balance
+how --name-only 2b1aa61f633011d2d6b6a78d8a8d16c5aa819b8d
+last_lines.txt
+vercel_out.txt
+vercel_status_final.txt
