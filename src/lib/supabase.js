@@ -29,7 +29,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // Клієнт для серверних операцій (обхід RLS)
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!serviceKey && typeof window === 'undefined') {
   console.warn('[Supabase] Service Role Key is missing. Server-side operations requiring RLS bypass will fail.');
@@ -43,5 +43,4 @@ export const supabaseService = (supabaseUrl && serviceKey)
       }
     }) 
   : null;
-
 

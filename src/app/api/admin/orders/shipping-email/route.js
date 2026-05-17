@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { sendShippingUpdateEmail } from '../../../../../lib/email-service';
 import { supabaseService } from '../../../../../lib/supabase';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 export async function POST(req) {
   try {
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+
     const { orderId, newStatus } = await req.json();
 
     if (!orderId || !newStatus) {

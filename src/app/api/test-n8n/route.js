@@ -3,8 +3,14 @@ import { NextResponse } from 'next/server';
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
+  const testRoutesEnabled = process.env.NODE_ENV !== 'production' || process.env.TEST_ROUTES_ENABLED === '1';
+  const expectedSecret = process.env.OLIVKA_DEBUG_SECRET || (process.env.NODE_ENV !== 'production' ? 'olivka-debug-2024' : null);
 
-  if (secret !== 'olivka-debug-2024') {
+  if (!testRoutesEnabled) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  if (!expectedSecret || secret !== expectedSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

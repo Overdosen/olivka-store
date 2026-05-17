@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseService } from '../../../../../lib/supabase';
 import { sendShippingUpdateEmail } from '../../../../../lib/email-service';
+import { requireAdmin } from '../../../../../lib/admin-auth';
 
 /**
  * Nova Poshta Manual Sync API
@@ -8,6 +9,9 @@ import { sendShippingUpdateEmail } from '../../../../../lib/email-service';
  */
 export async function POST(req) {
   try {
+    const auth = await requireAdmin(req);
+    if (auth.error) return auth.error;
+
     const { orderId, trackingNumber } = await req.json();
 
     if (!orderId || !trackingNumber) {

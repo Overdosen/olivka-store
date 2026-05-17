@@ -20,6 +20,18 @@ const STATUS_MAP = {
 
 const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([id, v]) => ({ id, ...v }));
 
+async function getAuthHeaders() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session?.access_token) {
+    throw new Error('Admin session is unavailable');
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${session.access_token}`,
+  };
+}
+
 export default function CustomersPage() {
   const [clients, setClients] = useState([]);
   const [orders, setOrders] = useState({});
@@ -28,7 +40,6 @@ export default function CustomersPage() {
   const [selectedClient, setSelectedClient] = useState(null);
   const [enlargedImage, setEnlargedImage] = useState(null);
   const [sortConfig, setSortConfig] = useState({ key: 'lastOrderDate', direction: 'desc' });
-
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -564,7 +575,7 @@ function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
         try {
           const res = await fetch('/api/admin/orders/shipping-email', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getAuthHeaders(),
             body: JSON.stringify({ orderId: order.id, newStatus })
           });
           const data = await res.json();
@@ -593,7 +604,7 @@ function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
     try {
       const res = await fetch('/api/admin/nova-poshta/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ orderId: order.id, trackingNumber: order.tracking_number })
       });
       if (!res.ok) {

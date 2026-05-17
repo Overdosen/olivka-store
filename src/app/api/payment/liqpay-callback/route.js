@@ -19,8 +19,8 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Missing data or signature' }, { status: 400 });
     }
 
-    // 1. Verify Signature (Bypass for local testing if header is present)
-    const isTestBypass = request.headers.get('x-test-bypass') === 'true';
+    // 1. Verify Signature (allow bypass only outside production for local diagnostics)
+    const isTestBypass = process.env.NODE_ENV !== 'production' && request.headers.get('x-test-bypass') === 'true';
     
     if (!isTestBypass && !liqpay.verify_signature(data, signature)) {
       console.error('[LiqPay Callback] Invalid signature');

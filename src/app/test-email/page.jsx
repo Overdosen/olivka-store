@@ -1,6 +1,11 @@
 import { getOrderEmailHtml } from '../../components/emails/OrderEmail';
+import { notFound } from 'next/navigation';
 
 export default function TestEmailPage() {
+  if (process.env.NODE_ENV === 'production' && process.env.TEST_ROUTES_ENABLED !== '1') {
+    notFound();
+  }
+
   const mockOrder = {
     order_number: '10254',
     full_name: 'Денис Сопин',
