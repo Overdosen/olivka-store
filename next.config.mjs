@@ -7,7 +7,8 @@ const nextConfig = {
     NEXT_PUBLIC_LIQPAY_PUBLIC_KEY: process.env.VITE_LIQPAY_PUBLIC_KEY || process.env.NEXT_PUBLIC_LIQPAY_PUBLIC_KEY,
   },
   images: {
-    unoptimized: true,
+    loader: 'custom',
+    loaderFile: './src/lib/imagekitLoader.js',
     remotePatterns: [
       {
         protocol: 'https',
