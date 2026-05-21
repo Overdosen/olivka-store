@@ -53,7 +53,8 @@ def slugify(text: str) -> str:
 
 def extract_wikilinks(content: str) -> list[str]:
     """Extract all [[wikilinks]] from markdown content."""
-    return re.findall(r"\[\[([^\]]+)\]\]", content)
+    links = re.findall(r"\[\[([^\]]+)\]\]", content)
+    return [link.split('|')[0].strip() for link in links]
 
 
 def wiki_article_exists(link: str) -> bool:

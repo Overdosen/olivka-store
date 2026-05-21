@@ -17,3 +17,10 @@
 | [[concepts/google-merchant-sync]] | Синхронізація товарів з Google Merchant Center через Membrane | daily/2026-05-14.md | 2026-05-14 |
 | [[concepts/store-reviews-polishing]] | Стратегія курації та стилізації відгуків магазину | daily/2026-05-14.md | 2026-05-14 |
 | [[concepts/vercel-image-optimization-bypass]] | Тимчасовий обхід лімітів Vercel на оптимізацію зображень | daily/2026-05-14.md | 2026-05-14 |
+| [[concepts/admin-dashboard-analytics-refinement]] | Оновлення аналітики та адаптивного табличного макету | daily/2026-05-17.md | 2026-05-17 |
+| [[concepts/dashboard-cogs-and-stock-valuation]] | Динамічний прорахунок витрат (COGS) та вартості складу | daily/2026-05-17.md | 2026-05-17 |
+| [[concepts/reviews-moderation-system]] | Безпечна система відгуків у Supabase, клієнтський модал та інтерфейс модерації в CRM | daily/2026-05-18.md | 2026-05-18 |
+| [[concepts/products]] | Товарний асортимент, облік залишків (розмірний та безрозмірний) та SEO у Store Olivka | daily/2026-05-18.md | 2026-05-18 |
+| [[concepts/categories]] | Структура категорій товарів, динамічна навігація та SEO-описи категорій | daily/2026-04-13.md | 2026-04-13 |
+
+

@@ -32,8 +32,35 @@ export async function sendOrderConfirmationEmail(orderId) {
       return { success: false, error: 'Order not found' };
     }
 
-    // 2. Генеруємо HTML (OrderEmail.jsx повертає рядок HTML)
-    const emailHtml = getOrderEmailHtml(order);
+    // 2. Генеруємо magic link для нових клієнтів (вхід в ЛК одним кліком)
+    let magicLink = 'https://olivka.store/account';
+    const isNew = order.account_created === true;
+    const last4 = order.account_password_hint || '';
+
+    if (isNew && order.email) {
+      try {
+        const { data: linkData, error: linkErr } = await supabaseService.auth.admin.generateLink({
+          type: 'magiclink',
+          email: order.email,
+          options: {
+            redirectTo: 'https://olivka.store/account',
+            expiresIn: 604800, // 7 днів
+          },
+        });
+        if (!linkErr && linkData?.properties?.action_link) {
+          magicLink = linkData.properties.action_link;
+          console.log(`[Email Service] Magic link generated for ${order.email}`);
+        } else if (linkErr) {
+          console.warn('[Email Service] Magic link generation failed:', linkErr.message);
+        }
+      } catch (e) {
+        console.warn('[Email Service] Magic link exception:', e.message);
+      }
+    }
+
+    // 3. Генеруємо HTML
+    const emailHtml = getOrderEmailHtml(order, { isNew, last4, magicLink });
+
 
     // 3. Відправляємо лист клієнту
     console.log(`[Email Service] Attempting to send email to ${order.email} for order ${order.order_number || order.id}`);

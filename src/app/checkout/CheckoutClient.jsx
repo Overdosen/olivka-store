@@ -197,15 +197,31 @@ export default function CheckoutClient() {
       };
 
       const newOrderId = generateUUID();
-      const orderItems = cartItems.map(item => ({
-        product_id: item.id,
-        name:       item.name,
-        sku:        item.sku || null,
-        price:      item.price,
-        qty:        item.quantity,
-        size:       item.size,
-        image_url:  item.image_url || item.image || null,
-      }));
+      const orderItems = cartItems.map(item => {
+        let itemCostPrice = 0;
+        if (item.size && Array.isArray(item.sizes)) {
+          const sizeObj = item.sizes.find(s => s.name === item.size);
+          if (sizeObj && sizeObj.cost_price !== undefined && sizeObj.cost_price !== null) {
+            itemCostPrice = Number(sizeObj.cost_price);
+          }
+        }
+        
+        // Якщо ціна закупки розміру не знайдена або дорівнює 0, беремо загальну собівартість
+        if (!itemCostPrice && item.cost_price) {
+          itemCostPrice = Number(item.cost_price);
+        }
+
+        return {
+          product_id: item.id,
+          name:       item.name,
+          sku:        item.sku || null,
+          price:      item.price,
+          qty:        item.quantity,
+          size:       item.size,
+          image_url:  item.image_url || item.image || null,
+          cost_price: itemCostPrice,
+        };
+      });
 
       console.log('Відправка замовлення в Supabase...', { 
         id: newOrderId, 
@@ -245,6 +261,34 @@ export default function CheckoutClient() {
       }
 
       const shortId = newOrder?.order_number || '';
+
+      // --- Авто-реєстрація гостьового клієнта ---
+      // Якщо клієнт не авторизований — створюємо акаунт автоматично.
+      // API роут оновлює замовлення через service role key (обходить RLS).
+      if (!user) {
+        const phoneDigits = phone.replace(/\D/g, '');
+        const last4 = phoneDigits.slice(-4);
+
+        try {
+          const autoRegRes = await fetch('/api/auth/auto-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email:    email.trim(),
+              fullName: fullName.trim(),
+              phone:    phone.trim(),
+              password: last4,
+              orderId:  newOrderId,  // API сам оновить замовлення через supabaseService
+            }),
+          }).then(r => r.json());
+
+          console.log(`[Checkout] Auto-register result:`, autoRegRes);
+        } catch (regErr) {
+          // Не зупиняємо оформлення — реєстрація є бонусом, не блокером
+          console.warn('[Checkout] Auto-register failed (non-critical):', regErr.message);
+        }
+      }
+
 
       // --- n8n Webhook & Email (Immediate for non-liqpay) ---
       if (payment !== 'liqpay') {

@@ -20,6 +20,7 @@ export default function ClientProviders({ children }) {
       <CartProvider>
         <Toaster 
           position="top-center" 
+          containerStyle={{ zIndex: 99999 }}
           toastOptions={{
             style: {
               background: '#fff',

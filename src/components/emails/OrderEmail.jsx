@@ -1,7 +1,7 @@
 /**
  * Покращений генератор HTML-шаблону для листів замовлень Store Olivka.
  */
-export const getOrderEmailHtml = (order) => {
+export const getOrderEmailHtml = (order, { isNew = false, last4 = '', magicLink = 'https://olivka.store/account' } = {}) => {
   const { 
     order_number, 
     full_name, 
@@ -120,6 +120,43 @@ export const getOrderEmailHtml = (order) => {
     </tr>
   `).join('');
 
+  // Блок «Особистий кабінет» — тільки для нових клієнтів
+  const accountBlock = isNew && last4 ? `
+    <tr>
+      <td style="padding: 0 40px 30px;">
+        <div style="background: linear-gradient(135deg, #f5f2e9 0%, #eae6d8 100%); border-radius: 16px; padding: 28px 30px; border: 1px solid rgba(82,79,37,0.12);">
+          <p style="margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(82,79,37,0.5); font-weight: 600;">Store Olivka</p>
+          <h3 style="margin: 0 0 14px; font-size: 18px; color: #524f25; font-weight: 700;">🔐 Ваш особистий кабінет</h3>
+          <p style="margin: 0 0 18px; font-size: 14px; color: #555; line-height: 1.6;">
+            Ми автоматично створили для вас акаунт у нашому магазині.<br>
+            Заходьте в будь-який момент, щоб переглянути статус замовлення.
+          </p>
+          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-radius: 10px; overflow: hidden; border: 1px solid rgba(82,79,37,0.12); margin-bottom: 18px;">
+            <tr style="background: white;">
+              <td style="padding: 12px 16px; border-bottom: 1px solid rgba(82,79,37,0.07); color: #888; font-size: 13px; width: 90px;">Логін:</td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid rgba(82,79,37,0.07); font-size: 13px; font-weight: 600; color: #524f25;">${email}</td>
+            </tr>
+            <tr style="background: white;">
+              <td style="padding: 12px 16px; color: #888; font-size: 13px;">Пароль:</td>
+              <td style="padding: 12px 16px; font-size: 20px; font-weight: 800; color: #524f25; letter-spacing: 0.2em; font-family: monospace;">${last4}</td>
+            </tr>
+          </table>
+          <p style="margin: 0 0 6px; font-size: 12px; color: rgba(82,79,37,0.5); line-height: 1.5;">
+            💡 Пароль — це <strong>4 останні цифри</strong> вашого номеру телефону.
+            Ви можете змінити пароль в особистому кабінеті.
+          </p>
+          <a href="${magicLink}"
+             style="display: inline-block; margin-top: 16px; padding: 12px 28px;
+                    background: #524f25; color: white; text-decoration: none;
+                    border-radius: 10px; font-size: 13px; font-weight: 600;
+                    letter-spacing: 0.08em; text-transform: uppercase;">
+            Увійти в кабінет →
+          </a>
+        </div>
+      </td>
+    </tr>
+  ` : '';
+
   return `
     <!DOCTYPE html>
     <html lang="uk">
@@ -203,7 +240,15 @@ export const getOrderEmailHtml = (order) => {
                     </div>
                   </div>
 
-                  <div style="margin-top: 40px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 30px;">
+                </td>
+              </tr>
+
+              ${accountBlock}
+
+              <!-- Маєте запитання? - тепер після блоку ЛК -->
+              <tr>
+                <td style="padding: 0 40px 40px;">
+                  <div style="text-align: center; border-top: 1px solid #f0f0f0; padding-top: 30px;">
                     <p style="color: #999; font-size: 13px; line-height: 1.6; margin: 0;">
                       Маєте запитання? Будемо раді допомогти! <br>
                       Просто <strong>напишіть нам у відповідь на цей лист</strong> — <br>
@@ -212,6 +257,7 @@ export const getOrderEmailHtml = (order) => {
                   </div>
                 </td>
               </tr>
+
 
               <!-- Footer -->
               <tr>

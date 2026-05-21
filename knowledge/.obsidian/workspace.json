@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "047a361c99224613",
+        "id": "e7dc839c1f4c5307",
         "type": "tabs",
         "children": [
           {
-            "id": "344055d219e24301",
+            "id": "433dab18346135c8",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -177,8 +177,11 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "344055d219e24301",
+  "active": "433dab18346135c8",
   "lastOpenFiles": [
+    "concepts/store-reviews-polishing.md",
+    "daily/2026-05-14.md",
+    "daily",
     "concepts/delivery.md",
     "2026-04-11.md",
     "concepts/architecture-overview.md",

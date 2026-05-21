@@ -1,183 +1,88 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import ReviewModal from './ReviewModal';
 
-const rawReviews = [
-  {
-    id: 16,
-    text: "Дякую вам безмежно! Все отримала Супер ніжнятіна і мілота 🥰 🥰 🥰",
-    author: "Покупець",
-    date: "25 липня",
-    rating: 5
-  },
-  {
-    id: 17,
-    text: "Вітаю) Забрала посилочку, ідеальний перший одяг для малюка 💙 Дякую вам!",
-    author: "Покупець",
-    date: "14 жовтня",
-    rating: 5
-  },
-  {
-    id: 5,
-    text: "Доброго дня! Речі дуже сподобались за якістю і виглядом Дякую ☺️",
-    author: "Покупець",
-    date: "16 липня",
-    rating: 5
-  },
-  {
-    id: 2,
-    text: "Дякую велике. Мама отримала посилку ) Все дуже гарне, окремо дякую за шкарпеточки 🫶🏻",
-    author: "Покупець",
-    date: "7 січня",
-    rating: 5
-  },
-  {
-    id: 1,
-    text: "Дуже хочу залишити відгук про ваш онлайн-магазин дитячого одягу 🤍 Я приємно здивована! Якість матеріалу просто чудова, тканина м’яка, ніжна і дуже приємна на дотик, ідеально для малюків. Сервіс на високому рівні: швидко відповідають, допомагають з вибором і відчувається турбота про клієнта. Доставка теж дуже швидка. Окремо хочу відзначити упакування - воно просто неймовірне!",
-    author: "Покупець",
-    date: "25 березня",
-    rating: 5
-  },
-  {
-    id: 10,
-    text: "Хочу вам подякувати від щирого серця за неймовірно якісний, ніжний та гарний одяг для майбутньої донечки 😍 🥺 неможливо стримати емоцій.. окремо дякую за подаруночок у виді прекрасних шкарпеточок 💗",
-    author: "Покупець",
-    date: "16 липня",
-    rating: 5
-  },
-  {
-    id: 11,
-    text: "Пелюшки усі сподобались теж по якості, ті принти - то любов, однозначно хочеться повернутись у ваш магазин, враховуєте усі деталі та перевершуєте очікування, від пакування до вкладених листівок 🌸 💖",
-    author: "Покупець",
-    date: "20 травня",
-    rating: 5
-  },
-  {
-    id: 3,
-    text: "Добрий вечір 😍 отримала вашу посилочку 🥰 речі всі супер задоволена 😍 і дякую за приємний подаруночок 😍😘 дуже приємно 🫶🏻",
-    author: "Покупець",
-    date: "12 лютого",
-    rating: 5
-  },
-  {
-    id: 14,
-    text: "Доброго дня) Посилку забрала 🥰 все таке гарне, ніжне, приємне і маленькеее 🥺 🥹 Дуже дякую за милий подаруночок) Замовляла такі ж самі платочки, але в іншому магазині і вони мені так сподобались, що хотіла б собі ще і ще і це така приємність була, що ви поклали саме платочок 🥹 🥹 Дуже дякую!",
-    author: "Покупець",
-    date: "10 вересня",
-    rating: 5
-  },
-  {
-    id: 4,
-    text: "Вітаю , вдячна вашому магазину, речі дуже якісні, доставка швидка , а упаковка 🥰 окремий кайф. Дякую за допомогу і приємне спілкування",
-    author: "Покупець",
-    date: "15 квітня",
-    rating: 5
-  },
-  {
-    id: 12,
-    text: "дякую за одяг, та за чудове пакування ❤️ ❤️",
-    author: "Покупець",
-    date: "3 серпня",
-    rating: 5
-  },
-  {
-    id: 13,
-    text: "Доброго вечора Тільки зараз отримала своє замовлення і дуже вам дякую Все гарне і якісне)",
-    author: "Покупець",
-    date: "7 січня",
-    rating: 5
-  },
-  {
-    id: 6,
-    text: "Дякую. Замовленням дуже задоволена)",
-    author: "Покупець",
-    date: "20 травня",
-    rating: 5
-  },
-  {
-    id: 15,
-    text: "Пізніше обов’язково ще й зробимо відгуки на модельці 🥰",
-    author: "Покупець",
-    date: "12 листопада",
-    rating: 5
-  },
-  {
-    id: 7,
-    text: "Доброго дня! Посилочку взяла, все дуже красиве, дякую 💗",
-    author: "Покупець",
-    date: "22 червня",
-    rating: 5
-  },
-  {
-    id: 8,
-    text: "Отримала посилку) щиро дякую, дуже гарно упакована, буду знімати огляд 🥰🫶🏻",
-    author: "Покупець",
-    date: "3 серпня",
-    rating: 5
-  },
-  {
-    id: 9,
-    text: "Дякую, замовлення прийшло, все добре 🥰",
-    author: "Покупець",
-    date: "10 вересня",
-    rating: 5
-  },
-  { id: 18, text: "Так, все супер 😍😍😍 Якість і упакування просто топчик 👌👍 Дякую!❤️", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 19, text: "Вітаю 🥰 Забрала посилочку, велика вам дяка за подаруночок, миленькі носочки 🫶🏻 Дуже гарні комплектики та якісні ❤️обов’язково ще прийду до вас за покупками 🥰 Гарного вам дня та вдалих продажів 😊", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 20, text: "Доброго дня 😊🥰🌷 Дуже дякую Вам 🫶🏻❤️ Все таке миле, якісне і дуже дуже гарне 🫶🏻🫶🏻🫶🏻🥰🥰🥰", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 21, text: "Доброго дня) отримала посилку) Дякую вам, це наймиліше упакування ❤️", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 22, text: "Добрий день Забрала посилочку Дуже гарний одяг, якісний 😍 Впевнена що ще не один раз зроблю у вас замовлення 😊 Дякую гарно 🫶🏻 І дуже дякую за подарунок 🤍", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 23, text: "дякую ❤️ У вас дуже гарна сторінка, все хочеться купити 😂🫶🏻", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 24, text: "Добрий день , забрала замовлення дуже гарний костюмчик)", author: "Покупець", date: "24 серпня", rating: 5 },
-  { id: 25, text: "Посилка приїхала! Все було гарно упаковане та дякую за подаруночок 🥰", author: "Покупець", date: "24 серпня", rating: 5 },
-  { id: 26, text: "Доброго дня! Забула відписати. Посилочку отримала, все дуже добре запаковано, гарної якості. Я дуже задоволена замовленням. Дякую 🫶🏻", author: "Покупець", date: "24 серпня", rating: 5 },
-  { id: 27, text: "Добрий вечір Дякую Вам за таку неймовірну красу 🥰🙏 Що речі, що упакування - щось просто неймовірне ✨", author: "Покупець", date: "24 серпня", rating: 5 },
-  { id: 28, text: "Отримала посилочку дякую за подарунок, все дуже сподобалось 🌸", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 29, text: "Дуже вам дякуємо ❤️ Коли побачила звідки відправлено, то аж защемило!!! Ви молодці!!! Дуже мило, що так упаковуєте", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 30, text: "Все забрали! Дуже Вам дякую 😍. Все просто чудове 😍", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 31, text: "Добрий вечір Дякую за швидку доставку і подарунок 🥰", author: "Покупець", date: "18 травня", rating: 5 },
-  { id: 32, text: "Доброго дня) Отримала посилочку ❤️ Боді просто неймовірний 😊", author: "Покупець", date: "24 квітня", rating: 5 },
-  { id: 33, text: "Дякую 💚 буду стежити за вашими новинками)", author: "Покупець", date: "24 квітня", rating: 5 },
-  { id: 34, text: "Дякую за швидке опрацювання замовлення ))", author: "Покупець", date: "24 квітня", rating: 5 },
-  { id: 35, text: "Доброго вечора 🕊️ Дуже дякую за швидку доставку, приємне спілкування та чудову якість набору 😍 Все дуже сподобалось, такий красивий і ніжний костюмчик 🤍 Будемо замовляти у вас ще, бажаю удачі у розвитку Вашого магазинчику 🧸", author: "Покупець", date: "24 квітня", rating: 5 },
-  { id: 36, text: "Добрий день! Отримала замовлення, хочу поділитися враженнями:) Чоловічок дуже сподобався, хороша та приємна якість 😍😍 Дякую вам, залишилась задоволена ☺️", author: "Покупець", date: "24 квітня", rating: 5 },
-  { id: 37, text: "Дякую ромпери супер якісні та зручні чудова тканина на теплу погоду 🥰🥰🥰", author: "Покупець", date: "23 травня", rating: 5 },
-  { id: 38, text: "доброго вечора, вже все отримала, дуже якісні речі, велике вам дякую 🤍 бажаю успіхів вам 🥰", author: "Покупець", date: "23 травня", rating: 5 },
-  { id: 39, text: "Доброго дня , я сьогодні забрала своє замовлення (вже в Парижі ) Дуже дякую, якість просто шикарна, таке все м'яке, таке гарненьке 🥰🥰🥰", author: "Покупець", date: "23 травня", rating: 5 },
-  { id: 40, text: "Вчора забрала посилку! Виглядає все супер, дякую ❤️", author: "Покупець", date: "23 травня", rating: 5 },
-  { id: 41, text: "Доброго дня) забрала одяг дитячий) все супер, гарне упакування і дуже миленькі комплекти) Дякую)", author: "Покупець", date: "26 червня", rating: 5 },
-  { id: 42, text: "Добрий день. Хотіла Вам подякувати за вашу посилочку, за вашу роботу. Я ще в очікуванні нашої дівчинки, і нічого з того , що замовляла, ще не використовувала-але це любов з першого дотику. Всі тканинні вироби досить якісні і приємні на дотик, сподіваюсь, що малеча так само оцінить їх ніжність ❤️❤️❤️", author: "Покупець", date: "26 червня", rating: 5 },
-  { id: 43, text: "Доброго дня, отримала речі, гарні виглядають і малюку зручно ☺️", author: "Покупець", date: "26 червня", rating: 5 },
-  { id: 44, text: "Дуже тішить, що ніде на одязі нема бірок, які можуть подразнювати шкіру малюка 🙏🏻", author: "Покупець", date: "26 червня", rating: 5 }
-];
+const InstagramIcon = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+  </svg>
+);
 
 export default function StoreReviews() {
   const [isExpanded, setIsExpanded] = useState(false);
-  
-  // Використовуємо порядок з масиву rawReviews
-  const sortedReviews = useMemo(() => {
-    return rawReviews;
+  const [dbReviews, setDbReviews] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('is_approved', true)
+          .order('is_pinned', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (!error && data) {
+          setDbReviews(data);
+        }
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+      }
+    }
+    fetchReviews();
   }, []);
+
+  const sortedReviews = useMemo(() => {
+    return dbReviews.map(r => ({
+      id: `db-${r.id}`,
+      text: r.text,
+      author: r.name,
+      rating: r.rating,
+      isInstagram: r.is_instagram
+    }));
+  }, [dbReviews]);
 
   const displayedReviews = isExpanded ? sortedReviews : sortedReviews.slice(0, 4);
 
   return (
     <section className="store-reviews-section">
       <div className="container">
-        <div className="reviews-header">
+        <div className="reviews-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="header-left">
             <h2 className="reviews-title">Що про нас кажуть мами</h2>
           </div>
-          <div className="header-right">
+          <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <button 
+              onClick={() => setIsReviewModalOpen(true)}
+              className="leave-review-btn"
+            >
+              <Star size={14} fill="#524f25" color="#524f25" />
+              Залишити відгук
+            </button>
             <div className="aggregate-rating">
               <div className="stars">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} size={16} fill="#f59e0b" color="#f59e0b" />
                 ))}
               </div>
-              <span className="rating-text">5/5 • 120+ відгуків</span>
+              <span className="rating-text">5/5 • {76 + dbReviews.length}+ відгуків</span>
             </div>
           </div>
         </div>
@@ -205,12 +110,26 @@ export default function StoreReviews() {
                 <div className="bubble-content">
                   <div className="review-stars">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} size={14} fill="#f59e0b" color="#f59e0b" />
+                      <Star 
+                        key={i} 
+                        size={14} 
+                        fill={i < review.rating ? "#f59e0b" : "transparent"} 
+                        color={i < review.rating ? "#f59e0b" : "#d6d3d1"} 
+                      />
                     ))}
                   </div>
                   <p className="review-text">{review.text}</p>
                 </div>
-                {/* Date removed as per request */}
+                <div className="bubble-footer">
+                  {review.isInstagram ? (
+                    <span className="review-instagram-badge">
+                      <InstagramIcon className="instagram-icon" style={{ width: 14, height: 14 }} />
+                      Відгук з Instagram
+                    </span>
+                  ) : (
+                    <span className="review-author">{review.author || 'Клієнт'}</span>
+                  )}
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -230,6 +149,8 @@ export default function StoreReviews() {
         </div>
       </div>
 
+      <ReviewModal isOpen={isReviewModalOpen} onClose={() => setIsReviewModalOpen(false)} />
+
       {/* SEO Structured Data */}
       <script
         type="application/ld+json"
@@ -237,24 +158,24 @@ export default function StoreReviews() {
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "Olivka Store",
+            "name": "Store Olivka",
             "url": "https://olivka.store",
             "logo": "https://olivka.store/logo.png",
             "aggregateRating": {
               "@type": "AggregateRating",
               "ratingValue": "5.0",
-              "reviewCount": "120"
+              "reviewCount": String(76 + dbReviews.length)
             },
             "review": sortedReviews.map(r => ({
               "@type": "Review",
               "author": {
                 "@type": "Person",
-                "name": "Покупець Olivka Store"
+                "name": r.isInstagram ? "Відгук з Instagram" : (r.author || "Клієнт Store Olivka")
               },
               "reviewBody": r.text,
               "reviewRating": {
                 "@type": "Rating",
-                "ratingValue": "5"
+                "ratingValue": String(r.rating)
               }
             }))
           })

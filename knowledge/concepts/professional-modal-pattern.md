@@ -31,7 +31,7 @@ updated: 2026-04-15
 ## Related Concepts
 
 - [[concepts/resend-integration]] - Реалізація бекенд-частини для контактних форм.
-- [[concepts/ui-visual-consistency]] - Загальна стратегія дизайну проєкту.
+- [[concepts/design-system]] - Загальна стратегія дизайну проєкту.
 
 ## Sources
 

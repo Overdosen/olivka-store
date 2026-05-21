@@ -2,35 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, ChevronDown, Users, ShoppingBag, ChevronUp, ArrowUpDown, Calendar, RefreshCw, ExternalLink, Check } from 'lucide-react';
+import { Search, X, ChevronUp, ChevronDown, Users, ArrowUpDown } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
-import toast from 'react-hot-toast';
-
-const STATUS_MAP = {
-  new:             { label: 'Нове',            color: '#b5880b', bg: '#fef9e7' },
-  pending_payment: { label: 'Очікує оплати',   color: '#7c3aed', bg: '#f5f3ff' },
-  paid:            { label: 'Сплачено',        color: '#10b981', bg: '#ecfdf5' },
-  shipped:         { label: 'Відправлено',     color: '#e65100', bg: '#fff3e0' },
-  arrived:         { label: 'Прибуло',         color: '#1d4ed8', bg: '#eff6ff' },
-  delivered:       { label: 'Доставлено',      color: '#2e7d32', bg: '#e8f5e9' },
-  returned:        { label: 'Повернуто',       color: '#9d174d', bg: '#fdf2f8' },
-  payment_error:   { label: 'Помилка оплати',  color: '#dc2626', bg: '#fef2f2' },
-  cancelled:       { label: 'Скасовано',       color: '#c62828', bg: '#ffebee' },
-};
-
-const STATUS_OPTIONS = Object.entries(STATUS_MAP).map(([id, v]) => ({ id, ...v }));
-
-async function getAuthHeaders() {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error || !session?.access_token) {
-    throw new Error('Admin session is unavailable');
-  }
-
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${session.access_token}`,
-  };
-}
+import PageHeader from '../../../components/admin/ui/PageHeader';
+import StatCard from '../../../components/admin/ui/StatCard';
+import ClientModal from '../../../components/admin/customers/ClientModal';
 
 export default function CustomersPage() {
   const [clients, setClients] = useState([]);
@@ -182,7 +158,6 @@ export default function CustomersPage() {
 
   async function updateOrderStatus(orderId, newStatus) {
     await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
-    // Оновлюємо локально
     setOrders(prev => {
       const updated = { ...prev };
       for (const uid in updated) {
@@ -192,7 +167,6 @@ export default function CustomersPage() {
       }
       return updated;
     });
-    // Оновлюємо вибраного клієнта
     if (selectedClient) {
       setSelectedClient(c => ({
         ...c,
@@ -205,7 +179,6 @@ export default function CustomersPage() {
 
   async function updateOrderTracking(orderId, trackingNumber) {
     await supabase.from('orders').update({ tracking_number: trackingNumber }).eq('id', orderId);
-    // Оновлюємо локально
     setOrders(prev => {
       const updated = { ...prev };
       for (const uid in updated) {
@@ -215,7 +188,6 @@ export default function CustomersPage() {
       }
       return updated;
     });
-    // Оновлюємо вибраного клієнта
     if (selectedClient) {
       setSelectedClient(c => ({
         ...c,
@@ -231,13 +203,8 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
-        <div>
-          <h1 className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Клієнти</h1>
-          <p className="text-stone-500 mt-1 md:mt-2 font-medium text-sm md:text-base">База клієнтів та замовлень.</p>
-        </div>
-      </div>
+    <div className="space-y-5 pb-10">
+      <PageHeader title="Клієнти" subtitle="База клієнтів та замовлень." />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <StatCard label="Всього клієнтів" value={clients.length} />
@@ -257,60 +224,61 @@ export default function CustomersPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-sm border border-stone-200/80 overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-4 border-b border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="relative w-full sm:max-w-xs md:max-w-sm">
+        <div className="p-4 border-b border-stone-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="relative w-full md:max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
             <input
               type="text"
-              placeholder="Пошук (ім'я, email, телефон)..."
+              placeholder="Пошук за ім'ям, email, телефоном..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-10 py-2 bg-stone-50 rounded-md border border-stone-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm font-medium placeholder-stone-400"
+              className="w-full pl-10 pr-10 py-3 bg-white rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm"
+              style={{ paddingLeft: '44px', paddingRight: '40px' }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors">
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 transition-colors p-1">
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
           <div className="text-xs font-medium text-stone-400 whitespace-nowrap">
-            Знайдено: {filteredClients.length}
+            Знайдено: {filteredClients.length} з {clients.length}
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto min-h-[400px]">
-          <table className="w-full text-left border-collapse text-sm min-w-[600px] md:min-w-full">
+          <table className="w-full text-left text-sm min-w-[700px]">
             <thead>
-              <tr className="bg-stone-50/80 border-b border-stone-200">
+              <tr className="bg-stone-50/50 border-b border-stone-100">
                 {[
-                  { label: 'Клієнт', key: 'full_name', className: '' },
+                  { label: 'Клієнт', key: 'full_name', className: 'w-1/3' },
                   { label: 'Email', key: 'email', className: 'hidden lg:table-cell' },
                   { label: 'Телефон', key: 'phone_ua', className: 'hidden md:table-cell' },
-                  { label: 'Дата', key: 'lastOrderDate', className: 'hidden sm:table-cell' },
-                  { label: 'З-нь', key: 'ordersCount', className: 'w-20' },
-                  { label: 'Сума', key: 'totalAmount', className: 'text-right pr-8' }
+                  { label: 'Дата ост.', key: 'lastOrderDate', className: 'hidden sm:table-cell' },
+                  { label: 'Зам.', key: 'ordersCount', className: 'w-20' },
+                  { label: 'Сума', key: 'totalAmount', className: 'text-right pr-5' }
                 ].map(h => (
                   <th 
                     key={h.key} 
-                    className={`py-4 px-5 font-semibold text-stone-500 text-xs cursor-pointer hover:text-stone-900 transition-colors group whitespace-nowrap ${h.className}`}
+                    className={`px-6 py-5 text-[10px] uppercase tracking-wider font-semibold text-stone-500 cursor-pointer hover:text-stone-700 transition-colors group ${h.className}`}
                     onClick={() => requestSort(h.key)}
                   >
-                    <div className={`flex items-center gap-1.5 list-none ${h.className.includes('text-right') ? 'justify-end' : ''}`}>
+                    <div className={`flex items-center gap-1.5 ${h.className.includes('text-right') ? 'justify-end' : ''}`}>
                       {h.label} <SortIcon column={h.key} />
                     </div>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-stone-50">
               {loading ? (
                 // Skeleton loading state
                 [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse bg-white border-b border-stone-100">
-                    <td className="px-5 py-4">
+                  <tr key={i} className="animate-pulse bg-white">
+                    <td className="px-6 py-5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-stone-100 rounded-full flex-shrink-0"></div>
                         <div className="flex flex-col gap-1 w-full max-w-[120px]">
@@ -318,15 +286,14 @@ export default function CustomersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-32"></div></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-28"></div></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-24"></div></td>
-                    <td className="px-5 py-4"><div className="h-5 bg-stone-100 rounded-full w-16"></div></td>
-                    <td className="px-5 py-4"><div className="h-4 bg-stone-100 rounded w-20"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-32"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-28"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-24"></div></td>
+                    <td className="px-6 py-5"><div className="h-5 bg-stone-100 rounded-full w-16"></div></td>
+                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-20"></div></td>
                   </tr>
                 ))
               ) : filteredClients.length === 0 ? (
-                // Empty state
                 <tr>
                   <td colSpan="6" className="py-20 px-4 text-center bg-white">
                     <div className="flex flex-col items-center justify-center">
@@ -359,11 +326,11 @@ export default function CustomersPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
                       onClick={() => openClient(client)}
-                      className="border-b border-stone-100 hover:bg-stone-50/50 cursor-pointer transition-colors bg-white group"
+                      className="hover:bg-stone-50/60 cursor-pointer transition-colors bg-white group"
                     >
-                      <td className={`px-5 py-3 ${sortConfig.key === 'full_name' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                      <td className={`px-6 py-5 ${sortConfig.key === 'full_name' ? 'bg-stone-50/30' : ''}`}>
                         <div className="flex items-center gap-2 md:gap-3">
-                          <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center font-semibold text-[10px] md:text-sm flex-shrink-0 ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-600'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 ring-2 ring-white ${client.isGuest ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-600'}`}>
                             {(client.full_name || client.email || '?')[0].toUpperCase()}
                           </div>
                           <div className="flex flex-col min-w-0">
@@ -376,17 +343,17 @@ export default function CustomersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className={`px-5 py-3 text-stone-600 hidden lg:table-cell ${sortConfig.key === 'email' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>{client.email}</td>
-                      <td className={`px-5 py-3 text-stone-600 hidden md:table-cell ${sortConfig.key === 'phone_ua' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>{client.phone_ua || orders[client.id]?.[0]?.phone || '—'}</td>
-                      <td className={`px-5 py-3 text-stone-500 text-[11px] whitespace-nowrap hidden sm:table-cell ${sortConfig.key === 'lastOrderDate' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                      <td className={`px-6 py-5 text-stone-600 text-[13px] hidden lg:table-cell ${sortConfig.key === 'email' ? 'bg-stone-50/30' : ''}`}>{client.email}</td>
+                      <td className={`px-6 py-5 text-stone-600 text-[13px] hidden md:table-cell ${sortConfig.key === 'phone_ua' ? 'bg-stone-50/30' : ''}`}>{client.phone_ua || orders[client.id]?.[0]?.phone || '—'}</td>
+                      <td className={`px-6 py-5 text-stone-400 text-xs whitespace-nowrap hidden sm:table-cell ${sortConfig.key === 'lastOrderDate' ? 'bg-stone-50/30' : ''}`}>
                         {formatDate(client.lastOrderDate)}
                       </td>
-                      <td className={`px-5 py-3 ${sortConfig.key === 'ordersCount' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200/60 text-stone-700 text-[9px] md:text-[10px] font-bold uppercase tracking-tight shadow-xs">
+                      <td className={`px-6 py-5 ${sortConfig.key === 'ordersCount' ? 'bg-stone-50/30' : ''}`}>
+                        <span className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[11px] font-semibold">
                           {client.ordersCount}
                         </span>
                       </td>
-                      <td className={`px-5 py-3 font-semibold text-stone-900 text-sm md:text-base text-right pr-8 ${sortConfig.key === 'totalAmount' ? 'bg-stone-50/40 group-hover:bg-transparent' : ''}`}>
+                      <td className={`px-6 py-5 font-semibold text-stone-800 text-sm text-right pr-5 ${sortConfig.key === 'totalAmount' ? 'bg-stone-50/30' : ''}`}>
                         {client.totalAmount > 0 ? `${client.totalAmount}₴` : '—'}
                       </td>
                     </motion.tr>
@@ -443,349 +410,6 @@ export default function CustomersPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-// ─── StatCard ─────────────────────────────────────────────────────────────────
-
-function StatCard({ label, value, className = "" }) {
-  return (
-    <div className={`bg-white/80 backdrop-blur-sm p-4 md:p-6 rounded-md shadow-sm border border-stone-200/60 hover:shadow-md transition-shadow ${className}`}>
-      <p className="text-[10px] md:text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
-      <p className="text-2xl md:text-4xl font-cormorant font-bold text-stone-800">{value}</p>
-    </div>
-  );
-}
-
-// ─── ClientModal ──────────────────────────────────────────────────────────────
-
-function ClientModal({ client, onClose, onUpdateStatus, onUpdateTracking, onImageClick }) {
-  const clientOrders = client._orders || [];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(28,25,23,0.45)', backdropFilter: 'blur(4px)' }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 24, scale: 0.97 }}
-        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        onClick={e => e.stopPropagation()}
-        className="bg-[#faf9f6] rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl"
-      >
-        {/* Шапка */}
-        <div className="flex items-center justify-between p-6 border-b border-stone-200/60">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${client.isGuest ? 'bg-amber-500 text-white' : 'bg-stone-800 text-white'}`}>
-              {(client.full_name || client.email || '?')[0].toUpperCase()}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-stone-800">{client.full_name || 'Без імені'}</h3>
-                {client.isGuest && (
-                  <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
-                    Гість
-                  </span>
-                )}
-                {client.isMissingProfile && (
-                  <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wider">
-                    Без профілю
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-stone-400">{client.email}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 transition p-1">
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Контакти */}
-        <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-stone-100">
-          <InfoItem label="Телефон" value={client.phone_ua || clientOrders[0]?.phone || '—'} />
-          <InfoItem label="Реєстрація" value={new Date(client.created_at).toLocaleDateString('uk-UA')} />
-        </div>
-
-        {/* Замовлення */}
-        <div className="p-4 md:p-6">
-          <h4 className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-stone-400 mb-4">
-            Замовлення ({clientOrders.length})
-          </h4>
-          {clientOrders.length === 0 ? (
-            <p className="text-stone-400 text-sm text-center py-4">Замовлень немає</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {clientOrders.map(order => (
-                <OrderRow 
-                  key={order.id} 
-                  order={order} 
-                  onUpdateStatus={onUpdateStatus} 
-                  onUpdateTracking={onUpdateTracking} 
-                  onImageClick={onImageClick} 
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ─── OrderRow ─────────────────────────────────────────────────────────────────
-
-function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
-  const [expanded, setExpanded] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [ttn, setTtn] = useState(order.tracking_number || '');
-  const [isTtnChanged, setIsTtnChanged] = useState(false);
-  const status = STATUS_MAP[order.status] || STATUS_MAP.new;
-  const items = Array.isArray(order.items) ? order.items : [];
-  const dateObj = new Date(order.created_at);
-  const dateStr = dateObj.toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\s*р\.?$/, '');
-  const timeStr = dateObj.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
-
-  async function handleStatusChange(e) {
-    const newStatus = e.target.value;
-    setUpdating(true);
-    await onUpdateStatus(order.id, newStatus);
-    
-    const isShippingStatus = ['shipped', 'arrived', 'delivered'].includes(newStatus);
-    
-    if (isShippingStatus) {
-      if (!order.tracking_number) {
-        toast.custom((t) => (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg shadow-lg flex items-start gap-3 max-w-sm">
-            <span className="text-xl leading-none">⚠️</span>
-            <div>
-              <p className="font-semibold text-sm">Статус оновлено</p>
-              <p className="text-xs mt-1">Лист клієнту <b>не відправлено</b>, оскільки не вказано ТТН.</p>
-            </div>
-          </div>
-        ), { duration: 5000 });
-      } else {
-        try {
-          const res = await fetch('/api/admin/orders/shipping-email', {
-            method: 'POST',
-            headers: await getAuthHeaders(),
-            body: JSON.stringify({ orderId: order.id, newStatus })
-          });
-          const data = await res.json();
-          if (data.success && !data.skipped) {
-            toast.success('Лист про доставку успішно відправлено клієнту');
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    }
-    
-    setUpdating(false);
-  }
-
-  async function handleTtnSave() {
-    setUpdating(true);
-    await onUpdateTracking(order.id, ttn);
-    setIsTtnChanged(false);
-    setUpdating(false);
-  }
-
-  async function handleSyncStatus() {
-    if (!order.tracking_number) return;
-    setUpdating(true);
-    try {
-      const res = await fetch('/api/admin/nova-poshta/sync', {
-        method: 'POST',
-        headers: await getAuthHeaders(),
-        body: JSON.stringify({ orderId: order.id, trackingNumber: order.tracking_number })
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        toast.error(data.error || 'Помилка отримання даних з Нової Пошти');
-        return;
-      }
-      const data = await res.json();
-      if (data.success) {
-        await onUpdateStatus(order.id, data.newStatus);
-        toast.success(`Статус оновлено: ${data.npStatus}`);
-      } else {
-        toast.error(data.error || 'Помилка синхронізації');
-      }
-    } catch (err) {
-      toast.error('Помилка запиту');
-    } finally {
-      setUpdating(false);
-    }
-  }
-
-  return (
-    <div className="border border-stone-200 rounded-xl overflow-hidden">
-      <div className="flex items-center gap-3 p-3.5 bg-white">
-        <button onClick={() => setExpanded(v => !v)} className="flex-1 flex items-center gap-3 text-left">
-          <ChevronDown size={15} className={`text-stone-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold text-stone-600">#{order.order_number || order.id.slice(0,8).toUpperCase()}</span>
-              {Array.isArray(order.items) && order.items.some(i => i.sku) && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-500 font-bold border border-stone-200/50">
-                  {Array.from(new Set(order.items.map(i => i.sku).filter(Boolean))).join(', ')}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px] text-stone-400">{dateStr}, {timeStr}</span>
-          </div>
-          <span className="ml-auto font-semibold text-stone-700 text-sm">{order.total} грн</span>
-        </button>
-
-        {/* ТТН Поле */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="ТТН"
-              value={ttn}
-              onChange={(e) => {
-                setTtn(e.target.value);
-                setIsTtnChanged(e.target.value !== (order.tracking_number || ''));
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && isTtnChanged && handleTtnSave()}
-              className="text-[10px] md:text-xs font-mono px-2 py-1.5 w-28 md:w-32 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 transition"
-            />
-            {isTtnChanged && (
-              <button
-                onClick={handleTtnSave}
-                disabled={updating}
-                className="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-all hover:scale-110 active:scale-95 z-10"
-              >
-                <Check size={14} strokeWidth={3} />
-              </button>
-            )}
-          </div>
-          {order.tracking_number && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={handleSyncStatus}
-                disabled={updating}
-                className={`p-1.5 text-stone-400 hover:text-stone-800 transition-all ${updating ? 'animate-spin opacity-50' : ''}`}
-                title="Оновити статус з Нової Пошти"
-              >
-                <RefreshCw size={14} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Dropdown статусу */}
-        <select
-          value={order.status}
-          onChange={handleStatusChange}
-          disabled={updating}
-          style={{ color: status.color, background: status.bg }}
-          className="text-xs font-semibold px-2.5 py-1.5 rounded-full border-0 cursor-pointer outline-none focus:ring-2 focus:ring-stone-300 transition"
-        >
-          {STATUS_OPTIONS.map(s => (
-            <option key={s.id} value={s.id}>{s.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }}
-            transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}
-          >
-            <div className="px-4 pb-4 pt-2 border-t border-stone-100 bg-stone-50 text-sm">
-              {items.map((item, i) => (
-                <div key={i} className="flex gap-3 py-2 text-stone-600 border-b border-stone-100 last:border-0 items-center">
-                  <div 
-                    className="w-12 h-12 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50 cursor-zoom-in hover:opacity-80 transition-opacity"
-                    onClick={() => item.image_url && onImageClick(item.image_url)}
-                  >
-                    {item.image_url ? (
-                      <img 
-                        src={item.image_url} 
-                        alt={item.name} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-5 h-5 text-stone-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 flex justify-between items-baseline min-w-0">
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-medium text-stone-800 leading-snug truncate">
-                        {item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}
-                      </span>
-                      {item.sku && (
-                        <span className="text-[10px] text-stone-400 font-mono mt-0.5 tracking-wider">
-                          Артикул: {item.sku}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-stone-500 font-semibold whitespace-nowrap ml-4">
-                      {item.price * item.qty} грн
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <div className="mt-3 pt-3 border-t border-stone-200/60 flex flex-col gap-2">
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  {order.full_name && (
-                    <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
-                      👤 {order.full_name}
-                    </p>
-                  )}
-                  {order.phone && (
-                    <p className="text-xs text-stone-500 font-medium flex items-center gap-1">
-                      📞 {order.phone}
-                    </p>
-                  )}
-                  {order.address && (
-                    <p className="text-xs text-stone-400 flex items-center gap-1">
-                      📍 {order.address}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
-                  <p className="text-xs text-stone-500 flex items-center gap-1">
-                    💳 {order.payment_method === 'cash_on_delivery' ? 'Післяплата' : order.payment_method} 
-                    <span className={`ml-1 px-1.5 py-0.5 rounded text-[10px] uppercase font-bold ${order.status === 'paid' ? 'bg-emerald-100 text-emerald-600' : 'bg-stone-100 text-stone-400'}`}>
-                      {order.status === 'paid' ? 'Оплачено' : 'Очікує оплати'}
-                    </span>
-                  </p>
-                  {order.notes && (
-                    <p className="text-xs text-stone-600 bg-amber-50 px-2 py-1.5 rounded-md border border-amber-100/50 flex items-start gap-1.5 w-full mt-1 italic">
-                      <span className="text-amber-500 shrink-0">💬</span>
-                      "{order.notes}"
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function InfoItem({ label, value }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wider text-stone-400 font-semibold mb-1">{label}</p>
-      <p className="text-sm text-stone-700">{value}</p>
     </div>
   );
 }

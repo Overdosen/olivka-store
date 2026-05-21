@@ -2130,6 +2130,32 @@ html:has(body.no-scroll) {
   color: #524f25;
 }
 
+.review-instagram-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #ab4b6b;
+  background: rgba(171, 75, 107, 0.05);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(171, 75, 107, 0.12);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+}
+
+.review-instagram-badge:hover {
+  background: rgba(171, 75, 107, 0.09);
+  border-color: rgba(171, 75, 107, 0.25);
+  transform: translateY(-1px);
+}
+
+.review-instagram-badge .instagram-icon {
+  stroke-width: 2.2;
+  color: #ab4b6b;
+}
+
 .review-date {
   font-size: 0.8rem;
   color: #524f25;
@@ -2158,6 +2184,28 @@ html:has(body.no-scroll) {
 .btn-expand:hover {
   background: #524f25;
   color: white;
+}
+
+.leave-review-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.2rem;
+  border: 1px solid rgba(82, 79, 37, 0.28);
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  color: rgba(82, 79, 37, 0.8);
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+
+.leave-review-btn:hover {
+  background: rgba(82, 79, 37, 0.08);
+  border-color: rgba(82, 79, 37, 0.6);
+  color: #524f25;
 }
 
 @media (max-width: 1024px) {

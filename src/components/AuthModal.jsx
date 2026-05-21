@@ -138,7 +138,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     if (message.includes('already registered') || message.includes('already exists') || message.includes('User already'))
       return 'Ця пошта вже зареєстрована';
     if (message.includes('Invalid login') || message.includes('invalid_credentials'))
-      return 'Невірна пошта або пароль';
+      return 'Невірний пароль. Підказка: якщо ви не змінювали пароль — спробуйте 4 останні цифри вашого номеру телефону 📱';
     if (message.includes('Email not confirmed'))
       return 'Підтвердіть email — перевірте пошту';
     if (message.includes('Password should'))

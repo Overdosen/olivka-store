@@ -35,7 +35,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-xl shadow-2xl shadow-stone-200/50 border border-stone-200/60 overflow-hidden p-8 md:p-10 space-y-10">
+      <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-lg shadow-2xl shadow-stone-200/50 border border-stone-200/60 overflow-hidden p-8 md:p-10 space-y-10">
         
         <div className="text-center">
           <h2 className="text-4xl font-cormorant font-bold text-stone-800 tracking-tight">Olivka<span className="text-stone-400 font-light">Admin</span></h2>

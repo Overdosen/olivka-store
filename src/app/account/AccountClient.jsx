@@ -3,17 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, LogOut, ChevronRight, Package, MapPin, Truck, Clock } from 'lucide-react';
+import { User, Phone, LogOut, ChevronRight, Package, MapPin, Truck, Clock, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { formatUaMasked, isPhoneFull } from '../../lib/utils';
 
-/** Перетворити full_name → { firstName, lastName } */
+/** Перетворити full_name → { firstName, lastName }
+ * Формат в БД: "Прізвище Ім'я [По батькові]"
+ * ІМ'Я  = друге слово (index 1)
+ * ПРІЗВИЩЕ = перше слово (index 0)
+ * По батькові — ігноруємо в ЛК
+ */
 function splitName(fullName = '') {
   const parts = fullName.trim().split(/\s+/);
-  const firstName = parts[0] || '';
-  const lastName  = parts.slice(1).join(' ') || '';
+  const lastName  = parts[0] || '';        // Прізвище — перше слово
+  const firstName = parts[1] || '';        // Ім'я — друге слово (без по батькові)
   return { firstName, lastName };
 }
 
@@ -32,6 +37,34 @@ export default function AccountClient() {
   const [lastName, setLastName]   = useState('');
   const [phoneUa, setPhoneUa]     = useState('');
   const [isInternational, setIsInternational] = useState(false);
+
+  // Зміна пароля
+  const [changingPwd, setChangingPwd]   = useState(false);
+  const [newPwd, setNewPwd]             = useState('');
+  const [confirmPwd, setConfirmPwd]     = useState('');
+  const [pwdError, setPwdError]         = useState('');
+  const [pwdSaving, setPwdSaving]       = useState(false);
+  const [showNewPwd, setShowNewPwd]     = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
+
+  async function handleChangePassword() {
+    setPwdError('');
+    if (newPwd.length < 6)        return setPwdError('Пароль — мінімум 6 символів');
+    if (newPwd !== confirmPwd)    return setPwdError('Паролі не збігаються');
+    setPwdSaving(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPwd });
+      if (error) throw error;
+      toast.success('Пароль успішно змінено!');
+      setChangingPwd(false);
+      setNewPwd('');
+      setConfirmPwd('');
+    } catch (err) {
+      setPwdError(err.message || 'Помилка зміни пароля');
+    } finally {
+      setPwdSaving(false);
+    }
+  }
 
   function startEdit() {
     const { firstName: fn, lastName: ln } = splitName(profile?.full_name);
@@ -79,7 +112,7 @@ export default function AccountClient() {
       return setSaveError('Будь ласка, введіть повний номер телефону: +38 (0__) ___-__-__');
     }
 
-    const full_name = `${firstName.trim()} ${lastName.trim()}`;
+    const full_name = [lastName.trim(), firstName.trim()].filter(Boolean).join(' ');
     const finalPhone = (phoneUa && phoneUa !== '+380') ? phoneUa : null;
 
     setSaving(true);
@@ -283,7 +316,75 @@ export default function AccountClient() {
           <OrdersList userId={user.id} />
         </Section>
 
-        {/* Вихід */}
+        {/* Безпека */}
+        <Section
+          icon={<ShieldCheck size={18} />}
+          title="Безпека"
+          action={!changingPwd ? <ActionBtn onClick={() => { setChangingPwd(true); setPwdError(''); setNewPwd(''); setConfirmPwd(''); }} label="Змінити пароль" /> : null}
+        >
+          {!changingPwd ? (
+            <div style={{ fontSize: '0.85rem', color: 'rgba(82,79,37,0.45)', fontFamily: 'var(--font-sans)' }}>
+              Для захисту акаунту рекомендуємо використовувати надійний пароль.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+              {/* Новий пароль */}
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Новий пароль</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showNewPwd ? 'text' : 'password'}
+                    value={newPwd}
+                    onChange={e => setNewPwd(e.target.value)}
+                    placeholder="Мінімум 6 символів"
+                    style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
+                  />
+                  <button type="button" onClick={() => setShowNewPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
+                    {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              {/* Підтвердження */}
+              <div>
+                <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Підтвердити пароль</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPwd ? 'text' : 'password'}
+                    value={confirmPwd}
+                    onChange={e => setConfirmPwd(e.target.value)}
+                    placeholder="Повторіть пароль"
+                    style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
+                    {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+              {/* Помилка */}
+              {pwdError && (
+                <div style={{ background: '#fdf1e8', border: '1px solid #e0b98a', borderRadius: '10px', padding: '0.75rem 1rem', color: '#8a5c2a', fontFamily: 'var(--font-sans)', fontSize: '0.85rem' }}>
+                  {pwdError}
+                </div>
+              )}
+              {/* Кнопки */}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={handleChangePassword} disabled={pwdSaving}
+                  style={{ flex: 1, padding: '0.75rem', background: pwdSaving ? 'rgba(82,79,37,0.45)' : '#524f25', color: 'white', border: 'none', cursor: pwdSaving ? 'not-allowed' : 'pointer', borderRadius: '10px', fontFamily: 'var(--font-sans)', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', transition: 'background 0.2s' }}
+                >
+                  {pwdSaving ? 'Збереження...' : 'Зберегти'}
+                </button>
+                <button
+                  onClick={() => { setChangingPwd(false); setPwdError(''); }}
+                  style={{ padding: '0.75rem 1.25rem', background: 'rgba(82,79,37,0.07)', color: 'rgba(82,79,37,0.6)', border: 'none', cursor: 'pointer', borderRadius: '10px', fontFamily: 'var(--font-sans)', fontSize: '0.8rem' }}
+                >
+                  Скасувати
+                </button>
+              </div>
+            </div>
+          )}
+        </Section>
+
         <button
           onClick={handleSignOut}
           disabled={isSignOutLoading}
@@ -569,14 +670,53 @@ function OrdersList({ userId }) {
                   style={{ overflow: 'hidden' }}
                 >
                   <div style={{ padding: '0 1.25rem 1.25rem', borderTop: '1px solid rgba(82,79,37,0.07)' }}>
-                    {/* Список товарів */}
-                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                    {/* Список товарів з фото */}
+                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0' }}>
                       {items.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                          <span style={{ color: '#524f25' }}>
-                            {item.name}{item.size ? ` · ${item.size}` : ''} × {item.qty}
+                        <div key={idx} style={{
+                          display: 'flex', gap: '0.75rem', alignItems: 'center',
+                          padding: '0.625rem 0',
+                          borderBottom: idx < items.length - 1 ? '1px solid rgba(82,79,37,0.07)' : 'none',
+                        }}>
+                          {/* Фото товару */}
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              style={{
+                                width: 52, height: 52, borderRadius: 8, objectFit: 'cover',
+                                flexShrink: 0, border: '1px solid rgba(82,79,37,0.09)',
+                              }}
+                            />
+                          ) : (
+                            <div style={{
+                              width: 52, height: 52, borderRadius: 8, flexShrink: 0,
+                              background: 'rgba(82,79,37,0.06)', display: 'flex',
+                              alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem',
+                            }}>🧸</div>
+                          )}
+
+                          {/* Інфо */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontFamily: 'var(--font-sans)', fontWeight: 600,
+                              fontSize: '0.82rem', color: '#524f25',
+                              marginBottom: '0.2rem',
+                              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                              {item.name}
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.73rem', color: 'rgba(82,79,37,0.45)' }}>
+                              {item.size && <span>Розмір: <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.size}</strong></span>}
+                              {(item.sku || item.article) && <span>Арт: <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.sku || item.article}</strong></span>}
+                              <span>× <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.qty}</strong></span>
+                            </div>
+                          </div>
+
+                          {/* Ціна */}
+                          <span style={{ fontWeight: 700, color: '#524f25', fontSize: '0.85rem', flexShrink: 0 }}>
+                            {item.price * item.qty} грн
                           </span>
-                          <span style={{ color: 'rgba(82,79,37,0.6)', flexShrink: 0 }}>{item.price * item.qty} грн</span>
                         </div>
                       ))}
                     </div>
