@@ -1,4 +1,9 @@
 export default function imageKitLoader({ src, width, quality }) {
+  // Локальні статичні ассети (імпортовані через import) — віддаємо без змін
+  if (src.startsWith("/_next/") || src.startsWith("data:")) {
+    return src;
+  }
+
   if (src[0] === "/") src = src.slice(1);
   const params = [`w-${width}`];
   if (quality) {
