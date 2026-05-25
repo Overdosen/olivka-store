@@ -6,7 +6,7 @@ import { supabase } from '../../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../../lib/admin-constants';
 import StatusBadge from '../../../../components/admin/ui/StatusBadge';
 import PageHeader from '../../../../components/admin/ui/PageHeader';
-import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp } from 'lucide-react';
+import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,8 @@ export default function OrderDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [ttn, setTtn] = useState('');
   const [isTtnChanged, setIsTtnChanged] = useState(false);
+  const [fiscalReceiptUrl, setFiscalReceiptUrl] = useState('');
+  const [isReceiptUrlChanged, setIsReceiptUrlChanged] = useState(false);
 
   const [products, setProducts] = useState([]);
   const [packagingCost, setPackagingCost] = useState('0');
@@ -39,6 +41,7 @@ export default function OrderDetailPage() {
 
       setOrder(data);
       setTtn(data.tracking_number || '');
+      setFiscalReceiptUrl(data.fiscal_receipt_url || '');
       setPackagingCost(String(data.packaging_cost || 0));
 
       const items = Array.isArray(data.items) ? data.items : [];
@@ -102,6 +105,23 @@ export default function OrderDetailPage() {
     setOrder(prev => ({ ...prev, tracking_number: ttn }));
     setIsTtnChanged(false);
     toast.success('ТТН збережено');
+    setUpdating(false);
+  }
+
+  async function handleReceiptUrlSave() {
+    setUpdating(true);
+    const { error } = await supabase
+      .from('orders')
+      .update({ fiscal_receipt_url: fiscalReceiptUrl })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Помилка при збереженні чеку');
+    } else {
+      setOrder(prev => ({ ...prev, fiscal_receipt_url: fiscalReceiptUrl }));
+      setIsReceiptUrlChanged(false);
+      toast.success('Чек збережено');
+    }
     setUpdating(false);
   }
 
@@ -404,6 +424,47 @@ export default function OrderDetailPage() {
                   >
                     <RefreshCw size={16} />
                   </button>
+                )}
+              </div>
+            </div>
+
+            {/* Чек (посилання) */}
+            <div className="space-y-2 mt-5 pt-5 border-t border-stone-100">
+              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Чек (посилання)</label>
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  <input
+                    type="text"
+                    placeholder="Введіть посилання на чек"
+                    value={fiscalReceiptUrl}
+                    onChange={(e) => {
+                      setFiscalReceiptUrl(e.target.value);
+                      setIsReceiptUrlChanged(e.target.value !== (order.fiscal_receipt_url || ''));
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && isReceiptUrlChanged && handleReceiptUrlSave()}
+                    className="w-full text-sm font-mono px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition"
+                  />
+                  {isReceiptUrlChanged && (
+                    <button
+                      onClick={handleReceiptUrlSave}
+                      disabled={updating}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all"
+                      title="Зберегти чек"
+                    >
+                      <Check size={14} strokeWidth={3} />
+                    </button>
+                  )}
+                </div>
+                {order.fiscal_receipt_url && (
+                  <a
+                    href={order.fiscal_receipt_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-all shrink-0"
+                    title="Переглянути чек у новій вкладці"
+                  >
+                    <ExternalLink size={16} />
+                  </a>
                 )}
               </div>
             </div>

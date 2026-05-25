@@ -785,6 +785,18 @@ export default function ProductFormClient({ id }) {
               </div>
             )}
             <p className="text-sm text-stone-500 leading-relaxed">Якщо ви додасте хоча б один розмір, на сторінці товару з'явиться вибір розміру для клієнта.</p>
+            
+            <div className="pt-4 border-t border-stone-200/60 mt-4">
+              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Заміри виробу (для лінійки)</label>
+              <textarea
+                rows="4"
+                value={formData.measurements || ''}
+                onChange={(e) => setFormData({ ...formData, measurements: e.target.value })}
+                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none"
+                placeholder="Введіть заміри виробу (наприклад: Довжина - 50 см, Ширина - 30 см...)"
+              />
+              <p className="text-[10px] text-stone-400 mt-2 italic">Цей текст буде показано клієнтам при натисканні на іконку лінійки поруч з розмірами.</p>
+            </div>
           </div>
         </Section>
 

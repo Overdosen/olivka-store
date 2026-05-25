@@ -126,7 +126,7 @@ export default function Dashboard() {
         // Period revenue
         const periodOrders = orders.filter(o => {
           const d = new Date(o.created_at);
-          return d >= periodStart && !['cancelled', 'returned', 'payment_error'].includes(o.status);
+          return d >= periodStart && !['cancelled', 'returned', 'payment_error', 'pending_payment'].includes(o.status);
         });
         const periodRevenue = periodOrders.reduce((s, o) => s + (o.total || 0), 0);
 

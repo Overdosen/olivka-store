@@ -193,7 +193,7 @@ export default function AdminProducts() {
     }
 
     orders.forEach(order => {
-      if (['cancelled', 'returned', 'payment_error'].includes(order.status)) return;
+      if (['cancelled', 'returned', 'payment_error', 'pending_payment'].includes(order.status)) return;
       if (dateLimit && new Date(order.created_at) < dateLimit) return;
       if (!Array.isArray(order.items)) return;
 

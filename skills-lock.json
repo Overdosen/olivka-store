@@ -11,6 +11,12 @@
       "sourceType": "github",
       "computedHash": "4679c05a1a6575cb6ff1dca8437705b44a155fe7f029bd3884dee4f20fa90957"
     },
+    "crm-builder": {
+      "source": "customware-ai/skills",
+      "sourceType": "github",
+      "skillPath": "skills/crm-builder/SKILL.md",
+      "computedHash": "cfff11e506a24a74e327df13422c6b247c64f19a03309ecb676efbb50332b55c"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",

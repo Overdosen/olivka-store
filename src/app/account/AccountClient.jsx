@@ -39,32 +39,10 @@ export default function AccountClient() {
   const [isInternational, setIsInternational] = useState(false);
 
   // Зміна пароля
-  const [changingPwd, setChangingPwd]   = useState(false);
   const [newPwd, setNewPwd]             = useState('');
   const [confirmPwd, setConfirmPwd]     = useState('');
-  const [pwdError, setPwdError]         = useState('');
-  const [pwdSaving, setPwdSaving]       = useState(false);
   const [showNewPwd, setShowNewPwd]     = useState(false);
   const [showConfirmPwd, setShowConfirmPwd] = useState(false);
-
-  async function handleChangePassword() {
-    setPwdError('');
-    if (newPwd.length < 6)        return setPwdError('Пароль — мінімум 6 символів');
-    if (newPwd !== confirmPwd)    return setPwdError('Паролі не збігаються');
-    setPwdSaving(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPwd });
-      if (error) throw error;
-      toast.success('Пароль успішно змінено!');
-      setChangingPwd(false);
-      setNewPwd('');
-      setConfirmPwd('');
-    } catch (err) {
-      setPwdError(err.message || 'Помилка зміни пароля');
-    } finally {
-      setPwdSaving(false);
-    }
-  }
 
   function startEdit() {
     const { firstName: fn, lastName: ln } = splitName(profile?.full_name);
@@ -72,6 +50,8 @@ export default function AccountClient() {
     setLastName(ln);
     setPhoneUa(formatUaMasked(profile?.phone_ua || ''));
     setIsInternational(profile?.is_international || false);
+    setNewPwd('');
+    setConfirmPwd('');
     setSaveError('');
     setEditing(true);
   }
@@ -112,6 +92,11 @@ export default function AccountClient() {
       return setSaveError('Будь ласка, введіть повний номер телефону: +38 (0__) ___-__-__');
     }
 
+    if (newPwd || confirmPwd) {
+      if (newPwd.length < 6) return setSaveError('Пароль — мінімум 6 символів');
+      if (newPwd !== confirmPwd) return setSaveError('Паролі не збігаються');
+    }
+
     const full_name = [lastName.trim(), firstName.trim()].filter(Boolean).join(' ');
     const finalPhone = (phoneUa && phoneUa !== '+380') ? phoneUa : null;
 
@@ -122,6 +107,14 @@ export default function AccountClient() {
         phone_ua: finalPhone,
         is_international: isInternational,
       });
+
+      if (newPwd) {
+        const { error } = await supabase.auth.updateUser({ password: newPwd });
+        if (error) throw error;
+        setNewPwd('');
+        setConfirmPwd('');
+      }
+
       setEditing(false);
       toast.success('Дані збережено!');
     } catch (err) {
@@ -265,6 +258,46 @@ export default function AccountClient() {
                 </label>
               </div>
 
+              {/* Зміна пароля */}
+              <div style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(82,79,37,0.1)' }}>
+                <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#524f25', marginBottom: '0.875rem' }}>Зміна пароля (необов'язково)</h3>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  {/* Новий пароль */}
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Новий пароль</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showNewPwd ? 'text' : 'password'}
+                        value={newPwd}
+                        onChange={e => setNewPwd(e.target.value)}
+                        placeholder="Мінімум 6 символів"
+                        style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
+                      />
+                      <button type="button" onClick={() => setShowNewPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
+                        {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  {/* Підтвердження */}
+                  <div>
+                    <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Підтвердити пароль</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showConfirmPwd ? 'text' : 'password'}
+                        value={confirmPwd}
+                        onChange={e => setConfirmPwd(e.target.value)}
+                        placeholder="Повторіть пароль"
+                        style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
+                      />
+                      <button type="button" onClick={() => setShowConfirmPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
+                        {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Повідомлення про помилку збереження */}
               {saveError && (
                 <div style={{
@@ -316,74 +349,7 @@ export default function AccountClient() {
           <OrdersList userId={user.id} />
         </Section>
 
-        {/* Безпека */}
-        <Section
-          icon={<ShieldCheck size={18} />}
-          title="Безпека"
-          action={!changingPwd ? <ActionBtn onClick={() => { setChangingPwd(true); setPwdError(''); setNewPwd(''); setConfirmPwd(''); }} label="Змінити пароль" /> : null}
-        >
-          {!changingPwd ? (
-            <div style={{ fontSize: '0.85rem', color: 'rgba(82,79,37,0.45)', fontFamily: 'var(--font-sans)' }}>
-              Для захисту акаунту рекомендуємо використовувати надійний пароль.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
-              {/* Новий пароль */}
-              <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Новий пароль</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showNewPwd ? 'text' : 'password'}
-                    value={newPwd}
-                    onChange={e => setNewPwd(e.target.value)}
-                    placeholder="Мінімум 6 символів"
-                    style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
-                  />
-                  <button type="button" onClick={() => setShowNewPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
-                    {showNewPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              {/* Підтвердження */}
-              <div>
-                <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Підтвердити пароль</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showConfirmPwd ? 'text' : 'password'}
-                    value={confirmPwd}
-                    onChange={e => setConfirmPwd(e.target.value)}
-                    placeholder="Повторіть пароль"
-                    style={{ width: '100%', padding: '0.7rem 2.5rem 0.7rem 1rem', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '10px', outline: 'none', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#524f25', background: 'rgba(255,255,255,0.7)', boxSizing: 'border-box' }}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPwd(v => !v)} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(82,79,37,0.4)', display: 'flex' }}>
-                    {showConfirmPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              {/* Помилка */}
-              {pwdError && (
-                <div style={{ background: '#fdf1e8', border: '1px solid #e0b98a', borderRadius: '10px', padding: '0.75rem 1rem', color: '#8a5c2a', fontFamily: 'var(--font-sans)', fontSize: '0.85rem' }}>
-                  {pwdError}
-                </div>
-              )}
-              {/* Кнопки */}
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <button
-                  onClick={handleChangePassword} disabled={pwdSaving}
-                  style={{ flex: 1, padding: '0.75rem', background: pwdSaving ? 'rgba(82,79,37,0.45)' : '#524f25', color: 'white', border: 'none', cursor: pwdSaving ? 'not-allowed' : 'pointer', borderRadius: '10px', fontFamily: 'var(--font-sans)', fontSize: '0.8rem', letterSpacing: '0.1em', textTransform: 'uppercase', transition: 'background 0.2s' }}
-                >
-                  {pwdSaving ? 'Збереження...' : 'Зберегти'}
-                </button>
-                <button
-                  onClick={() => { setChangingPwd(false); setPwdError(''); }}
-                  style={{ padding: '0.75rem 1.25rem', background: 'rgba(82,79,37,0.07)', color: 'rgba(82,79,37,0.6)', border: 'none', cursor: 'pointer', borderRadius: '10px', fontFamily: 'var(--font-sans)', fontSize: '0.8rem' }}
-                >
-                  Скасувати
-                </button>
-              </div>
-            </div>
-          )}
-        </Section>
+
 
         <button
           onClick={handleSignOut}
@@ -747,6 +713,33 @@ function OrdersList({ userId }) {
                           }[order.payment_method] || order.payment_method}</span>
                         </div>
                       )}
+                      
+                      {/* Електронний чек */}
+                      <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.8rem', color: 'rgba(82,79,37,0.55)', alignItems: 'center' }}>
+                        <span style={{ fontSize: '14px', flexShrink: 0 }}>🧾</span>
+                        {order.fiscal_receipt_url ? (
+                          <a
+                            href={order.fiscal_receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              color: '#524f25',
+                              fontWeight: 600,
+                              textDecoration: 'underline',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.25rem'
+                            }}
+                          >
+                            Електронний чек (переглянути)
+                          </a>
+                        ) : (
+                          <span style={{ fontStyle: 'italic', color: 'rgba(82,79,37,0.4)' }}>
+                            Електронний чек: готується (з'явиться найближчим часом)
+                          </span>
+                        )}
+                      </div>
                       {order.notes && (
                         <div style={{ 
                           marginTop: '0.4rem', padding: '0.625rem 0.75rem', 
