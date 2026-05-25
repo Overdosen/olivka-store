@@ -91,6 +91,15 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
       if (!product.features || !product.features.some(f => filters.features.includes(f))) return false;
     }
     return true;
+  }).sort((a, b) => {
+    const aHasSizes = a.sizes && a.sizes.length > 0;
+    const aIsAvailable = aHasSizes ? a.sizes.some(s => s.quantity > 0) : a.stock > 0;
+    
+    const bHasSizes = b.sizes && b.sizes.length > 0;
+    const bIsAvailable = bHasSizes ? b.sizes.some(s => s.quantity > 0) : b.stock > 0;
+    
+    if (aIsAvailable === bIsAvailable) return 0;
+    return aIsAvailable ? -1 : 1;
   });
 
   return (
