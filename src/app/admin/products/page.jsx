@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import PageHeader from '../../../components/admin/ui/PageHeader';
 import EmptyState from '../../../components/admin/ui/EmptyState';
 import QuickSaleModal from '../../../components/admin/products/QuickSaleModal';
+import Image from 'next/image';
+import { getOptimizedUrl } from '../../../lib/image-utils';
 
 // ── Image zoom overlay ────────────────────────────────────────────────────────
 function ImageZoom({ src, alt, onClose }) {
@@ -53,7 +55,7 @@ function ImageZoom({ src, alt, onClose }) {
         <X style={{ width: '24px', height: '24px' }} />
       </button>
       <img
-        src={src}
+        src={getOptimizedUrl(src, 1200)}
         alt={alt}
         style={{
           position: 'relative',
@@ -85,7 +87,7 @@ function ProductThumb({ src, alt, onZoom }) {
     >
       {src ? (
         <>
-          <img src={src} alt={alt} className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110" />
+          <Image src={src} alt={alt} fill sizes="44px" style={{ objectFit: 'cover' }} className="transition-transform duration-200 group-hover:scale-110" />
           <div className={`absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-150 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
             <ZoomIn className="w-4 h-4 text-white" />
           </div>

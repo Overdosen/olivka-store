@@ -8,6 +8,7 @@ import StatusBadge from '../../../../components/admin/ui/StatusBadge';
 import PageHeader from '../../../../components/admin/ui/PageHeader';
 import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 
 export default function OrderDetailPage() {
@@ -255,9 +256,9 @@ export default function OrderDetailPage() {
                 const prodId = item.product_id || item.id;
                 return (
                 <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50/50 transition-colors">
-                  <Link href={`/admin/products/${prodId}`} className="w-11 h-11 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50 hover:opacity-80 transition-opacity block">
+                  <Link href={`/admin/products/${prodId}`} className="relative w-11 h-11 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50 hover:opacity-80 transition-opacity block">
                     {item.image_url ? (
-                      <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                      <Image src={item.image_url} alt={item.name} fill sizes="44px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Package className="w-5 h-5 text-stone-400" strokeWidth={1.5} />

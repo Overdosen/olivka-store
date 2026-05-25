@@ -35,7 +35,7 @@ export async function sendOrderConfirmationEmail(orderId) {
     // 2. Генеруємо magic link для нових клієнтів (вхід в ЛК одним кліком)
     let magicLink = 'https://olivka.store/account';
     const isNew = order.account_created === true;
-    const last4 = order.account_password_hint || '';
+    const last7 = order.account_password_hint || '';
 
     if (isNew && order.email) {
       try {
@@ -59,7 +59,7 @@ export async function sendOrderConfirmationEmail(orderId) {
     }
 
     // 3. Генеруємо HTML
-    const emailHtml = getOrderEmailHtml(order, { isNew, last4, magicLink });
+    const emailHtml = getOrderEmailHtml(order, { isNew, last7, magicLink });
 
 
     // 3. Відправляємо лист клієнту

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ShoppingBag, RefreshCw, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { STATUS_MAP, STATUS_OPTIONS, getAuthHeaders } from '../../../lib/admin-constants';
+import Image from 'next/image';
 
 export default function OrderRow({ order, onUpdateStatus, onUpdateTracking, onImageClick }) {
   const [expanded, setExpanded] = useState(false);
@@ -177,14 +178,15 @@ export default function OrderRow({ order, onUpdateStatus, onUpdateTracking, onIm
               {items.map((item, i) => (
                 <div key={i} className="flex gap-3 py-2 text-stone-600 border-b border-stone-100 last:border-0 items-center">
                   <div 
-                    className="w-12 h-12 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50 cursor-zoom-in hover:opacity-80 transition-opacity"
+                    className="relative w-12 h-12 bg-stone-200 rounded-lg overflow-hidden flex-shrink-0 border border-stone-200/50 cursor-zoom-in hover:opacity-80 transition-opacity"
                     onClick={() => item.image_url && onImageClick(item.image_url)}
                   >
                     {item.image_url ? (
-                      <img 
+                      <Image 
                         src={item.image_url} 
                         alt={item.name} 
-                        className="w-full h-full object-cover"
+                        fill sizes="48px"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

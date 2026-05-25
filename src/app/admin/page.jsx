@@ -8,6 +8,7 @@ import StatCard from '../../components/admin/ui/StatCard';
 import StatusBadge from '../../components/admin/ui/StatusBadge';
 import PageHeader from '../../components/admin/ui/PageHeader';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ResponsiveContainer,
@@ -629,9 +630,9 @@ export default function Dashboard() {
                 {topProducts.map((p, i) => {
                   const content = (
                     <div className="flex items-center gap-3 p-3 bg-stone-50/40 border border-stone-100/80 hover:bg-stone-50 rounded-lg transition-colors">
-                      <div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/50">
+                      <div className="relative w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-stone-200/50">
                         {p.image ? (
-                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          <Image src={p.image} alt={p.name} fill sizes="40px" className="object-cover" />
                         ) : (
                           <Package className="w-5 h-5 text-stone-400" strokeWidth={1.5} />
                         )}

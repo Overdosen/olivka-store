@@ -8,6 +8,7 @@ import { useAuth } from '../../context/useAuth';
 import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 import { formatUaMasked, isPhoneFull } from '../../lib/utils';
+import Image from 'next/image';
 
 /** Перетворити full_name → { firstName, lastName }
  * Формат в БД: "Прізвище Ім'я [По батькові]"
@@ -646,14 +647,15 @@ function OrdersList({ userId }) {
                         }}>
                           {/* Фото товару */}
                           {item.image_url ? (
-                            <img
-                              src={item.image_url}
-                              alt={item.name}
-                              style={{
-                                width: 52, height: 52, borderRadius: 8, objectFit: 'cover',
-                                flexShrink: 0, border: '1px solid rgba(82,79,37,0.09)',
-                              }}
-                            />
+                            <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+                              <Image
+                                src={item.image_url}
+                                alt={item.name}
+                                fill
+                                style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid rgba(82,79,37,0.09)' }}
+                                sizes="52px"
+                              />
+                            </div>
                           ) : (
                             <div style={{
                               width: 52, height: 52, borderRadius: 8, flexShrink: 0,

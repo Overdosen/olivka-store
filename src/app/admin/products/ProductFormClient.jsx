@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
-import { ArrowLeft, Upload, Save, Loader2, Star, Trash2, Package, DollarSign, Ruler, Palette, Image, Search, Settings, TrendingUp } from 'lucide-react';
+import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -949,7 +950,7 @@ export default function ProductFormClient({ id }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
             {images.map((img) => (
               <div key={img.id} className={`group relative aspect-square rounded-md overflow-hidden border-2 transition-all ${img.isMain ? 'border-amber-400 shadow-md ring-4 ring-amber-100' : 'border-stone-200 hover:border-stone-400'}`}>
-                <img src={img.url} alt="Preview" className="w-full h-full object-cover" />
+                {img.url && <Image src={img.url} alt="Preview" fill sizes="150px" className="object-cover" />}
 
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-stone-900/80 to-transparent p-2 pt-8 flex items-end justify-between opacity-0 group-hover:opacity-100 transition-opacity">
                   <button

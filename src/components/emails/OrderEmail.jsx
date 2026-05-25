@@ -1,7 +1,9 @@
 /**
  * Покращений генератор HTML-шаблону для листів замовлень Store Olivka.
  */
-export const getOrderEmailHtml = (order, { isNew = false, last4 = '', magicLink = 'https://olivka.store/account' } = {}) => {
+import { getOptimizedUrl } from '../../lib/image-utils';
+
+export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink = 'https://olivka.store/account' } = {}) => {
   const { 
     order_number, 
     full_name, 
@@ -101,10 +103,13 @@ export const getOrderEmailHtml = (order, { isNew = false, last4 = '', magicLink 
   }
 
   // Генерація рядків товарів
-  const itemsHtml = items.map(item => `
+  const itemsHtml = items.map(item => {
+    const rawUrl = item.image_url || `${baseUrl}/placeholder-product.png`;
+    const optimizedUrl = getOptimizedUrl(rawUrl, { width: 140, quality: 80 });
+    return `
     <tr>
       <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; width: 80px;">
-        <img src="${item.image_url || `${baseUrl}/placeholder-product.png`}" alt="${item.name}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover; border: 1px solid #f0f0f0;">
+        <img src="${optimizedUrl}" alt="${item.name}" style="width: 70px; height: 70px; border-radius: 8px; object-fit: cover; border: 1px solid #f0f0f0;">
       </td>
       <td style="padding: 15px 10px; border-bottom: 1px solid #f0f0f0;">
         <p style="margin: 0; font-weight: bold; color: ${brandColor}; font-size: 14px;">${item.name}</p>
@@ -118,10 +123,10 @@ export const getOrderEmailHtml = (order, { isNew = false, last4 = '', magicLink 
         ${item.price * item.qty} грн
       </td>
     </tr>
-  `).join('');
+  `}).join('');
 
   // Блок «Особистий кабінет» — тільки для нових клієнтів
-  const accountBlock = isNew && last4 ? `
+  const accountBlock = isNew && last7 ? `
     <tr>
       <td style="padding: 0 40px 30px;">
         <div style="background: linear-gradient(135deg, #f5f2e9 0%, #eae6d8 100%); border-radius: 16px; padding: 28px 30px; border: 1px solid rgba(82,79,37,0.12);">
@@ -138,11 +143,11 @@ export const getOrderEmailHtml = (order, { isNew = false, last4 = '', magicLink 
             </tr>
             <tr style="background: white;">
               <td style="padding: 12px 16px; color: #888; font-size: 13px;">Пароль:</td>
-              <td style="padding: 12px 16px; font-size: 20px; font-weight: 800; color: #524f25; letter-spacing: 0.2em; font-family: monospace;">${last4}</td>
+              <td style="padding: 12px 16px; font-size: 20px; font-weight: 800; color: #524f25; letter-spacing: 0.2em; font-family: monospace;">${last7}</td>
             </tr>
           </table>
           <p style="margin: 0 0 6px; font-size: 12px; color: rgba(82,79,37,0.5); line-height: 1.5;">
-            💡 Пароль — це <strong>4 останні цифри</strong> вашого номеру телефону.
+            💡 Пароль — це <strong>7 останніх цифр</strong> вашого номеру телефону.
             Ви можете змінити пароль в особистому кабінеті.
           </p>
           <a href="${magicLink}"

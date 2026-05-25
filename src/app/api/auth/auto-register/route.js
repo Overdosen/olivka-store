@@ -4,7 +4,7 @@ import { supabaseService } from '../../../../lib/supabase';
 /**
  * Автоматична реєстрація клієнта при оформленні замовлення.
  * Якщо email вже існує — повертає наявний userId (пароль не змінюється).
- * Якщо новий — створює акаунт з паролем = 4 останні цифри телефону.
+ * Якщо новий — створює акаунт з паролем = 7 останніх цифр телефону.
  * Також оновлює замовлення: user_id, account_created, account_password_hint
  * через supabaseService (обходить RLS, anon-клієнт не може update).
  *
@@ -111,7 +111,7 @@ export async function POST(request) {
       const orderUpdate = { user_id: userId };
       if (isNew) {
         orderUpdate.account_created       = true;
-        orderUpdate.account_password_hint = password; // password = last4
+        orderUpdate.account_password_hint = password; // password = last7
       }
 
       const { error: updateErr } = await supabaseService

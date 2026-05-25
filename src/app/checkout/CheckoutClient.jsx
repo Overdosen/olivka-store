@@ -267,7 +267,7 @@ export default function CheckoutClient() {
       // API роут оновлює замовлення через service role key (обходить RLS).
       if (!user) {
         const phoneDigits = phone.replace(/\D/g, '');
-        const last4 = phoneDigits.slice(-4);
+        const last7 = phoneDigits.slice(-7);
 
         try {
           const autoRegRes = await fetch('/api/auth/auto-register', {
@@ -277,7 +277,7 @@ export default function CheckoutClient() {
               email:    email.trim(),
               fullName: fullName.trim(),
               phone:    phone.trim(),
-              password: last4,
+              password: last7,
               orderId:  newOrderId,  // API сам оновить замовлення через supabaseService
             }),
           }).then(r => r.json());
@@ -981,11 +981,15 @@ export default function CheckoutClient() {
                         {cartItems.map((item, idx) => (
                           <div key={`${item.id}-${item.size}-${idx}`} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
                             {(item.image_url || item.image) && (
-                              <img
-                                src={item.image_url || item.image}
-                                alt={item.name}
-                                style={{ width: '40px', height: '50px', objectFit: 'cover', borderRadius: '6px', background: '#f5f2e9', flexShrink: 0 }}
-                              />
+                              <div style={{ position: 'relative', width: '40px', height: '50px', flexShrink: 0 }}>
+                                <Image
+                                  src={item.image_url || item.image}
+                                  alt={item.name}
+                                  fill
+                                  style={{ objectFit: 'cover', borderRadius: '6px', background: '#f5f2e9' }}
+                                  sizes="40px"
+                                />
+                              </div>
                             )}
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 500, color: '#524f25', lineHeight: 1.2 }}>

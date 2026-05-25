@@ -78,6 +78,39 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     }
   }
 
+  // ── Скидання пароля ────────────────────────────────────────────────────────
+  async function handleReset(e) {
+    e.preventDefault();
+    setError(''); setSuccess(''); setLoading(true);
+
+    if (!email) {
+      setError('Введіть email');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Помилка скидання пароля');
+      }
+
+      setSuccess('Пароль успішно скинуто! Тепер ви можете увійти, використовуючи 7 останніх цифр вашого телефону.');
+      setMode('login');
+      setPassword('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ── Реєстрація ─────────────────────────────────────────────────────────────
   async function handleSignUp(e) {
     e.preventDefault();
@@ -138,7 +171,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     if (message.includes('already registered') || message.includes('already exists') || message.includes('User already'))
       return 'Ця пошта вже зареєстрована';
     if (message.includes('Invalid login') || message.includes('invalid_credentials'))
-      return 'Невірний пароль. Підказка: якщо ви не змінювали пароль — спробуйте 4 останні цифри вашого номеру телефону 📱';
+      return 'Невірний пароль. Підказка: якщо ви не змінювали пароль — спробуйте 7 останніх цифр вашого номеру телефону 📱';
     if (message.includes('Email not confirmed'))
       return 'Підтвердіть email — перевірте пошту';
     if (message.includes('Password should'))
@@ -280,7 +313,29 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
                     value={email} onChange={e => setEmail(e.target.value)} required />
                   <AuthInput icon={<Lock size={16} />} type="password" placeholder="Пароль"
                     value={password} onChange={e => setPassword(e.target.value)} required />
+                  
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-0.5rem' }}>
+                    <button type="button" onClick={() => { setMode('reset'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#9a866a', fontSize: '0.8rem', cursor: 'pointer', padding: 0 }}>Забули пароль?</button>
+                  </div>
+
                   <AuthButton loading={loading} label="Увійти" />
+                </form>
+              )}
+
+              {/* ── ФОРМА СКИДАННЯ ПАРОЛЯ ── */}
+              {mode === 'reset' && !success && (
+                <form onSubmit={handleReset} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <p style={{ fontFamily: 'var(--font-sans)', fontSize: '0.85rem', color: '#666', lineHeight: 1.5, marginBottom: '0.5rem' }}>
+                    Введіть ваш Email. Ми скинемо ваш пароль до 7 останніх цифр вашого мобільного телефону, вказаного при реєстрації/замовленні.
+                  </p>
+                  <AuthInput icon={<Mail size={16} />} type="email" placeholder="Email"
+                    value={email} onChange={e => setEmail(e.target.value)} required />
+                  
+                  <AuthButton loading={loading} label="Скинути пароль" />
+                  
+                  <button type="button" onClick={() => { setMode('login'); setError(''); setSuccess(''); }} style={{ background: 'none', border: 'none', color: '#9a866a', fontSize: '0.85rem', cursor: 'pointer', marginTop: '0.5rem' }}>
+                    Повернутися до входу
+                  </button>
                 </form>
               )}
 

@@ -10,6 +10,7 @@ import {
   User, Truck, CreditCard, Check, ArrowRight, FileText, ChevronDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -398,11 +399,14 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                           className="w-full text-left px-4 py-3 hover:bg-stone-50 border-b border-stone-100 last:border-0 flex items-center gap-3.5 transition"
                         >
                           {prod.image_url ? (
-                            <img 
-                              src={prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`} 
-                              alt={prod.name} 
-                              className="w-9 h-9 rounded-lg object-cover bg-stone-100 border border-stone-200/50 flex-shrink-0"
-                            />
+                            <div className="relative w-9 h-9 rounded-lg bg-stone-100 border border-stone-200/50 flex-shrink-0 overflow-hidden">
+                              <Image 
+                                src={prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`} 
+                                alt={prod.name} 
+                                fill sizes="36px"
+                                className="object-cover"
+                              />
+                            </div>
                           ) : (
                             <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200/50">
                               <ShoppingBag className="w-4 h-4 text-stone-400" />
@@ -429,11 +433,14 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3.5">
                         {selectedProduct.image_url ? (
-                          <img 
-                            src={selectedProduct.image_url.startsWith('http') ? selectedProduct.image_url : `/images/${selectedProduct.image_url}`} 
-                            alt={selectedProduct.name} 
-                            className="w-14 h-14 rounded-xl object-cover bg-stone-100 border border-stone-200/50 shadow-sm"
-                          />
+                          <div className="relative w-14 h-14 rounded-xl bg-stone-100 border border-stone-200/50 shadow-sm overflow-hidden flex-shrink-0">
+                            <Image 
+                              src={selectedProduct.image_url.startsWith('http') ? selectedProduct.image_url : `/images/${selectedProduct.image_url}`} 
+                              alt={selectedProduct.name} 
+                              fill sizes="56px"
+                              className="object-cover"
+                            />
+                          </div>
                         ) : (
                           <div className="w-14 h-14 rounded-xl bg-stone-200 flex items-center justify-center border border-stone-200">
                             <ShoppingBag className="w-7 h-7 text-stone-400" />
@@ -583,11 +590,14 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {item.image_url ? (
-                            <img 
-                              src={item.image_url.startsWith('http') ? item.image_url : `/images/${item.image_url}`} 
-                              alt={item.name} 
-                              className="w-12 h-12 rounded-lg object-cover bg-stone-50 border border-stone-100 flex-shrink-0 shadow-sm"
-                            />
+                            <div className="relative w-12 h-12 rounded-lg bg-stone-50 border border-stone-100 flex-shrink-0 shadow-sm overflow-hidden">
+                              <Image 
+                                src={item.image_url.startsWith('http') ? item.image_url : `/images/${item.image_url}`} 
+                                alt={item.name} 
+                                fill sizes="48px"
+                                className="object-cover"
+                              />
+                            </div>
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0">
                               <ShoppingBag className="w-6 h-6 text-stone-400" />
