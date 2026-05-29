@@ -8,6 +8,7 @@ import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, Tr
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import imageCompression from 'browser-image-compression';
 
 const THEMES = {
   stone: {
@@ -350,13 +351,29 @@ export default function ProductFormClient({ id }) {
 
   const uploadImage = async (file) => {
     try {
-      const fileExt = file.name.split('.').pop();
+      // Стиснення фотографії перед завантаженням
+      const options = {
+        maxSizeMB: 0.5, // Максимум 500 КБ
+        maxWidthOrHeight: 1200, // Адекватний розмір для вебу
+        useWebWorker: true,
+        fileType: 'image/webp' // Конвертуємо у WebP для кращого співвідношення якість/вага
+      };
+
+      let fileToUpload = file;
+      try {
+        fileToUpload = await imageCompression(file, options);
+      } catch (err) {
+        console.warn('Помилка стиснення фото, завантажуємо оригінал', err);
+      }
+
+      // WebP розширення
+      const fileExt = fileToUpload.type === 'image/webp' ? 'webp' : fileToUpload.name.split('.').pop() || 'jpg';
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         });
