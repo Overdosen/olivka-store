@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '../../../lib/supabase';
+import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
 import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -84,6 +84,7 @@ export default function ProductFormClient({ id }) {
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [images, setImages] = useState([]);
+  const [originalImages, setOriginalImages] = useState([]);
   const [initialState, setInitialState] = useState(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [targetUrl, setTargetUrl] = useState(null);
@@ -117,10 +118,9 @@ export default function ProductFormClient({ id }) {
   });
 
   const [sizeInput, setSizeInput] = useState('');
-  const [sizeQuantity, setSizeQuantity] = useState('1'); // Default to 1 instead of 0
+  const [sizeQuantity, setSizeQuantity] = useState('1'); 
   const [sizeCostPrice, setSizeCostPrice] = useState('');
 
-  // Initialize initialState for new products
   useEffect(() => {
     if (!isEditing) {
       setInitialState({
@@ -154,11 +154,9 @@ export default function ProductFormClient({ id }) {
   const isDirty = () => {
     if (!initialState) return false;
 
-    // Compare formData by comparing their JSON representations
     const currentFormDataStr = JSON.stringify(formData);
     const initialFormDataStr = JSON.stringify(initialState.formData);
 
-    // Compare images by matching their isMain status and filenames/URLs
     const currentImagesClean = images.map(img => ({
       isMain: img.isMain,
       name: img.file ? img.file.name : (img.rawUrl || img.url)
@@ -178,7 +176,7 @@ export default function ProductFormClient({ id }) {
     const handleBeforeUnload = (e) => {
       if (isDirty()) {
         e.preventDefault();
-        e.returnValue = ''; // Standard browser prompt
+        e.returnValue = '';
       }
     };
 
@@ -187,7 +185,6 @@ export default function ProductFormClient({ id }) {
       if (!anchor) return;
 
       const href = anchor.getAttribute('href');
-      // If no href, or it's a relative/empty/hash anchor, or goes to current page, skip
       if (!href || href.startsWith('#') || href.startsWith('javascript:') || href === pathname) return;
 
       if (isDirty()) {
@@ -199,7 +196,7 @@ export default function ProductFormClient({ id }) {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('click', handleCaptureClick, true); // Capturing phase to intercept Next.js Link
+    window.addEventListener('click', handleCaptureClick, true);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
@@ -214,7 +211,6 @@ export default function ProductFormClient({ id }) {
     }
   }, [id]);
 
-  // Auto-calculate total stock from sizes
   useEffect(() => {
     if (formData.sizes && formData.sizes.length > 0) {
       const totalStock = formData.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
@@ -300,6 +296,7 @@ export default function ProductFormClient({ id }) {
         });
       }
       setImages(fetchedImages);
+      setOriginalImages(fetchedImages.map(img => img.rawUrl).filter(Boolean));
       setInitialState({
         formData: fetchedProductData,
         images: fetchedImages
@@ -351,12 +348,11 @@ export default function ProductFormClient({ id }) {
 
   const uploadImage = async (file) => {
     try {
-      // Стиснення фотографії перед завантаженням
       const options = {
-        maxSizeMB: 0.5, // Максимум 500 КБ
-        maxWidthOrHeight: 1200, // Адекватний розмір для вебу
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
         useWebWorker: true,
-        fileType: 'image/webp' // Конвертуємо у WebP для кращого співвідношення якість/вага
+        fileType: 'image/webp'
       };
 
       let fileToUpload = file;
@@ -366,7 +362,6 @@ export default function ProductFormClient({ id }) {
         console.warn('Помилка стиснення фото, завантажуємо оригінал', err);
       }
 
-      // WebP розширення
       const fileExt = fileToUpload.type === 'image/webp' ? 'webp' : fileToUpload.name.split('.').pop() || 'jpg';
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
@@ -430,6 +425,15 @@ export default function ProductFormClient({ id }) {
         }
       }
       toast.dismiss('upload');
+
+      if (isEditing) {
+        for (const origUrl of originalImages) {
+          const stillExists = processedImages.some(img => img.finalUrl === origUrl);
+          if (!stillExists) {
+            await deleteImageFromStorage(origUrl);
+          }
+        }
+      }
 
       setImages(processedImages.map(img => ({ ...img, rawUrl: img.finalUrl })));
 
@@ -517,6 +521,9 @@ export default function ProductFormClient({ id }) {
     if (!id) return;
     if (!window.confirm('Ви впевнені, що хочете видалити цей товар?')) return;
     try {
+      for (const url of originalImages) {
+        await deleteImageFromStorage(url);
+      }
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
       toast.success('Товар видалено');

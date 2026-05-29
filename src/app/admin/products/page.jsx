@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { supabase } from '../../../lib/supabase';
+import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
 import { Trash2, Package, ChevronUp, ChevronDown, ArrowUpDown, ShoppingCart, ZoomIn, X } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -300,6 +300,20 @@ export default function AdminProducts() {
   async function handleDelete(id) {
     if (!window.confirm('Ви впевнені, що хочете видалити цей товар?')) return;
     try {
+      const productToDelete = products.find(p => p.id === id);
+      if (productToDelete && productToDelete.image_url) {
+        let urls = [];
+        try {
+          urls = typeof productToDelete.image_url === 'string' && productToDelete.image_url.startsWith('[') 
+            ? JSON.parse(productToDelete.image_url) 
+            : [productToDelete.image_url];
+        } catch(e) {}
+        
+        for (const url of urls) {
+           await deleteImageFromStorage(url);
+        }
+      }
+
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
       toast.success('Товар видалено');

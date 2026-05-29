@@ -44,3 +44,22 @@ export const supabaseService = (supabaseUrl && serviceKey)
     }) 
   : null;
 
+// Утиліта для видалення зображення з Storage
+export const deleteImageFromStorage = async (imageUrl) => {
+  if (!imageUrl) return;
+  try {
+    const parts = imageUrl.split('/product-images/');
+    if (parts.length > 1) {
+      const fileName = parts[1];
+      const { error } = await supabase.storage.from('product-images').remove([fileName]);
+      if (error) {
+        console.error('Помилка видалення файлу з Storage:', error);
+      } else {
+        console.log('Файл успішно видалено з Storage:', fileName);
+      }
+    }
+  } catch (err) {
+    console.error('Помилка в deleteImageFromStorage:', err);
+  }
+};
+
