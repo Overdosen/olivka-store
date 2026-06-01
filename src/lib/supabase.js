@@ -44,10 +44,32 @@ export const supabaseService = (supabaseUrl && serviceKey)
     }) 
   : null;
 
-// Утиліта для видалення зображення з Storage
+// Утиліта для безпечного видалення зображення з Storage (з перевіркою використання іншими товарами)
 export const deleteImageFromStorage = async (imageUrl) => {
   if (!imageUrl) return;
   try {
+    // 1. Спочатку перевіримо, чи використовується цей URL іншими товарами в базі даних.
+    // Це захищає оригінальні товари від видалення фото при редагуванні копій.
+    const { data: usageCount, error: checkError } = await supabase
+      .from('products')
+      .select('id, image_url, gallery');
+
+    if (checkError) {
+      console.error('Помилка при перевірці використання зображення:', checkError);
+    } else if (usageCount) {
+      // Рахуємо скільки товарів посилаються на це фото
+      const matches = usageCount.filter(product => {
+        const isMain = product.image_url === imageUrl;
+        const inGallery = Array.isArray(product.gallery) && product.gallery.includes(imageUrl);
+        return isMain || inGallery;
+      });
+
+      if (matches.length > 0) {
+        console.log(`Файл ${imageUrl} НЕ видалено з Storage, оскільки він використовується у ${matches.length} товар(ах):`, matches.map(m => m.id));
+        return; // Скасовуємо видалення, бо файл ще потрібен іншим товарам
+      }
+    }
+
     const parts = imageUrl.split('/product-images/');
     if (parts.length > 1) {
       const fileName = parts[1];
