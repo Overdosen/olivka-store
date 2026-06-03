@@ -267,7 +267,7 @@ export default function CheckoutClient() {
       // API роут оновлює замовлення через service role key (обходить RLS).
       if (!user) {
         const phoneDigits = phone.replace(/\D/g, '');
-        const last4 = phoneDigits.slice(-4);
+        const last7 = phoneDigits.slice(-7);
 
         try {
           const autoRegRes = await fetch('/api/auth/auto-register', {
@@ -277,7 +277,7 @@ export default function CheckoutClient() {
               email:    email.trim(),
               fullName: fullName.trim(),
               phone:    phone.trim(),
-              password: last4,
+              password: last7,
               orderId:  newOrderId,  // API сам оновить замовлення через supabaseService
             }),
           }).then(r => r.json());
