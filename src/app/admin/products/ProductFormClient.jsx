@@ -970,7 +970,7 @@ export default function ProductFormClient({ id }) {
         </Section>
 
         {/* Image Upload Gallery */}
-        <Section icon={Image} title="Фотографії товару" theme="indigo">
+        <Section icon={ImageIcon} title="Фотографії товару" theme="indigo">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-4">
             {images.map((img) => (
               <div key={img.id} className={`group relative aspect-square rounded-md overflow-hidden border-2 transition-all ${img.isMain ? 'border-amber-400 shadow-md ring-4 ring-amber-100' : 'border-stone-200 hover:border-stone-400'}`}>

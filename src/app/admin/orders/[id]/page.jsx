@@ -25,6 +25,8 @@ export default function OrderDetailPage() {
   const [products, setProducts] = useState([]);
   const [packagingCost, setPackagingCost] = useState('0');
   const [isPackagingChanged, setIsPackagingChanged] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
+  const [editItemCost, setEditItemCost] = useState('');
 
   useEffect(() => {
     async function fetchOrder() {
@@ -163,6 +165,29 @@ export default function OrderDetailPage() {
     setUpdating(false);
   }
 
+  async function handleSaveItemCost(index) {
+    const cost = Number(editItemCost) || 0;
+    setUpdating(true);
+    
+    // clone items
+    const newItems = [...order.items];
+    newItems[index] = { ...newItems[index], cost_price: cost };
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Помилка при збереженні собівартості');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems }));
+      setEditingItemIndex(null);
+      toast.success('Собівартість товару оновлено');
+    }
+    setUpdating(false);
+  }
+
   async function handleSyncStatus() {
     if (!order.tracking_number) return;
     setUpdating(true);
@@ -278,9 +303,38 @@ export default function OrderDetailPage() {
                     <p className="text-[12px] md:text-[13px] font-bold text-stone-900 tabular-nums">{formatMoney(item.price * (item.qty || item.quantity || 1))} ₴</p>
                     <div className="flex flex-col items-end gap-1 mt-1">
                       <p className="text-[11px] text-stone-500 font-medium">× {item.qty || item.quantity || 1}</p>
-                      <div className="bg-stone-100 text-stone-600 font-normal px-1.5 py-0.5 rounded text-[10px] md:text-[11px] inline-block">
-                        закупка: {formatMoney(calculateItemCost(item))} ₴
-                      </div>
+                      {editingItemIndex === i ? (
+                        <div className="flex items-center gap-1 mt-1">
+                          <input
+                            type="number"
+                            min="0"
+                            value={editItemCost}
+                            onChange={(e) => setEditItemCost(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSaveItemCost(i)}
+                            className="w-16 text-right px-1.5 py-0.5 bg-white border border-stone-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold"
+                            autoFocus
+                          />
+                          <span className="text-[11px] text-stone-500">₴</span>
+                          <button
+                            onClick={() => handleSaveItemCost(i)}
+                            disabled={updating}
+                            className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all shadow-sm shrink-0"
+                          >
+                            <Check size={10} strokeWidth={3} />
+                          </button>
+                        </div>
+                      ) : (
+                        <div 
+                          className="bg-stone-100 text-stone-600 font-normal px-1.5 py-0.5 rounded text-[10px] md:text-[11px] inline-block cursor-pointer hover:bg-stone-200 hover:text-stone-800 transition-colors border border-transparent hover:border-stone-300"
+                          onClick={() => {
+                            setEditingItemIndex(i);
+                            setEditItemCost(String(calculateItemCost(item)));
+                          }}
+                          title="Натисніть, щоб змінити собівартість для цього замовлення"
+                        >
+                          закупка: {formatMoney(calculateItemCost(item))} ₴
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
