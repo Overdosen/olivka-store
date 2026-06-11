@@ -1,15 +1,78 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '../../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../../lib/admin-constants';
+import { getOptimizedUrl } from '../../../../lib/image-utils';
 import StatusBadge from '../../../../components/admin/ui/StatusBadge';
 import PageHeader from '../../../../components/admin/ui/PageHeader';
-import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink } from 'lucide-react';
+import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+
+function ImageZoom({ src, alt, onClose }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!mounted) return null;
+
+  const content = (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 999999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px'
+      }}
+    >
+      <div
+        style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+        onClick={onClose}
+      />
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          padding: '12px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.15)',
+          color: '#fff',
+          zIndex: 10,
+          border: '1px solid rgba(255,255,255,0.1)',
+          cursor: 'pointer',
+          transition: 'background 0.2s'
+        }}
+        className="hover:bg-white/25 active:scale-95"
+      >
+        <X style={{ width: '24px', height: '24px' }} />
+      </button>
+      <img
+        src={getOptimizedUrl(src, 1200)}
+        alt={alt}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          maxHeight: '90vh',
+          maxWidth: '90vw',
+          borderRadius: '16px',
+          objectFit: 'contain',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+
+  return createPortal(content, document.body);
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -27,6 +90,10 @@ export default function OrderDetailPage() {
   const [isPackagingChanged, setIsPackagingChanged] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [editItemCost, setEditItemCost] = useState('');
+  
+  const [adminNotes, setAdminNotes] = useState('');
+  const [isNotesSaving, setIsNotesSaving] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -46,6 +113,16 @@ export default function OrderDetailPage() {
       setTtn(data.tracking_number || '');
       setFiscalReceiptUrl(data.fiscal_receipt_url || '');
       setPackagingCost(String(data.packaging_cost || 0));
+
+      // Fetch global scratchpad
+      const { data: settingsData } = await supabase
+        .from('global_settings')
+        .select('value')
+        .eq('id', 'admin_scratchpad')
+        .single();
+      if (settingsData) {
+        setAdminNotes(settingsData.value || '');
+      }
 
       const items = Array.isArray(data.items) ? data.items : [];
       const productIds = items.map(item => item.product_id || item.id).filter(Boolean);
@@ -188,6 +265,20 @@ export default function OrderDetailPage() {
     setUpdating(false);
   }
 
+  async function handleAdminNotesSave() {
+    setIsNotesSaving(true);
+    const { error } = await supabase
+      .from('global_settings')
+      .upsert({ id: 'admin_scratchpad', value: adminNotes });
+
+    if (!error) {
+      toast.success('Глобальну нотатку збережено', { id: 'note-saved' });
+    } else {
+      toast.error('Помилка при збереженні нотатки');
+    }
+    setIsNotesSaving(false);
+  }
+
   async function handleSyncStatus() {
     if (!order.tracking_number) return;
     setUpdating(true);
@@ -268,7 +359,7 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Left column — items */}
         <div className="lg:col-span-2 space-y-5">
           {/* Products */}
@@ -281,15 +372,25 @@ export default function OrderDetailPage() {
                 const prodId = item.product_id || item.id;
                 return (
                 <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50/50 transition-colors">
-                  <Link href={`/admin/products/${prodId}`} className="relative w-11 h-11 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50 hover:opacity-80 transition-opacity block">
+                  <div 
+                    className="relative w-11 h-11 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50 block group cursor-pointer"
+                    onClick={() => {
+                      if (item.image_url) setZoomedImage(item.image_url);
+                    }}
+                  >
                     {item.image_url ? (
-                      <Image src={item.image_url} alt={item.name} fill sizes="44px" className="object-cover" />
+                      <>
+                        <Image src={item.image_url} alt={item.name} fill sizes="44px" className="object-cover transition-transform duration-300 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <ZoomIn className="w-4 h-4 text-white" />
+                        </div>
+                      </>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Package className="w-5 h-5 text-stone-400" strokeWidth={1.5} />
                       </div>
                     )}
-                  </Link>
+                  </div>
                   <div className="flex-1 min-w-0">
                     <Link href={`/admin/products/${prodId}`} className="text-[12px] md:text-[13px] font-semibold text-stone-900 hover:text-emerald-600 transition-colors truncate block">
                       {item.name}
@@ -422,7 +523,7 @@ export default function OrderDetailPage() {
         </div>
 
         {/* Right column — info */}
-        <div className="space-y-5">
+        <div className="space-y-[5px] lg:sticky lg:top-5">
           {/* Status management */}
           <div className="bg-white rounded-lg border border-stone-200/80 p-5">
             <h2 className="text-sm font-semibold text-stone-800 mb-4">Статус</h2>
@@ -567,8 +668,37 @@ export default function OrderDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Global Notes */}
+          <div className="bg-amber-50/80 rounded-lg border border-amber-200/60 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+            <div className="flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-amber-600" />
+              <h2 className="text-sm font-bold text-amber-900">Блокнот</h2>
+            </div>
+            <textarea
+              className="w-full text-sm px-3 py-2 bg-white/80 border border-amber-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition resize-none custom-scrollbar text-amber-950 font-medium"
+              rows={5}
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              onBlur={handleAdminNotesSave}
+            />
+            {isNotesSaving && (
+              <p className="text-xs text-stone-400 mt-2 flex items-center gap-1">
+                <RefreshCw size={12} className="animate-spin" /> Збереження...
+              </p>
+            )}
+          </div>
         </div>
       </div>
+      
+      {/* Модальне вікно для збільшеного фото */}
+      {zoomedImage && (
+        <ImageZoom 
+          src={zoomedImage} 
+          alt="Збільшене фото" 
+          onClose={() => setZoomedImage(null)} 
+        />
+      )}
     </div>
   );
 }

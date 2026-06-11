@@ -7,10 +7,73 @@ import { STATUS_OPTIONS } from '../../../lib/admin-constants';
 import { 
   X, ShoppingCart, Search, Trash2, Plus, Minus, 
   ChevronRight, AlertCircle, ShoppingBag, Store, 
-  User, Truck, CreditCard, Check, ArrowRight, FileText, ChevronDown
+  User, Truck, CreditCard, Check, ArrowRight, FileText, ChevronDown, ZoomIn
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { getOptimizedUrl } from '../../../lib/image-utils';
+
+// ── Image zoom overlay ────────────────────────────────────────────────────────
+function ImageZoom({ src, alt, onClose }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  if (!mounted) return null;
+
+  const content = (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 999999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px'
+      }}
+    >
+      <div
+        style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
+        onClick={onClose}
+      />
+      <button
+        onClick={onClose}
+        style={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          padding: '12px',
+          borderRadius: '50%',
+          background: 'rgba(255,255,255,0.15)',
+          color: '#fff',
+          zIndex: 10,
+          border: '1px solid rgba(255,255,255,0.1)',
+          cursor: 'pointer',
+          transition: 'background 0.2s'
+        }}
+        className="hover:bg-white/25 active:scale-95"
+      >
+        <X style={{ width: '24px', height: '24px' }} />
+      </button>
+      <img
+        src={getOptimizedUrl(src, 1200)}
+        alt={alt}
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          maxHeight: '90vh',
+          maxWidth: '90vw',
+          borderRadius: '16px',
+          objectFit: 'contain',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      />
+    </div>
+  );
+
+  return createPortal(content, document.body);
+}
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -70,6 +133,8 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
   const [orderStatus, setOrderStatus] = useState('new');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const searchTimeoutRef = useRef(null);
 
@@ -392,31 +457,39 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                   {searchResults.length > 0 && (
                     <div className="absolute left-0 right-0 mt-1.5 bg-white border border-stone-200 rounded-xl shadow-lg z-50 max-h-60 overflow-y-auto custom-scrollbar">
                       {searchResults.map(prod => (
-                        <button
+                        <div
                           key={prod.id}
-                          type="button"
-                          onClick={() => handleSelectProduct(prod)}
                           className="w-full text-left px-4 py-3 hover:bg-stone-50 border-b border-stone-100 last:border-0 flex items-center gap-3.5 transition"
                         >
                           {prod.image_url ? (
-                            <div className="relative w-9 h-9 rounded-lg bg-stone-100 border border-stone-200/50 flex-shrink-0 overflow-hidden">
+                            <div 
+                              className="relative w-9 h-9 rounded-lg bg-stone-100 border border-stone-200/50 flex-shrink-0 overflow-hidden cursor-pointer group"
+                              onClick={(e) => { e.stopPropagation(); setZoomedImage({ src: prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`, alt: prod.name }); }}
+                              title="Збільшити фото"
+                            >
                               <Image 
                                 src={prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`} 
                                 alt={prod.name} 
                                 fill sizes="36px"
-                                className="object-cover"
+                                className="object-cover transition-transform duration-200 group-hover:scale-110"
                               />
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity duration-150 opacity-0 group-hover:opacity-100">
+                                <ZoomIn className="w-4 h-4 text-white" />
+                              </div>
                             </div>
                           ) : (
                             <div className="w-9 h-9 rounded-lg bg-stone-100 flex items-center justify-center flex-shrink-0 border border-stone-200/50">
                               <ShoppingBag className="w-4 h-4 text-stone-400" />
                             </div>
                           )}
-                          <div className="min-w-0 flex-1">
-                            <p className="text-xs font-bold text-stone-850 truncate leading-tight">{prod.name}</p>
+                          <div 
+                            className="min-w-0 flex-1 cursor-pointer"
+                            onClick={() => handleSelectProduct(prod)}
+                          >
+                            <p className="text-xs font-bold text-stone-850 truncate leading-tight hover:underline">{prod.name}</p>
                             <p className="text-[10px] text-stone-400 font-bold mt-1">Арт: {prod.sku || '—'} • Ціна: {prod.price} ₴</p>
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -880,8 +953,15 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
             )}
           </div>
         )}
-
       </div>
+
+      {zoomedImage && (
+        <ImageZoom
+          src={zoomedImage.src}
+          alt={zoomedImage.alt}
+          onClose={() => setZoomedImage(null)}
+        />
+      )}
     </div>
   );
 

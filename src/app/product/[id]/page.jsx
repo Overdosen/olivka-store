@@ -2,6 +2,7 @@ import { supabase } from '../../../lib/supabase';
 import ProductClient from './ProductClient';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import RelatedProducts from '../../../components/RelatedProducts';
+import { notFound } from 'next/navigation';
 
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
@@ -15,9 +16,7 @@ export async function generateMetadata({ params }) {
     .single();
 
   if (!product) {
-    return {
-      title: 'Товар не знайдено | Store Olivka',
-    };
+    notFound();
   }
 
   // Ensure absolute URL for social previews
@@ -66,11 +65,7 @@ export default async function ProductPage({ params }) {
     .single();
 
   if (!data) {
-    return (
-      <div className="container section text-center" style={{ paddingTop: '4rem' }}>
-        <h2>Товар не знайдено</h2>
-      </div>
-    );
+    notFound();
   }
   
   // Parse gallery

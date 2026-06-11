@@ -94,7 +94,7 @@ export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink 
         <div style="margin: 15px 0 0; padding: 12px; background-color: #f9f7f0; border-radius: 8px; text-align: center;">
           <p style="margin: 0; font-size: 13px; color: ${brandColor}; line-height: 1.6;">
             <strong>У призначенні обов'язково вкажіть:</strong><br>
-            <span style="font-size: 15px;"><strong>«Сплата за товар»</strong> та вашу фамілію або номер замовлення <strong>${order_number}</strong>.</span><br>
+            <span style="font-size: 15px;"><strong>«Сплата за товар»</strong> та ваше прізвище або номер замовлення <strong>${order_number}</strong>.</span><br>
             <span style="font-size: 11px; color: #9a866a;">*Будь ласка, враховуйте комісію банку при переказі.</span>
           </p>
         </div>
@@ -150,13 +150,15 @@ export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink 
             💡 Пароль — це <strong>7 останніх цифр</strong> вашого номеру телефону.
             Ви можете змінити пароль в особистому кабінеті.
           </p>
-          <a href="${magicLink}"
-             style="display: inline-block; margin-top: 16px; padding: 12px 28px;
-                    background: #524f25; color: white; text-decoration: none;
-                    border-radius: 10px; font-size: 13px; font-weight: 600;
-                    letter-spacing: 0.08em; text-transform: uppercase;">
-            Увійти в кабінет →
-          </a>
+          <div style="text-align: center; margin-top: 16px;">
+            <a href="${baseUrl}/"
+               style="display: inline-block; padding: 12px 28px;
+                      background: #524f25; color: white; text-decoration: none;
+                      border-radius: 10px; font-size: 13px; font-weight: 600;
+                      letter-spacing: 0.08em; text-transform: uppercase;">
+              Увійти в кабінет →
+            </a>
+          </div>
         </div>
       </td>
     </tr>

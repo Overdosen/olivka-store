@@ -1,28 +1,127 @@
 import { useCart } from '../context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Trash2, Plus, Minus } from 'lucide-react';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { supabase } from '../lib/supabase';
 
 export default function CartDrawer() {
   const { isCartOpen, setIsCartOpen, cartItems, removeFromCart, updateQuantity } = useCart();
   const router = useRouter();
   const lastToastTime = useRef(0);
+  const [outOfStockItems, setOutOfStockItems] = useState([]);
+  const [isCheckingStock, setIsCheckingStock] = useState(false);
 
-  // Блокування скролу при відкритому кошику
+  // Блокування скролу при відкритому кошику та очищення стану
   useEffect(() => {
     if (isCartOpen) {
       document.body.classList.add('no-scroll');
     } else {
       document.body.classList.remove('no-scroll');
+      if (!isCheckingStock) setOutOfStockItems([]);
     }
     return () => {
       document.body.classList.remove('no-scroll');
     };
-  }, [isCartOpen]);
+  }, [isCartOpen, isCheckingStock]);
+
+  // Автоматична перевірка залишків при відкритті кошика або зміні товарів
+  useEffect(() => {
+    if (isCartOpen && cartItems.length > 0) {
+      const checkStock = async () => {
+        try {
+          const productIds = cartItems.map(item => item.id);
+          const { data: products, error } = await supabase
+            .from('products')
+            .select('id, stock, sizes')
+            .in('id', productIds);
+            
+          if (error) throw error;
+          
+          const outOfStock = [];
+          for (const item of cartItems) {
+            const dbProduct = products.find(p => p.id === item.id);
+            if (!dbProduct) {
+              outOfStock.push({ id: item.id, size: item.size });
+              continue;
+            }
+            let availableStock = dbProduct.stock;
+            if (item.size && dbProduct.sizes) {
+              const sizeObj = dbProduct.sizes.find(s => s.name === item.size);
+              if (sizeObj) {
+                availableStock = sizeObj.quantity;
+              }
+            }
+            if (availableStock < item.quantity || availableStock === 0) {
+              outOfStock.push({ id: item.id, size: item.size });
+            }
+          }
+          setOutOfStockItems(outOfStock);
+        } catch (err) {
+          console.error('Помилка автоматичної перевірки залишків:', err);
+        }
+      };
+      
+      checkStock();
+    }
+  }, [isCartOpen, cartItems]);
+
+  const handleCheckout = async (e) => {
+    e.preventDefault();
+    setIsCheckingStock(true);
+    
+    try {
+      const productIds = cartItems.map(item => item.id);
+      const { data: products, error } = await supabase
+        .from('products')
+        .select('id, stock, sizes')
+        .in('id', productIds);
+        
+      if (error) throw error;
+      
+      const outOfStock = [];
+      
+      for (const item of cartItems) {
+        const dbProduct = products.find(p => p.id === item.id);
+        if (!dbProduct) {
+          outOfStock.push({ id: item.id, size: item.size });
+          continue;
+        }
+        
+        let availableStock = dbProduct.stock;
+        if (item.size && dbProduct.sizes) {
+          const sizeObj = dbProduct.sizes.find(s => s.name === item.size);
+          if (sizeObj) {
+            availableStock = sizeObj.quantity;
+          }
+        }
+        
+        if (availableStock < item.quantity || availableStock === 0) {
+          outOfStock.push({ id: item.id, size: item.size });
+        }
+      }
+      
+      if (outOfStock.length > 0) {
+        setOutOfStockItems(outOfStock);
+        toast.error('Деякі товари у кошику закінчились або їх кількість перевищує залишок на складі.');
+        setIsCheckingStock(false);
+        return;
+      }
+      
+      setOutOfStockItems([]);
+      setIsCartOpen(false);
+      router.push('/checkout');
+      
+    } catch (err) {
+      console.error('Помилка перевірки наявності:', err);
+      toast.error('Помилка перевірки кошика. Спробуйте ще раз.');
+    } finally {
+      setIsCheckingStock(false);
+    }
+  };
 
   const total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -108,16 +207,20 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {cartItems.map((item, idx) => (
-                    <div key={`${item.id}-${item.size}-${idx}`} 
-                         style={{ 
-                           display: 'flex', 
-                           gap: '1rem', 
-                           padding: '1rem', 
-                           backgroundColor: 'var(--color-stone-50)',
-                           borderRadius: '1rem'
-                         }}>
-                      <Link href={`/product/${item.id}`} onClick={() => setIsCartOpen(false)}>
+                  {cartItems.map((item, idx) => {
+                    const isOutOfStock = outOfStockItems.some(oos => oos.id === item.id && oos.size === item.size);
+                    return (
+                      <div key={`${item.id}-${item.size}-${idx}`} 
+                           style={{ 
+                             display: 'flex', 
+                             gap: '1rem', 
+                             padding: '1rem', 
+                             backgroundColor: 'var(--color-stone-50)',
+                             borderRadius: '1rem',
+                             opacity: isOutOfStock ? 0.6 : 1,
+                             filter: isOutOfStock ? 'grayscale(100%)' : 'none'
+                           }}>
+                      <Link href={`/product/${item.id}`} onClick={() => setIsCartOpen(false)} style={{ pointerEvents: isOutOfStock ? 'none' : 'auto' }}>
                         <div style={{ position: 'relative', width: '90px', height: '110px', flexShrink: 0 }}>
                           <Image
                             src={item.image || '/placeholder-product.png'}
@@ -130,6 +233,22 @@ export default function CartDrawer() {
                             }}
                             sizes="90px"
                           />
+                          {isOutOfStock && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '4px',
+                              left: '4px',
+                              backgroundColor: 'rgba(0,0,0,0.6)',
+                              color: 'white',
+                              padding: '2px 4px',
+                              fontSize: '0.5rem',
+                              fontWeight: 'bold',
+                              borderRadius: '2px',
+                              zIndex: 10
+                            }}>
+                              НЕМАЄ В НАЯВНОСТІ
+                            </div>
+                          )}
                         </div>
                       </Link>
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
@@ -168,6 +287,7 @@ export default function CartDrawer() {
                             <button 
                               onClick={() => updateQuantity(item.id, item.size, -1)}
                               style={{ display: 'flex', alignItems: 'center', color: '#524f25' }}
+                              disabled={isOutOfStock}
                             >
                               <Minus size={14} />
                             </button>
@@ -186,23 +306,25 @@ export default function CartDrawer() {
                                    updateQuantity(item.id, item.size, 1);
                                  }
                                }}
+                               disabled={isOutOfStock}
                                style={{ 
                                  display: 'flex', 
                                  alignItems: 'center',
                                  color: (item.stock != null && item.quantity >= item.stock) ? 'rgba(82,79,37,0.4)' : '#524f25',
-                                 cursor: 'pointer',
+                                 cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                                }}
                              >
                                <Plus size={14} />
                              </button>
                           </div>
-                          <p style={{ margin: 0, fontWeight: '600', color: '#524f25' }}>
+                          <p style={{ margin: 0, fontWeight: '600', color: '#524f25', textDecoration: isOutOfStock ? 'line-through' : 'none' }}>
                             {item.price * item.quantity} грн
                           </p>
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
               )}
             </div>
@@ -263,14 +385,22 @@ export default function CartDrawer() {
                     </span>
                   </div>
                 )}
-                <Link
-                  href="/checkout"
-                  onClick={() => setIsCartOpen(false)}
+                <button
+                  onClick={handleCheckout}
+                  disabled={isCheckingStock}
                   className="btn btn-primary"
-                  style={{ width: '100%', padding: '1rem', fontSize: '1rem', textAlign: 'center', textDecoration: 'none', display: 'block' }}
+                  style={{ 
+                    width: '100%', 
+                    padding: '1rem', 
+                    fontSize: '1rem', 
+                    textAlign: 'center', 
+                    display: 'block',
+                    opacity: isCheckingStock ? 0.7 : 1,
+                    cursor: isCheckingStock ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  Оформити замовлення
-                </Link>
+                  {isCheckingStock ? 'Перевірка...' : 'Оформити замовлення'}
+                </button>
               </div>
             )}
           </motion.div>

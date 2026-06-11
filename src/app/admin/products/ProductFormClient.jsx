@@ -577,7 +577,7 @@ export default function ProductFormClient({ id }) {
 
   const handleUpdateSizeQuantity = (sizeName, newQty) => {
     const updatedSizes = formData.sizes.map(s =>
-      s.name === sizeName ? { ...s, quantity: parseInt(newQty) || 0 } : s
+      s.name === sizeName ? { ...s, quantity: newQty === '' ? '' : parseInt(newQty) } : s
     );
     setFormData({
       ...formData,
@@ -685,7 +685,7 @@ export default function ProductFormClient({ id }) {
                 <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Кількість на складі (без розмірів)</label>
                 <input type="number" min="0" value={formData.stock}
                   disabled={formData.sizes && formData.sizes.length > 0}
-                  onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })}
                   className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed transition-all text-stone-800 font-medium"
                   placeholder="0" />
                 {formData.sizes && formData.sizes.length > 0 && (

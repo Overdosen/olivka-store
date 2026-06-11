@@ -2,6 +2,7 @@ import React from 'react';
 import { supabase } from '../../../lib/supabase';
 import CategoryClient from './CategoryClient';
 import Breadcrumbs from '../../../components/Breadcrumbs';
+import { notFound } from 'next/navigation';
 
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
@@ -26,6 +27,8 @@ export async function generateMetadata({ params }) {
     } else if (catId === 'fullset') {
       title = 'Готові рішення';
       description = 'Економте час та кошти з нашими готовими наборами одягу для немовлят.';
+    } else {
+      notFound();
     }
   } else {
     title = 'Весь каталог';
@@ -75,11 +78,7 @@ export default async function CategoryPage({ params }) {
   }
 
   if (!category) {
-    return (
-      <div className="container section text-center" style={{ paddingTop: '4rem' }}>
-        <h2>Категорія не знайдена</h2>
-      </div>
-    );
+    notFound();
   }
 
   // Fetch initial products
