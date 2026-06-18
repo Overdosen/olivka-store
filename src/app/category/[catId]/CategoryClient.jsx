@@ -49,8 +49,27 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   // Options
+  // Порядок розмірів для сортування
+  const SIZE_ORDER = ['56', '56-62', '62', '62-68', '68', '74', '80', '86', '92', '100*80 см', '100*75 см', '75*50 см'];
+
+  // Динамічний список розмірів: тільки ті що є в наявності (quantity > 0) хоча б в одному товарі
+  const availableSizes = Array.from(
+    new Set(
+      products.flatMap(p =>
+        (p.sizes || []).filter(s => s.quantity > 0).map(s => s.name)
+      )
+    )
+  ).sort((a, b) => {
+    const ai = SIZE_ORDER.indexOf(a);
+    const bi = SIZE_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
   const filterOptions = {
-    sizes: ['56', '56-62', '62', '62-68', '68', '74', '80', '86', '92', '100*80 см', '100*75 см', '75*50 см'],
+    sizes: availableSizes,
     ages: ['0-1 місяць', '0-3 місяці', '1-3 місяці', '3-6 місяців', '6-9 місяців', '9-12 місяців', '12-18 місяців', '2 роки'],
     materials: ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча', 'Інтерлок', 'Футер', 'Перфорація'],
     features: [
@@ -76,7 +95,8 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
   const filteredProducts = products.filter(product => {
     if (filters.gender && product.gender !== filters.gender) return false;
     if (filters.sizes.length > 0) {
-      if (!product.sizes || !product.sizes.some(s => filters.sizes.includes(s.name))) return false;
+      // Фільтруємо тільки по тих розмірах які є в наявності (quantity > 0)
+      if (!product.sizes || !product.sizes.some(s => filters.sizes.includes(s.name) && s.quantity > 0)) return false;
     }
     if (filters.ages.length > 0) {
       if (!product.age || !product.age.some(a => filters.ages.includes(a))) return false;
@@ -94,10 +114,10 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
   }).sort((a, b) => {
     const aHasSizes = a.sizes && a.sizes.length > 0;
     const aIsAvailable = aHasSizes ? a.sizes.some(s => s.quantity > 0) : a.stock > 0;
-    
+
     const bHasSizes = b.sizes && b.sizes.length > 0;
     const bIsAvailable = bHasSizes ? b.sizes.some(s => s.quantity > 0) : b.stock > 0;
-    
+
     if (aIsAvailable === bIsAvailable) return 0;
     return aIsAvailable ? -1 : 1;
   });

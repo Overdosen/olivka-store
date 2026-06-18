@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { LiqPay } from '../../../../lib/liqpay';
 import { supabase, supabaseService } from '../../../../lib/supabase';
 import { sendOrderConfirmationEmail } from '../../../../lib/email-service';
+import { autoRegisterUser } from '../../../../lib/auto-register';
 
 
 const liqpay = new LiqPay(
@@ -87,8 +88,25 @@ export async function POST(request) {
         console.error('[LiqPay Callback] Database Update Error:', orderError);
         return NextResponse.json({ status: 'error', error: orderError.message, code: orderError.code }, { status: 500 });
       }
-
       console.log('[LiqPay Callback] Order status updated to paid:', order_id);
+
+      // Автореєстрація гостьового користувача при успішній оплаті
+      if (orderData && !orderData.user_id && orderData.email) {
+        const phoneDigits = (orderData.phone || '').replace(/\D/g, '');
+        const last7 = phoneDigits.slice(-7);
+        try {
+          await autoRegisterUser({
+            email:    orderData.email,
+            fullName: orderData.full_name,
+            phone:    orderData.phone,
+            password: last7,
+            orderId:  order_id
+          });
+          console.log(`[LiqPay Callback] Guest user auto-registered for order: ${order_id}`);
+        } catch (regErr) {
+          console.error('[LiqPay Callback] Auto-register failed:', regErr);
+        }
+      }
 
       // 4. Send Confirmation Email
       console.log(`[LiqPay Callback] Triggering email for order: ${order_id}`);

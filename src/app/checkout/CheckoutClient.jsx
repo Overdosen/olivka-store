@@ -265,7 +265,7 @@ export default function CheckoutClient() {
       // --- Авто-реєстрація гостьового клієнта ---
       // Якщо клієнт не авторизований — створюємо акаунт автоматично.
       // API роут оновлює замовлення через service role key (обходить RLS).
-      if (!user) {
+      if (!user && payment !== 'liqpay') {
         const phoneDigits = phone.replace(/\D/g, '');
         const last7 = phoneDigits.slice(-7);
 
