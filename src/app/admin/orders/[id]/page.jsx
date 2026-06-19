@@ -8,10 +8,11 @@ import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHea
 import { getOptimizedUrl } from '../../../../lib/image-utils';
 import StatusBadge from '../../../../components/admin/ui/StatusBadge';
 import PageHeader from '../../../../components/admin/ui/PageHeader';
-import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn } from 'lucide-react';
+import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
+import AddProductModal from '../../../../components/admin/orders/AddProductModal';
 
 function ImageZoom({ src, alt, onClose }) {
   const [mounted, setMounted] = useState(false);
@@ -74,6 +75,43 @@ function ImageZoom({ src, alt, onClose }) {
   return createPortal(content, document.body);
 }
 
+function ConfirmModal({ title, onConfirm, onClose }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
+
+  const content = (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 999997, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+    >
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(28,25,23,0.4)', backdropFilter: 'blur(6px)' }} onClick={onClose} />
+      <div style={{ position: 'relative', zIndex: 10, background: 'white', borderRadius: '20px', padding: '28px 24px 24px', maxWidth: '340px', width: '100%', boxShadow: '0 24px 48px rgba(0,0,0,0.15)', textAlign: 'center' }}>
+        <p style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', marginBottom: '22px', lineHeight: 1.4 }}>{title}</p>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 500, color: '#78716c', background: '#f5f5f4', border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#e7e5e4'}
+            onMouseLeave={e => e.currentTarget.style.background = '#f5f5f4'}
+          >
+            Скасувати
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 700, color: 'white', background: '#1c1917', border: 'none', borderRadius: '10px', cursor: 'pointer', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#292524'}
+            onMouseLeave={e => e.currentTarget.style.background = '#1c1917'}
+          >
+            Підтвердити
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+  return createPortal(content, document.body);
+}
+
 export default function OrderDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -94,6 +132,10 @@ export default function OrderDetailPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [isNotesSaving, setIsNotesSaving] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
+  const [editingQtyIndex, setEditingQtyIndex] = useState(null);
+  const [editQty, setEditQty] = useState('');
+  const [showAddProduct, setShowAddProduct] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -143,10 +185,42 @@ export default function OrderDetailPage() {
     fetchOrder();
   }, [id, router]);
 
+  function promptStatusChange(newStatus) {
+    const label = STATUS_MAP[newStatus]?.label || newStatus;
+    setConfirmModal({ title: `Змінити статус на «${label}»?`, newStatus });
+  }
+
   async function handleStatusChange(newStatus) {
+    setConfirmModal(null);
     setUpdating(true);
-    await supabase.from('orders').update({ status: newStatus }).eq('id', id);
-    setOrder(prev => ({ ...prev, status: newStatus }));
+
+    let orderUpdatePayload = { status: newStatus };
+
+    if (newStatus === 'new' && order.status !== 'new' && order.status !== 'cancelled') {
+      try {
+        const res = await fetch('/api/admin/orders/restore-stock', {
+          method: 'POST',
+          headers: await getAuthHeaders(),
+          body: JSON.stringify({ items: order.items })
+        });
+        
+        if (!res.ok) {
+          throw new Error('Failed to restore stock');
+        }
+        
+        // Скидаємо прапорець, щоб при наступному переведенні в 'paid' 
+        // тригер бази даних знову зміг списати залишки
+        orderUpdatePayload.is_stock_deducted = false;
+        
+        toast.success('Товари повернуто на склад');
+      } catch (err) {
+        console.error('Помилка при поверненні товарів:', err);
+        toast.error('Не вдалося повністю повернути товари на склад');
+      }
+    }
+
+    await supabase.from('orders').update(orderUpdatePayload).eq('id', id);
+    setOrder(prev => ({ ...prev, ...orderUpdatePayload }));
 
     const isShippingStatus = ['shipped', 'arrived', 'delivered'].includes(newStatus);
     if (isShippingStatus) {
@@ -261,6 +335,61 @@ export default function OrderDetailPage() {
       setOrder(prev => ({ ...prev, items: newItems }));
       setEditingItemIndex(null);
       toast.success('Собівартість товару оновлено');
+    }
+    setUpdating(false);
+  }
+
+  async function handleDeleteItem(index) {
+    setUpdating(true);
+    const newItems = order.items.filter((_, i) => i !== index);
+    const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems, total: newTotal })
+      .eq('id', id);
+    if (error) {
+      toast.error('Помилка при видаленні товару');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems, total: newTotal }));
+      toast.success('Товар видалено з замовлення');
+    }
+    setUpdating(false);
+  }
+
+  async function handleSaveQty(index) {
+    const qty = Math.max(1, parseInt(editQty) || 1);
+    setUpdating(true);
+    const newItems = [...order.items];
+    newItems[index] = { ...newItems[index], qty, quantity: qty };
+    const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems, total: newTotal })
+      .eq('id', id);
+    if (error) {
+      toast.error('Помилка при збереженні кількості');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems, total: newTotal }));
+      setEditingQtyIndex(null);
+      toast.success('Кількість оновлено');
+    }
+    setUpdating(false);
+  }
+
+  async function handleAddProduct(newItem) {
+    setUpdating(true);
+    const newItems = [...(order.items || []), newItem];
+    const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems, total: newTotal })
+      .eq('id', id);
+    if (error) {
+      toast.error('Помилка при додаванні товару');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems, total: newTotal }));
+      setShowAddProduct(false);
+      toast.success('Товар додано до замовлення');
     }
     setUpdating(false);
   }
@@ -403,7 +532,39 @@ export default function OrderDetailPage() {
                   <div className="text-right flex-shrink-0">
                     <p className="text-[12px] md:text-[13px] font-bold text-stone-900 tabular-nums">{formatMoney(item.price * (item.qty || item.quantity || 1))} ₴</p>
                     <div className="flex flex-col items-end gap-1 mt-1">
-                      <p className="text-[11px] text-stone-500 font-medium">× {item.qty || item.quantity || 1}</p>
+                      {order.status === 'new' ? (
+                        editingQtyIndex === i ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-[11px] text-stone-400">×</span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={editQty}
+                              onChange={(e) => setEditQty(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveQty(i)}
+                              className="w-12 text-center px-1 py-0.5 bg-white border border-stone-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => handleSaveQty(i)}
+                              disabled={updating}
+                              className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all shrink-0"
+                            >
+                              <Check size={8} strokeWidth={3} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div
+                            className="text-[11px] text-stone-500 font-medium cursor-pointer hover:text-emerald-600 transition-colors"
+                            onClick={() => { setEditingQtyIndex(i); setEditingItemIndex(null); setEditQty(String(item.qty || item.quantity || 1)); }}
+                            title="Натисніть, щоб змінити кількість"
+                          >
+                            × {item.qty || item.quantity || 1}
+                          </div>
+                        )
+                      ) : (
+                        <p className="text-[11px] text-stone-500 font-medium">× {item.qty || item.quantity || 1}</p>
+                      )}
                       {editingItemIndex === i ? (
                         <div className="flex items-center gap-1 mt-1">
                           <input
@@ -429,6 +590,7 @@ export default function OrderDetailPage() {
                           className="bg-stone-100 text-stone-600 font-normal px-1.5 py-0.5 rounded text-[10px] md:text-[11px] inline-block cursor-pointer hover:bg-stone-200 hover:text-stone-800 transition-colors border border-transparent hover:border-stone-300"
                           onClick={() => {
                             setEditingItemIndex(i);
+                            setEditingQtyIndex(null);
                             setEditItemCost(String(calculateItemCost(item)));
                           }}
                           title="Натисніть, щоб змінити собівартість для цього замовлення"
@@ -438,10 +600,32 @@ export default function OrderDetailPage() {
                       )}
                     </div>
                   </div>
+                  {order.status === 'new' && (
+                    <button
+                      onClick={() => handleDeleteItem(i)}
+                      disabled={updating}
+                      className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
+                      title="Видалити товар із замовлення"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               );
               })}
             </div>
+            {order.status === 'new' && (
+              <div className="px-5 py-4 border-t border-stone-100">
+                <button
+                  onClick={() => setShowAddProduct(true)}
+                  disabled={updating}
+                  className="w-full flex items-center justify-center gap-2 text-[13px] font-bold text-stone-700 hover:text-stone-900 bg-stone-50 hover:bg-stone-100 border-2 border-dashed border-stone-200 hover:border-stone-300 px-4 py-3.5 rounded-xl transition-all"
+                >
+                  <Plus size={16} />
+                  Додати товар
+                </button>
+              </div>
+            )}
             
             {/* Фінансова статистика замовлення */}
             <div className="px-5 py-5 border-t border-stone-100 bg-stone-50/40 space-y-4">
@@ -529,7 +713,7 @@ export default function OrderDetailPage() {
             <h2 className="text-sm font-semibold text-stone-800 mb-4">Статус</h2>
             <select
               value={order.status}
-              onChange={(e) => handleStatusChange(e.target.value)}
+              onChange={(e) => promptStatusChange(e.target.value)}
               disabled={updating}
               style={{ color: status.color, backgroundColor: status.bg }}
               className="w-full text-sm font-semibold px-4 py-2.5 rounded-lg border-0 cursor-pointer outline-none focus:ring-2 focus:ring-stone-300 transition-all mb-4"
@@ -691,6 +875,19 @@ export default function OrderDetailPage() {
         </div>
       </div>
       
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          onConfirm={() => handleStatusChange(confirmModal.newStatus)}
+          onClose={() => setConfirmModal(null)}
+        />
+      )}
+      {showAddProduct && (
+        <AddProductModal
+          onAdd={handleAddProduct}
+          onClose={() => setShowAddProduct(false)}
+        />
+      )}
       {/* Модальне вікно для збільшеного фото */}
       {zoomedImage && (
         <ImageZoom 
