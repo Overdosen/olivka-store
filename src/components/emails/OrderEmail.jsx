@@ -105,7 +105,7 @@ export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink 
   // Генерація рядків товарів
   const itemsHtml = items.map(item => {
     const rawUrl = item.image_url || `${baseUrl}/placeholder-product.png`;
-    const optimizedUrl = getOptimizedUrl(rawUrl, { width: 140, quality: 80 });
+    const optimizedUrl = getOptimizedUrl(rawUrl, 140, 80);
     return `
     <tr>
       <td style="padding: 15px 0; border-bottom: 1px solid #f0f0f0; width: 80px;">
