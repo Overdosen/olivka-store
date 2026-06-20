@@ -144,16 +144,80 @@ export default function HomeClient({ blogPosts = [] }) {
         backgroundColor: '#fdfbf7'
       }}>
 
-        <div className="mobile-only">
-          <img
-            src="/images/bannermobile.png"
-            alt="Store Olivka Mobile Banner"
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block'
-            }}
+        {/* Mobile animated banner */}
+        <div className="mobile-only mobile-banner-wrap">
+          {/* Background */}
+          <Image
+            src="/images/emptybanner.png"
+            alt="Mobile Banner Background"
+            fill
+            priority
+            style={{ objectFit: 'cover', objectPosition: 'center top' }}
           />
+
+          {/* Clouds — 3 regular + 1 big, timed for 3 simultaneously on screen */}
+
+          {/* Big cloud — larger than the rest */}
+          <div className="cloud-layer cloud-4 mobile-cloud" style={{ top: '6%', width: '44%', opacity: 0.6 }}>
+            <Image src="/images/oblako.png" alt="Cloud" width={300} height={150} style={{ width: '100%', height: 'auto' }} />
+          </div>
+
+          {/* Regular cloud 1 */}
+          <div className="cloud-layer cloud-1 mobile-cloud" style={{ top: '10%', width: '28%', opacity: 0.65 }}>
+            <Image src="/images/oblako.png" alt="Cloud" width={200} height={100} style={{ width: '100%', height: 'auto' }} />
+          </div>
+
+          {/* Regular cloud 2 */}
+          <div className="cloud-layer cloud-2 mobile-cloud" style={{ top: '45%', width: '24%', opacity: 0.5 }}>
+            <Image src="/images/oblako.png" alt="Cloud" width={200} height={100} style={{ width: '100%', height: 'auto' }} />
+          </div>
+
+          {/* Regular cloud 3 */}
+          <div className="cloud-layer cloud-3 mobile-cloud" style={{ top: '65%', width: '22%', opacity: 0.4 }}>
+            <Image src="/images/oblako.png" alt="Cloud" width={200} height={100} style={{ width: '100%', height: 'auto' }} />
+          </div>
+
+
+          {/* Stork — right, vertically close to girl */}
+          <div className="stork-float" style={{
+            position: 'absolute',
+            right: '3%',
+            top: '5%',
+            width: '50%',
+            aspectRatio: '3 / 2',
+            zIndex: 5,
+            pointerEvents: 'none'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.0, delay: 0.2 }}
+              style={{ width: '100%', height: '100%', position: 'relative' }}
+            >
+              <Image src="/images/leleka.png" alt="Stork" fill priority style={{ objectFit: 'contain', objectPosition: 'right top' }} />
+            </motion.div>
+          </div>
+
+          {/* Girl — center bottom, 30% smaller */}
+          <div style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: '-2%',
+            width: '38%',
+            aspectRatio: '1 / 1.1',
+            zIndex: 6,
+            pointerEvents: 'none'
+          }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.0, delay: 0.3 }}
+              style={{ width: '100%', height: '100%', position: 'relative' }}
+            >
+              <Image src="/images/girl.png" alt="Girl" fill priority style={{ objectFit: 'contain', objectPosition: 'center bottom' }} />
+            </motion.div>
+          </div>
         </div>
 
         <div className="desktop-only" style={{ position: 'relative', width: '100%', minHeight: '350px' }}>

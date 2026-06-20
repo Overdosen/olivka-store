@@ -12,8 +12,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    // При помилці refresh token — автоматично виходимо
-    onAuthStateChange: undefined,
   },
   global: {
     // Перехоплюємо мережеві помилки refresh-запитів
@@ -27,6 +25,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
 });
+
+// Тихий обробник: при невалідному refresh token Supabase автоматично
+// викликає signOut() → спрацьовує SIGNED_OUT. Ми очищаємо залишки
+// сесії з localStorage, щоб помилка не повторювалась при перезавантаженні.
+if (typeof window !== 'undefined') {
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') {
+      // Видаляємо протухлі токени з localStorage
+      const keys = Object.keys(localStorage).filter(
+        (k) => k.startsWith('sb-') && k.includes('-auth-token')
+      );
+      keys.forEach((k) => localStorage.removeItem(k));
+    }
+  });
+}
 
 // Клієнт для серверних операцій (обхід RLS)
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

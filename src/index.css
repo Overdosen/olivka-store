@@ -401,6 +401,40 @@ button {
   }
 }
 
+/* =========================================
+   Mobile Animated Banner
+   ========================================= */
+.mobile-banner-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background-color: #fdfbf7;
+}
+
+/* Override cloud-layer inside mobile banner to use % sizing, not px */
+.mobile-banner-wrap .cloud-layer {
+  height: auto;
+}
+
+/* Mobile cloud timing — 4 clouds, 5s apart in a 20s cycle = always 3 visible */
+@media (max-width: 639px) {
+  @keyframes cloudLoop {
+    0%   { transform: translateX(-140px); }
+    100% { transform: translateX(110vw); }
+  }
+
+  .mobile-cloud {
+    animation-duration: 40s !important;
+  }
+
+  .mobile-cloud.cloud-1 { animation-delay:  0s !important; }
+  .mobile-cloud.cloud-2 { animation-delay: -10s !important; }
+  .mobile-cloud.cloud-3 { animation-delay: -20s !important; }
+  .mobile-cloud.cloud-4 { animation-delay: -30s !important; }
+}
+
+
 /* Products GRID */
 .section {
   padding: 5rem 0;
