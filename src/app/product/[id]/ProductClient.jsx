@@ -10,6 +10,8 @@ import Link from 'next/link';
 import AddToCartButton from '../../../components/AddToCartButton';
 import InfoModal from '../../../components/InfoModal';
 import sizeIcon from '../../../assets/icons/size.png';
+import { useVacation } from '../../../context/VacationContext';
+import { AlertTriangle } from 'lucide-react';
 
 export default function ProductClient({ product }) {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -18,6 +20,7 @@ export default function ProductClient({ product }) {
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const sliderRef = useRef(null);
   const { addToCart, cartItems } = useCart();
+  const { vacationMode } = useVacation();
 
   const mainImgRef = useRef(null);
 
@@ -239,6 +242,22 @@ export default function ProductClient({ product }) {
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {vacationMode?.enabled && vacationMode?.productText && (
+          <div 
+            className="flex items-start gap-2.5 p-3.5 rounded-xl mb-4"
+            style={{ 
+              backgroundColor: '#fffbeb', 
+              border: '1px solid #fde68a',
+              color: '#92400e'
+            }}
+          >
+            <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+            <p className="text-sm font-medium leading-snug m-0">
+              {vacationMode.productText}
+            </p>
           </div>
         )}
 

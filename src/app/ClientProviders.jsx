@@ -10,6 +10,8 @@ import CartDrawer from '../components/CartDrawer';
 import ScrollToTop from '../components/ScrollToTop';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
+import { VacationProvider } from '../context/VacationContext';
+import VacationBanner from '../components/VacationBanner';
 
 export default function ClientProviders({ children }) {
   const pathname = usePathname();
@@ -37,15 +39,18 @@ export default function ClientProviders({ children }) {
         {isAdmin ? (
           children
         ) : (
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <CartDrawer />
-            <ScrollToTop />
-            <main className="flex-grow" style={{ position: 'relative' }}>
+          <VacationProvider>
+            <div className="min-h-screen flex flex-col">
+              <VacationBanner />
+              <Header />
+              <CartDrawer />
+              <ScrollToTop />
+              <main className="flex-grow" style={{ position: 'relative' }}>
               {children}
             </main>
             <Footer />
           </div>
+        </VacationProvider>
         )}
       </CartProvider>
     </AuthProvider>

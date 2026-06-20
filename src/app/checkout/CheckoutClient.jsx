@@ -15,6 +15,8 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import InfoModal from '../../components/InfoModal';
 import { formatUaMasked, isPhoneFull } from '../../lib/utils';
+import { useVacation } from '../../context/VacationContext';
+import { AlertTriangle } from 'lucide-react';
 
 const DELIVERY_OPTIONS = [
   { 
@@ -62,6 +64,8 @@ export default function CheckoutClient() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const phoneRef = useRef(null);
+  const { vacationMode } = useVacation();
+  const [vacationAccepted, setVacationAccepted] = useState(false);
 
   // Форма
   const [fullName, setFullName]     = useState('');
@@ -182,6 +186,10 @@ export default function CheckoutClient() {
     
     if (!address.trim() && delivery !== 'pickup') { toast.error("Введіть адресу доставки"); return; }
     if (cartItems.length === 0) { toast.error("Кошик порожній"); return; }
+    if (vacationMode?.enabled && !vacationAccepted) {
+      toast.error("Будь ласка, підтвердіть згоду з умовами відправки");
+      return;
+    }
 
     setSubmitting(true);
     const loadingToast = toast.loading("Оформлюємо замовлення...");
@@ -891,6 +899,23 @@ export default function CheckoutClient() {
 
                 {/* 6. Кнопка "Підтвердити замовлення" (мобілка) */}
                 <div className="mobile-submit-container" style={{ margin: '1rem 0' }}>
+                  {vacationMode?.enabled && (
+                    <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl" style={{ margin: '0 0.5rem 1rem' }}>
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <input
+                            type="checkbox"
+                            checked={vacationAccepted}
+                            onChange={(e) => setVacationAccepted(e.target.checked)}
+                            className="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 accent-amber-600"
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-amber-900 leading-snug">
+                          {vacationMode.checkoutText}
+                        </span>
+                      </label>
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <button
                       type="submit"
@@ -1025,6 +1050,24 @@ export default function CheckoutClient() {
                           <span>До сплати</span>
                           <span>{total} грн</span>
                         </div>
+
+                        {vacationMode?.enabled && (
+                          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                            <label className="flex items-start gap-3 cursor-pointer">
+                              <div className="flex-shrink-0 mt-0.5">
+                                <input
+                                  type="checkbox"
+                                  checked={vacationAccepted}
+                                  onChange={(e) => setVacationAccepted(e.target.checked)}
+                                  className="w-5 h-5 rounded border-amber-300 text-amber-600 focus:ring-amber-500 accent-amber-600"
+                                />
+                              </div>
+                              <span className="text-sm font-medium text-amber-900 leading-snug">
+                                {vacationMode.checkoutText}
+                              </span>
+                            </label>
+                          </div>
+                        )}
 
                         <button
                           type="submit"

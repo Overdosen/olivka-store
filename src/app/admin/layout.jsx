@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import {
   LayoutDashboard, ShoppingBag, Users, Package, FolderOpen,
-  LogOut, Menu, X, ChevronRight, Plus, DollarSign, MessageSquare
+  LogOut, Menu, X, ChevronRight, Plus, DollarSign, MessageSquare, Settings
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import ProtectedRoute from './ProtectedRoute';
@@ -375,6 +375,13 @@ export default function AdminLayout({ children }) {
             {/* Right */}
             <div className="flex items-center gap-2">
               <CommandPalette />
+              <Link
+                href="/admin/settings"
+                className="relative p-2 text-stone-500 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-all flex items-center justify-center"
+                title="Налаштування"
+              >
+                <Settings className="w-5 h-5" />
+              </Link>
               <NotificationBell />
             </div>
           </header>
