@@ -1,9 +1,8 @@
 import { getPostBySlug, getAllPosts } from '../../../lib/blog';
 import { MDXRemote } from 'next-mdx-remote/rsc';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Clock, ArrowLeft, Tag } from 'lucide-react';
+import { Clock, ArrowLeft, Tag, FileText, ShoppingBag, Baby, Sparkles, Heart, ShieldCheck, Car } from 'lucide-react';
 
 export async function generateStaticParams() {
   const posts = getAllPosts();
@@ -28,17 +27,43 @@ export async function generateMetadata({ params }) {
   };
 }
 
+const SECTION_ICONS = {
+  doc: FileText,
+  mom: ShoppingBag,
+  baby: Baby,
+  discharge: Heart,
+  comfort: Sparkles,
+  shield: ShieldCheck,
+  car: Car,
+  sparkles: Sparkles,
+  heart: Heart,
+};
+
+function SectionHeadingComponent({ icon, children }) {
+  const IconComp = SECTION_ICONS[icon] || Heart;
+  const iconSize = icon === 'baby' ? 48 : 28;
+  return (
+    <h2 className="article-h2" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <IconComp size={iconSize} color="#7a8c5c" />
+      {children}
+    </h2>
+  );
+}
+
 const mdxComponents = {
   h2: (props) => <h2 className="article-h2" {...props} />,
   h3: (props) => <h3 className="article-h3" {...props} />,
+  h4: (props) => <h4 className="article-h4" {...props} />,
   p: (props) => <p className="article-p" {...props} />,
   ul: (props) => <ul className="article-ul" {...props} />,
+  ol: (props) => <ol className="article-ol" {...props} />,
   li: (props) => <li className="article-li" {...props} />,
   strong: (props) => <strong className="article-strong" {...props} />,
   blockquote: (props) => <blockquote className="article-blockquote" {...props} />,
   table: (props) => <div className="article-table-wrap"><table className="article-table" {...props} /></div>,
   th: (props) => <th className="article-th" {...props} />,
   td: (props) => <td className="article-td" {...props} />,
+  SectionHeading: SectionHeadingComponent,
 };
 
 export default async function BlogPostPage({ params }) {
@@ -98,20 +123,21 @@ export default async function BlogPostPage({ params }) {
             </div>
 
             <h1 className="article-title">{post.title}</h1>
-            <p className="article-desc">{post.description}</p>
+            {post.description && (
+              <p className="article-desc">{post.description}</p>
+            )}
           </header>
 
           {/* Cover image */}
-          <div className="article-cover">
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              fill
-              priority
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
-              sizes="(max-width: 768px) 100vw, 800px"
-            />
-          </div>
+          {post.coverImage && (
+            <div className="article-cover" style={{ backgroundColor: '#fafaf8' }}>
+              <img
+                src={post.coverImage}
+                alt={post.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+              />
+            </div>
+          )}
 
           {/* Content */}
           <article className="article-content">
@@ -124,7 +150,7 @@ export default async function BlogPostPage({ params }) {
               <h2 className="article-related-title">Дивіться також у каталозі</h2>
               <div className="article-related-links">
                 {post.relatedCategories.map((cat) => (
-                  <Link key={cat.slug} href={`/category/${cat.slug}`} className="article-related-btn">
+                  <Link key={cat.slug} href={cat.href || `/category/${cat.slug}`} className="article-related-btn">
                     {cat.label || cat.name}
                   </Link>
                 ))}

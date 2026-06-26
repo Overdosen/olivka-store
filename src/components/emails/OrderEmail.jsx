@@ -80,15 +80,15 @@ export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink 
             ПІСЛЯПЛАТА
           </span>
         </div>
-        <p style="margin: 0 0 16px; color: #666; font-size: 14px; text-align: center;">Для підтвердження замовлення внесіть аванс 150 грн:</p>
+        <p style="margin: 0 0 16px; color: #666; font-size: 14px; text-align: center;">Для підтвердження замовлення внесіть аванс 200 грн:</p>
         <div style="background: white; padding: 15px; border-radius: 8px; border: 1px dashed ${secondaryColor};">
           <table style="width: 100%; font-size: 13px; color: ${textColor}; border-collapse: collapse;">
             <tr><td style="padding: 5px 0; color: #888; width: 100px;">Отримувач:</td><td style="padding: 5px 0; text-align: right; font-weight: 600;">ФОП Сопіна Вікторія Іванівна</td></tr>
             <tr><td style="padding: 5px 0; color: #888;">ЄДРПОУ:</td><td style="padding: 5px 0; text-align: right; font-weight: 600;">3522303066</td></tr>
             <tr><td style="padding: 5px 0; color: #888;">Банк:</td><td style="padding: 5px 0; text-align: right; font-weight: 600;">АТ КБ "ПРИВАТБАНК"</td></tr>
             <tr><td style="padding: 5px 0; color: #888;">IBAN для авансу:</td><td style="padding: 5px 0; text-align: right; font-weight: 600; font-family: monospace;">UA203052990000026002043900812</td></tr>
-            <tr><td style="padding: 8px 0; color: #888; border-top: 1px solid #f0f0f0;">Сума авансу:</td><td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${brandColor}; font-size: 15px;">150 грн</td></tr>
-            <tr><td style="padding: 8px 0; color: #888; border-top: 1px solid #f0f0f0;">Залишок при отриманні:</td><td style="padding: 8px 0; text-align: right; font-weight: 600; border-top: 1px solid #f0f0f0;">${total - 150} грн</td></tr>
+            <tr><td style="padding: 8px 0; color: #888; border-top: 1px solid #f0f0f0;">Сума авансу:</td><td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${brandColor}; font-size: 15px;">200 грн</td></tr>
+            <tr><td style="padding: 8px 0; color: #888; border-top: 1px solid #f0f0f0;">Залишок при отриманні:</td><td style="padding: 8px 0; text-align: right; font-weight: 600; border-top: 1px solid #f0f0f0;">${total - 200} грн</td></tr>
           </table>
         </div>
         <div style="margin: 15px 0 0; padding: 12px; background-color: #f9f7f0; border-radius: 8px; text-align: center;">

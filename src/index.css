@@ -1844,6 +1844,10 @@ html:has(body.no-scroll) {
   color: #524f25;
 }
 
+.article-h2--center {
+  text-align: center;
+}
+
 .article-h3 {
   font-size: 1.35rem;
   font-weight: 600;
@@ -1858,11 +1862,13 @@ html:has(body.no-scroll) {
 .article-ul {
   margin-bottom: 2rem;
   padding-left: 1.5rem;
+  list-style-type: disc;
 }
 
 .article-li {
   margin-bottom: 0.75rem;
   position: relative;
+  display: list-item;
 }
 
 .article-li::marker {
@@ -1874,9 +1880,67 @@ html:has(body.no-scroll) {
   padding: 1.5rem 2rem;
   background: #f7f9f6;
   border-radius: 0 1rem 1rem 0;
-  
   margin: 2.5rem 0;
 }
+
+.article-h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 2rem 0 0.75rem;
+  color: #524f25;
+}
+
+.article-ol {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+  counter-reset: none;
+}
+
+.article-ol .article-li {
+  margin-bottom: 0.75rem;
+}
+
+.article-ol .article-li::marker {
+  color: #7a8c5c;
+  font-weight: 600;
+}
+
+/* Section card — стиль як checkout карточки */
+.article-section-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(82, 79, 37, 0.08);
+  box-shadow: 0 4px 20px rgba(82, 79, 37, 0.05);
+  margin: 2.5rem 0;
+  overflow: hidden;
+}
+
+.article-section-card__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.1rem 1.75rem;
+  border-bottom: 1px solid rgba(82, 79, 37, 0.07);
+  color: #524f25;
+  background: #fafaf8;
+}
+
+.article-section-card__header span {
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.article-section-card__body {
+  padding: 1.5rem 1.75rem;
+}
+
+.article-section-card__body .article-p:last-child,
+.article-section-card__body .article-ul:last-child {
+  margin-bottom: 0;
+}
+
 
 .article-table-wrap {
   overflow-x: auto;

@@ -44,7 +44,7 @@ const PAYMENT_OPTIONS = [
   },
   { 
     id: 'cash_on_delivery', 
-    label: 'Післяплата з авансом 150 грн', 
+    label: 'Післяплата з авансом 200 грн', 
     icon: <Wallet size={24} style={{ color: '#c4a882' }} />, 
     desc: '' 
   },
@@ -527,9 +527,9 @@ export default function CheckoutClient() {
                         marginBottom: '0.5rem', 
                         fontSize: '0.85rem', 
                         fontWeight: 500, 
-                        color: total >= 2500 ? '#2e7d32' : '#c4a882'
+                        color: total >= 3000 ? '#2e7d32' : '#c4a882'
                       }}>
-                        {total >= 2500 ? 'Доставка безкоштовна' : 'Безкоштовна доставка на суму від 2500 грн'}
+                        {total >= 3000 ? 'Доставка безкоштовна' : 'Безкоштовна доставка на суму від 3000 грн'}
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 600, color: '#524f25' }}>
@@ -1041,9 +1041,9 @@ export default function CheckoutClient() {
                           marginBottom: '0.5rem', 
                           fontSize: '0.85rem', 
                           fontWeight: 500, 
-                          color: total >= 2500 ? '#2e7d32' : '#c4a882'
+                          color: total >= 3000 ? '#2e7d32' : '#c4a882'
                         }}>
-                          {total >= 2500 ? 'Доставка безкоштовна' : 'Безкоштовна доставка на суму від 2500 грн'}
+                          {total >= 3000 ? 'Доставка безкоштовна' : 'Безкоштовна доставка на суму від 3000 грн'}
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.1rem', fontWeight: 600, color: '#524f25', marginBottom: '1.5rem' }}>

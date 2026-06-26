@@ -353,7 +353,7 @@ export default function CartDrawer() {
                 </div>
 
                 {/* Banner Counter */}
-                {total > 0 && total < 2500 && (
+                {total > 0 && total < 3000 && (
                   <div style={{
                     marginBottom: '1.5rem',
                     padding: '0.75rem 1rem',
@@ -365,11 +365,11 @@ export default function CartDrawer() {
                     border: '1px dashed rgba(196, 168, 130, 0.3)'
                   }}>
                     <span style={{ fontSize: '0.8rem', color: '#524f25', fontWeight: 500, lineHeight: 1.4 }}>
-                      Додайте ще на <span style={{ color: '#c4a882', fontWeight: 700 }}>{2500 - total} грн</span> для безкоштовної доставки
+                      Додайте ще на <span style={{ color: '#c4a882', fontWeight: 700 }}>{3000 - total} грн</span> для безкоштовної доставки
                     </span>
                   </div>
                 )}
-                {total >= 2500 && (
+                {total >= 3000 && (
                   <div style={{
                     marginBottom: '1.5rem',
                     padding: '0.75rem 1rem',
