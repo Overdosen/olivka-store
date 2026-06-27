@@ -40,7 +40,7 @@ export default function HomePage() {
   };
 
   // Завантажуємо пости на сервері (статично, без API запитів)
-  const blogPosts = getAllPosts().slice(0, 3);
+  const blogPosts = getAllPosts().slice(0, 4);
 
   return (
     <>

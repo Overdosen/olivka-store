@@ -32,7 +32,7 @@ export default function BlogPage() {
         </div>
       </section>
 
-      <section className="section container">
+      <section className="container" style={{ paddingBottom: '5rem' }}>
         <div className="blog-grid">
           {posts.map((post) => (
             <BlogCard key={post.slug} post={post} />

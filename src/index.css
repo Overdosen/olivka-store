@@ -1574,9 +1574,27 @@ html:has(body.no-scroll) {
 /* Blog Grid */
 .blog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 2.5rem;
   margin-top: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .blog-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .blog-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .blog-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Blog Card (Reusable) */
@@ -1722,8 +1740,8 @@ html:has(body.no-scroll) {
 
 .blog-preview-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem; /* Зменшив відступ, щоб 4 картки виглядали гармонійно */
 }
 
 @media (max-width: 1024px) {
