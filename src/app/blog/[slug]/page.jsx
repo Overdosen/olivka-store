@@ -50,6 +50,19 @@ function SectionHeadingComponent({ icon, children }) {
   );
 }
 
+function CenterHeading({ children }) {
+  return <h2 className="article-h2" style={{ textAlign: 'center', margin: '3rem 0 2rem', color: '#524f25' }}>{children}</h2>;
+}
+
+function BlogCard({ bgColor, borderColor, titleColor, title, children }) {
+  return (
+    <div style={{ backgroundColor: bgColor, padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', border: `1px solid ${borderColor}` }}>
+      <h3 className="article-h3" style={{ marginTop: 0, color: titleColor, fontSize: '1.3rem', marginBottom: '0.5rem', fontWeight: 600 }}>{title}</h3>
+      <div style={{ margin: 0, color: '#4a4a4a', lineHeight: '1.6' }}>{children}</div>
+    </div>
+  );
+}
+
 const mdxComponents = {
   h2: (props) => <h2 className="article-h2" {...props} />,
   h3: (props) => <h3 className="article-h3" {...props} />,
@@ -64,6 +77,8 @@ const mdxComponents = {
   th: (props) => <th className="article-th" {...props} />,
   td: (props) => <td className="article-td" {...props} />,
   SectionHeading: SectionHeadingComponent,
+  CenterHeading,
+  BlogCard,
 };
 
 export default async function BlogPostPage({ params }) {
