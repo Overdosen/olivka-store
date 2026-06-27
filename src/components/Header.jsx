@@ -85,8 +85,8 @@ export default function Header() {
     <>
       <header className={`header ${isMobileMenuOpen ? 'menu-open' : ''}`} style={{ touchAction: isMobileMenuOpen ? 'none' : 'auto' }}>
         <div className="header-inner md-grid-header" style={{ maxWidth: '1600px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button className="btn btn-icon d-md-none" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
+            <button className="btn btn-icon d-md-none" style={{ padding: '0 8px' }} onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
 
@@ -123,12 +123,12 @@ export default function Header() {
             </Link>
           </nav>
 
-          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.2rem', paddingRight: '0.5rem', justifySelf: 'end' }}>
+          <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', paddingRight: '0', justifySelf: 'end' }}>
             <button
               className="btn btn-icon"
               onClick={handleUserClick}
               title={user ? 'Особистий кабінет' : 'Увійти / Зареєструватись'}
-              style={{ position: 'relative' }}
+              style={{ position: 'relative', padding: '0 4px' }}
             >
               {user ? (
                 <span style={{
@@ -145,8 +145,8 @@ export default function Header() {
               )}
             </button>
 
-            <button className="btn btn-icon relative" style={{ position: 'relative' }} onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}>
-              <ShoppingBag size={24} color="var(--color-stone-600)" />
+            <button className="btn btn-icon relative" style={{ position: 'relative', padding: '0 4px' }} onClick={() => { setIsMobileMenuOpen(false); setIsCartOpen(true); }}>
+              <ShoppingBag size={28} color="var(--color-stone-600)" />
               <AnimatePresence>
                 {cartCount > 0 && (
                   <motion.span
@@ -160,8 +160,8 @@ export default function Header() {
                     }}
                     style={{
                       position: 'absolute',
-                      top: '-2px',
-                      right: '6px',
+                      top: '-4px',
+                      right: '-2px',
                       backgroundColor: 'var(--color-olive-600)',
                       color: 'white',
                       fontSize: '10px',
