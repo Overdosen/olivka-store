@@ -2041,6 +2041,23 @@ html:has(body.no-scroll) {
   box-shadow: 0 8px 20px rgba(82, 79, 37, 0.2);
 }
 
+@media (max-width: 640px) {
+  .article-related {
+    padding: 2rem 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .article-related-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .article-related-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 .article-back {
   margin-top: 4rem;
   display: flex;

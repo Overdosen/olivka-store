@@ -204,7 +204,7 @@ export default async function ProductPage({ params }) {
     { label: data.name }
   ];
 
-  // Fetch related products from the same category (exclude current)
+  // Fetch related products from the same category (exclude current, only in stock)
   let relatedProducts = [];
   if (data.category_id) {
     const { data: related } = await supabase
@@ -213,8 +213,16 @@ export default async function ProductPage({ params }) {
       .eq('category_id', data.category_id)
       .eq('is_published', true)
       .neq('id', id)
+      .or('stock.gt.0,sizes.cs.[{"quantity":1}]')
       .limit(8);
-    relatedProducts = related || [];
+
+    // Додаткова клієнтська фільтрація для коректної перевірки sizes
+    relatedProducts = (related || []).filter(p => {
+      if (p.sizes && p.sizes.length > 0) {
+        return p.sizes.some(s => s.quantity > 0);
+      }
+      return p.stock > 0;
+    });
   }
 
   return (
