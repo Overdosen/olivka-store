@@ -70,7 +70,7 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
   return (
     <div className="flex flex-col" style={{ gap: '14px', paddingTop: '8px' }}>
       {/* Gender Filter */}
-      {categoryName !== 'Текстиль (пелюшки, пледи)' && (
+      {categoryName !== 'Текстиль (пелюшки, пледи)' && categoryName !== 'Аксесуари' && (
         <FilterDropdown
           label=" Стать "
           options={genderOptions}
@@ -82,7 +82,7 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Size Filter */}
-      <FilterDropdown
+      {categoryName !== 'Аксесуари' && <FilterDropdown
         label=" Розмір  "
         options={categoryName === 'Текстиль (пелюшки, пледи)'
           ? ['100*80 см', '100*75 см', '75*50 см']
@@ -91,10 +91,10 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
         selected={filters.sizes}
         onSelect={(val) => setFilters(prev => ({ ...prev, sizes: val }))}
         className="rounded-sm"
-      />
+      />}
 
       {/* Age Filter */}
-      {categoryName !== 'Текстиль (пелюшки, пледи)' && (
+      {categoryName !== 'Текстиль (пелюшки, пледи)' && categoryName !== 'Аксесуари' && (
         <FilterDropdown
           label=" Вік   "
           options={options.ages}
@@ -105,7 +105,7 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Material Filter */}
-      <FilterDropdown
+      {categoryName !== 'Аксесуари' && <FilterDropdown
         label=" Матеріал  "
         options={categoryName === 'Текстиль (пелюшки, пледи)'
           ? ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча']
@@ -114,10 +114,10 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
         selected={filters.materials}
         onSelect={(val) => setFilters(prev => ({ ...prev, materials: val }))}
         className="rounded-sm"
-      />
+      />}
 
       {/* Colors Filter */}
-      {availableColors.length > 0 && (
+      {availableColors.length > 0 && categoryName !== 'Аксесуари' && (
         <FilterDropdown
           label=" Кольори  "
           options={availableColors}
@@ -146,14 +146,15 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Features Filter */}
-      {['Комплекти', 'Боді', 'Пісочники, ромпери', 'Чепчики, шапочки', 'Костюми, сукні'].includes(categoryName) && (
+      {['Комплекти', 'Боді', 'Пісочники, ромпери', 'Чепчики, шапочки', 'Костюми, сукні', 'Аксесуари'].includes(categoryName) && (
         <FilterDropdown
-          label=" Особливості моделі  "
+          label={categoryName === 'Аксесуари' ? " Тип аксесуару  " : " Особливості моделі  "}
           options={(() => {
             if (categoryName === 'Боді') return options.features.filter(f => f.includes('рукав'));
             if (categoryName === 'Пісочники, ромпери') return options.features.filter(f => ['Пісочник', 'Ромпер'].includes(f));
             if (categoryName === 'Чепчики, шапочки') return options.features.filter(f => ['Шапочка-вузлик', 'Чепчик'].includes(f));
             if (categoryName === 'Костюми, сукні') return options.features.filter(f => ['Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'].includes(f));
+            if (categoryName === 'Аксесуари') return options.features.filter(f => ['Пустушки', 'Прорізувачі', 'Контейнери', 'Ланцюжки для пустушок'].includes(f));
             return options.features.filter(f => ['З боді', 'З сорочкою', 'З шапочкою', 'Без шапочки'].includes(f));
           })()}
           selected={filters.features}

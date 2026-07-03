@@ -506,7 +506,7 @@ export default function CheckoutClient() {
                             {item.name}
                           </p>
                           <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: 'rgba(82,79,37,0.5)' }}>
-                            {item.size && `Розмір: ${item.size} · `}{item.quantity} шт.
+                            {item.size && `${item.variant_type === 'color' ? 'Колір' : 'Розмір'}: ${item.size} · `}{item.quantity} шт.
                           </p>
                           {item.sku && (
                             <p style={{ margin: '0.1rem 0 0', fontSize: '0.65rem', color: 'rgba(82,79,37,0.4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

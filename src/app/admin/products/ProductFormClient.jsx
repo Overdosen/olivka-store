@@ -106,6 +106,7 @@ export default function ProductFormClient({ id }) {
     image_url: '',
     stock: 0,
     sizes: [],
+    variant_type: 'size',
     meta_keywords: '',
     meta_description: '',
     measurements: '',
@@ -136,6 +137,7 @@ export default function ProductFormClient({ id }) {
           image_url: '',
           stock: 0,
           sizes: [],
+          variant_type: 'size',
           meta_keywords: '',
           meta_description: '',
           measurements: '',
@@ -249,6 +251,7 @@ export default function ProductFormClient({ id }) {
         image_url: data.image_url || '',
         stock: data.stock || 0,
         sizes: data.sizes || [],
+        variant_type: data.variant_type || 'size',
         meta_keywords: data.meta_keywords || '',
         meta_description: data.meta_description || '',
         measurements: data.measurements || '',
@@ -712,14 +715,62 @@ export default function ProductFormClient({ id }) {
           </div>
         </Section>
 
-        {/* Sizes */}
-        <Section icon={Ruler} title="Розміри (опціонально)" theme="emerald">
+        {/* Sizes / Colors */}
+        <Section icon={Ruler} title="Варіанти (розміри або кольори)" theme="emerald">
           <div className="flex flex-col space-y-4">
-            <div className="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-3">
+
+            {/* Toggle: Size or Color */}
+            <div className="flex flex-col gap-2 pb-2 border-b border-stone-100">
+              <span className="text-xs uppercase font-bold tracking-widest text-[#524f25]">Тип варіантів</span>
+              <div className="inline-flex rounded-xl overflow-hidden border border-stone-200 w-fit bg-stone-50 p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() => { setFormData({ ...formData, variant_type: 'size', sizes: [] }); setSizeInput(''); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 20px', borderRadius: '8px',
+                    fontSize: '14px', fontWeight: 600, border: 'none',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    backgroundColor: formData.variant_type !== 'color' ? '#524f25' : 'transparent',
+                    color: formData.variant_type !== 'color' ? '#fff' : '#78716c',
+                    boxShadow: formData.variant_type !== 'color' ? '0 2px 8px rgba(82,79,37,0.3)' : 'none',
+                  }}
+                >
+                  📏 Розміри
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFormData({ ...formData, variant_type: 'color', sizes: [] }); setSizeInput(''); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 20px', borderRadius: '8px',
+                    fontSize: '14px', fontWeight: 600, border: 'none',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                    backgroundColor: formData.variant_type === 'color' ? '#524f25' : 'transparent',
+                    color: formData.variant_type === 'color' ? '#fff' : '#78716c',
+                    boxShadow: formData.variant_type === 'color' ? '0 2px 8px rgba(82,79,37,0.3)' : 'none',
+                  }}
+                >
+                  🎨 Кольори
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              {formData.variant_type === 'color' ? (
+                <input
+                  type="text"
+                  value={sizeInput}
+                  onChange={(e) => setSizeInput(e.target.value)}
+                  placeholder="Введіть колір"
+                  className="flex-1 min-w-[150px] sm:max-w-[200px] px-4 py-2.5 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddSize(e); }}
+                />
+              ) : (
               <select
                 value={sizeInput}
                 onChange={(e) => setSizeInput(e.target.value)}
-                className="flex-1 w-full sm:max-w-[200px] px-4 py-2.5 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800 appearance-none"
+                className="flex-1 min-w-[150px] sm:max-w-[200px] px-4 py-2.5 bg-white rounded-lg border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all font-medium text-stone-800 appearance-none"
               >
                 <option value="">Оберіть розмір...</option>
                 {SIZE_OPTIONS.map(opt => (
@@ -728,6 +779,7 @@ export default function ProductFormClient({ id }) {
                   </option>
                 ))}
               </select>
+              )}
               <div className="flex items-center space-x-2">
                 <span className="text-[10px] uppercase font-bold text-[#524f25] whitespace-nowrap">К-ть:</span>
                 <input
@@ -759,7 +811,7 @@ export default function ProductFormClient({ id }) {
               <button
                 type="button"
                 onClick={handleAddSize}
-                className="w-full sm:w-auto bg-stone-200 hover:bg-stone-300 text-stone-800 px-4 py-2 rounded-lg font-semibold tracking-wide transition-all shadow-sm whitespace-nowrap disabled:opacity-50"
+                className="w-full sm:w-auto bg-[#524f25] hover:bg-[#63602f] text-white px-5 py-2.5 rounded-lg font-semibold tracking-wide transition-all shadow-sm whitespace-nowrap disabled:opacity-50"
                 disabled={!sizeInput}
               >
                 Додати
@@ -768,11 +820,14 @@ export default function ProductFormClient({ id }) {
             {formData.sizes.length > 0 && (
               <div className="space-y-2 pt-2">
                 {formData.sizes.sort((a, b) => {
+                  if (formData.variant_type === 'color') {
+                    return a.name.localeCompare(b.name);
+                  }
                   return SIZE_OPTIONS.indexOf(a.name) - SIZE_OPTIONS.indexOf(b.name);
                 }).map(size => (
-                  <div key={size.name} className="flex items-center justify-between bg-white border border-stone-200 pl-4 pr-1 py-1.5 rounded-lg text-sm font-semibold text-stone-700 shadow-sm transition-all hover:border-stone-400">
-                    <div className="flex items-center space-x-4">
-                      <span className="w-12 text-stone-900 border-r border-stone-100">{size.name}</span>
+                  <div key={size.name} className="flex flex-wrap sm:flex-nowrap items-center justify-between bg-white border border-stone-200 pl-4 pr-1 py-2 rounded-lg text-sm font-semibold text-stone-700 shadow-sm transition-all hover:border-stone-400 gap-2">
+                    <div className="flex items-center space-x-4 flex-1 min-w-[120px]">
+                      <span className="min-w-[90px] text-stone-900 border-r border-stone-100 pr-2 truncate">{size.name}</span>
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
                           <span className="text-[10px] uppercase font-bold text-[#524f25]">К-ть:</span>
@@ -917,7 +972,8 @@ export default function ProductFormClient({ id }) {
                   'Короткий рукав', 'Довгий рукав',
                   'Пісочник', 'Ромпер',
                   'Шапочка-вузлик', 'Чепчик',
-                  'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'
+                  'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани',
+                  'Пустушки', 'Прорізувачі', 'Контейнери', 'Ланцюжки для пустушок'
                 ].map((feat) => (
                   <label key={feat} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
                     <input

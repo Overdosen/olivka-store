@@ -15,7 +15,7 @@ import { AlertTriangle } from 'lucide-react';
 
 export default function ProductClient({ product }) {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedVariants, setSelectedVariants] = useState([]);
   const [activeSlide, setActiveSlide] = useState(0);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState(false);
   const sliderRef = useRef(null);
@@ -66,30 +66,48 @@ export default function ProductClient({ product }) {
     }
   };
 
+  const toggleVariant = (variantName) => {
+    setSelectedVariants(prev =>
+      prev.includes(variantName)
+        ? prev.filter(v => v !== variantName)
+        : [...prev, variantName]
+    );
+  };
+
   const handleAddToCart = async () => {
     if (!product || !isAvailable) return;
-    if (hasSizes && !selectedSize) {
-      toast.error('Будь ласка, оберіть розмір');
-      throw new Error('no-size');
+    if (hasSizes && selectedVariants.length === 0) {
+      const label = product.variant_type === 'color' ? 'колір' : 'розмір';
+      toast.error(`Будь ласка, оберіть ${label}`);
+      throw new Error('no-variant');
     }
 
-    // Отримуємо поточну кількість цього товару в кошику
-    const existingInCart = cartItems.find(item => item.id === product.id && item.size === selectedSize);
-    const qtyInCart = existingInCart ? existingInCart.quantity : 0;
+    const variantsToAdd = hasSizes ? selectedVariants : [''];
 
-    let stockLimit = product.stock;
-    if (selectedSize && product.sizes) {
-      const sizeObj = product.sizes.find(s => s.name === selectedSize);
-      if (sizeObj) stockLimit = sizeObj.quantity;
+    for (const variant of variantsToAdd) {
+      const existingInCart = cartItems.find(item => item.id === product.id && item.size === variant);
+      const qtyInCart = existingInCart ? existingInCart.quantity : 0;
+
+      let stockLimit = product.stock;
+      if (variant && product.sizes) {
+        const sizeObj = product.sizes.find(s => s.name === variant);
+        if (sizeObj) stockLimit = sizeObj.quantity;
+      }
+
+      if (qtyInCart + 1 > (stockLimit ?? Infinity)) {
+        toast.error(`"${variant || product.name}" — більше немає в наявності`);
+        continue;
+      }
+
+      addToCart(product, variant, 1);
     }
 
-    if (qtyInCart + 1 > (stockLimit ?? Infinity)) {
-      toast.error('Більше немає в наявності');
-      throw new Error('out-of-stock');
-    }
+    const label = product.variant_type === 'color' ? 'кольори' : 'розміри';
+    const msg = variantsToAdd.length > 1
+      ? `${product.name} (${variantsToAdd.length} ${label}) додано до кошика!`
+      : `${product.name} додано до кошика!`;
 
-    addToCart(product, selectedSize, 1);
-    toast.success(`${product.name} додано до кошика!`, { 
+    toast.success(msg, {
       icon: <ShoppingBag size={20} style={{ color: '#524f25' }} />,
       style: {
         borderRadius: '12px',
@@ -193,7 +211,12 @@ export default function ProductClient({ product }) {
               <div />
               {hasSizes ? (
                 <h3 className="m-0 leading-none text-center">
-                  Розмір <span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>(Оберіть доступний)</span>
+                  {product.variant_type === 'color' ? 'Колір' : 'Розмір'}
+                  {' '}<span style={{ fontSize: '0.8rem', color: '#888', fontWeight: 'normal', marginLeft: '8px' }}>
+                    {selectedVariants.length > 0
+                      ? `(${selectedVariants.length} обрано)`
+                      : '(Оберіть один або декілька)'}
+                  </span>
                 </h3>
               ) : (
                 <div />
@@ -221,11 +244,12 @@ export default function ProductClient({ product }) {
               <div className="size-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {product.sizes.map(size => {
                   const isOutOfStock = size.quantity <= 0;
+                  const isSelected = selectedVariants.includes(size.name);
                   return (
                     <button
                       key={size.name}
-                      className={`size-btn ${selectedSize === size.name ? 'active' : ''}`}
-                      onClick={() => !isOutOfStock && setSelectedSize(size.name)}
+                      className={`size-btn ${isSelected ? 'active' : ''}`}
+                      onClick={() => !isOutOfStock && toggleVariant(size.name)}
                       disabled={isOutOfStock}
                       style={{
                         opacity: isOutOfStock ? 0.4 : 1,
@@ -234,7 +258,7 @@ export default function ProductClient({ product }) {
                         backgroundColor: isOutOfStock ? '#f5f5f5' : undefined,
                         color: isOutOfStock ? '#999' : undefined
                       }}
-                      title={isOutOfStock ? "Немає в наявності" : "В наявності"}
+                      title={isOutOfStock ? "Немає в наявності" : (isSelected ? "Клікніть щоб зняти вибір" : "В наявності")}
                     >
                       {size.name}
                     </button>

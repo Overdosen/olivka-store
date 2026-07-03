@@ -679,7 +679,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                           <div className="min-w-0">
                             <p className="text-xs font-extrabold text-stone-850 truncate leading-snug mb-1">{item.name}</p>
                             <p className="text-[10px] text-stone-450 font-bold">
-                              {item.size ? `Розмір: ${item.size} • ` : ''}{item.quantity} шт
+                              {item.size ? `${item.variant_type === 'color' ? 'Колір' : 'Розмір'}: ${item.size} • ` : ''}{item.quantity} шт
                             </p>
                             <p className="text-[11px] text-stone-850 font-extrabold mt-1.5 tabular-nums">
                               {item.price} ₴
@@ -872,7 +872,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                         <span style={{ fontWeight: 800, color: '#1c1917' }}>{item.name}</span>
                         {item.size && (
                           <span style={{ padding: '2px 6px', backgroundColor: '#f5f5f4', border: '1px solid #e7e5e4', color: '#57534e', borderRadius: '4px', fontSize: '10px', fontWeight: 850 }}>
-                            Розмір: {item.size}
+                            {item.variant_type === 'color' ? 'Колір' : 'Розмір'}: {item.size}
                           </span>
                         )}
                         {item.sku && (

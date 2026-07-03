@@ -43,6 +43,16 @@ function runAction(actionId, inputObj) {
   return execSync(command, { encoding: 'utf-8' });
 }
 
+function deleteGmcProduct(offerId) {
+  const apiObj = {
+    method: "DELETE",
+    path: `/${merchantId}/products/online:uk:UA:${offerId}`
+  };
+  const apiJson = JSON.stringify(apiObj).replace(/"/g, '\\"');
+  const command = `membrane act --connectionId ${connectionId} --api "${apiJson}" --json`;
+  return execSync(command, { encoding: 'utf-8' });
+}
+
 // ───────────────────────────────────────────────
 // Маппінг статі
 // ───────────────────────────────────────────────
@@ -132,11 +142,12 @@ function buildGmcProduct(product) {
 async function syncAllProducts() {
   console.log('\n📤 Синхронізація ВСІХ товарів з Google Merchant Center...');
 
-  // Отримуємо ВСІ опубліковані товари — незалежно від наявності
+  // Отримуємо опубліковані товари, АБО ті що були зняті з публікації за останні 3 дні
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
   const { data: products, error } = await supabase
     .from('products')
     .select('*, categories(name, id)')
-    .eq('is_published', true);
+    .or(`is_published.eq.true,and(is_published.eq.false,updated_at.gte.${threeDaysAgo})`);
 
   if (error) {
     console.error('❌ Помилка отримання товарів:', error);
@@ -144,16 +155,18 @@ async function syncAllProducts() {
   }
 
   if (!products || products.length === 0) {
-    console.log('ℹ️  Немає опублікованих товарів.');
+    console.log('ℹ️  Немає товарів.');
     return;
   }
 
-  const inStock    = products.filter(p => (p.stock || 0) > 0);
-  const outOfStock = products.filter(p => (p.stock || 0) === 0);
+  const inStock    = products.filter(p => p.is_published && (p.stock || 0) > 0);
+  const outOfStock = products.filter(p => p.is_published && (p.stock || 0) === 0);
+  const unpublished = products.filter(p => !p.is_published);
 
-  console.log(`📦 Всього опублікованих товарів: ${products.length}`);
-  console.log(`   ✅ В наявності:    ${inStock.length}`);
-  console.log(`   ❌ Немає в наявності: ${outOfStock.length}`);
+  console.log(`📦 Всього товарів: ${products.length}`);
+  console.log(`   ✅ Опубліковані, в наявності:    ${inStock.length}`);
+  console.log(`   ❌ Опубліковані, немає в наявності: ${outOfStock.length}`);
+  console.log(`   👻 Неопубліковані (на видалення): ${unpublished.length}`);
 
   let successCount = 0;
   let errorCount   = 0;
@@ -161,16 +174,27 @@ async function syncAllProducts() {
   for (const product of products) {
     const offerId = product.sku || product.id;
     const stock   = product.stock || 0;
-    const status  = stock > 0 ? '✅ in stock' : '🔴 out of stock';
+    
+    let status = '';
+    if (!product.is_published) {
+      status = '👻 unpublished (видалення)';
+    } else {
+      status = stock > 0 ? '✅ in stock' : '🔴 out of stock';
+    }
 
     console.log(`\n  🔹 ${product.name} (арт. ${offerId}) — ${status}`);
 
     try {
-      const gmcProduct = buildGmcProduct(product);
-
-      console.log(`  📤 Відправляємо в GMC (availability: ${gmcProduct.availability})...`);
-      runAction(insertProductAction, gmcProduct);
-      console.log(`  ✅ Успішно оновлено!`);
+      if (!product.is_published) {
+        console.log(`  🗑️ Видаляємо з GMC (is_published: false)...`);
+        deleteGmcProduct(offerId);
+        console.log(`  ✅ Успішно видалено!`);
+      } else {
+        const gmcProduct = buildGmcProduct(product);
+        console.log(`  📤 Відправляємо в GMC (availability: ${gmcProduct.availability})...`);
+        runAction(insertProductAction, gmcProduct);
+        console.log(`  ✅ Успішно оновлено!`);
+      }
       successCount++;
 
     } catch (err) {

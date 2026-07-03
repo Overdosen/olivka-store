@@ -675,7 +675,7 @@ function OrdersList({ userId }) {
                               {item.name}
                             </div>
                             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.73rem', color: 'rgba(82,79,37,0.45)' }}>
-                              {item.size && <span>Розмір: <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.size}</strong></span>}
+                              {item.size && <span>{item.variant_type === 'color' ? 'Колір' : 'Розмір'}: <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.size}</strong></span>}
                               {(item.sku || item.article) && <span>Арт: <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.sku || item.article}</strong></span>}
                               <span>× <strong style={{ color: 'rgba(82,79,37,0.65)' }}>{item.qty}</strong></span>
                             </div>

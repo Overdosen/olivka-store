@@ -265,7 +265,7 @@ export default function CartDrawer() {
                             </button>
                           </div>
                           <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-stone-500)' }}>
-                            Розмір: {item.size}
+                            {item.variant_type === 'color' ? 'Колір' : 'Розмір'}: {item.size}
                           </p>
                           {item.sku && (
                             <p style={{ margin: '0.1rem 0 0', fontSize: '0.7rem', color: 'var(--color-stone-400)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

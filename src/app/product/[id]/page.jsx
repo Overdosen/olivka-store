@@ -120,8 +120,14 @@ export default async function ProductPage({ params }) {
       url: `${baseUrl}/product/${id}`,
       priceCurrency: 'UAH',
       price: data.price,
-      priceValidUntil: '2026-12-31',
-      availability: data.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      priceValidUntil: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().split('T')[0],
+      availability: (() => {
+        const hasSizes = data.sizes && data.sizes.length > 0;
+        const inStock = hasSizes
+          ? data.sizes.some(s => s.quantity > 0)
+          : data.stock > 0;
+        return inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+      })(),
       seller: {
         '@type': 'Organization',
         name: 'Store Olivka',
