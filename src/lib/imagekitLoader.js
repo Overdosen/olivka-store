@@ -4,6 +4,9 @@ export default function imageKitLoader({ src, width, quality }) {
     return src;
   }
 
+  // Зберігаємо початковий шлях
+  const originalSrc = src;
+
   if (src[0] === "/") src = src.slice(1);
   const params = [`w-${width}`];
   if (quality) {
@@ -24,6 +27,6 @@ export default function imageKitLoader({ src, width, quality }) {
     return `${urlEndpoint}/${cleanPath}?tr=${paramsString}`;
   }
 
-  // Якщо це локальна картинка або з іншого джерела, віддаємо як є
-  return src;
+  // Якщо це локальна картинка або з іншого джерела, віддаємо як є (зберігаючи оригінальний слеш)
+  return originalSrc;
 }
