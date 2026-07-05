@@ -94,9 +94,9 @@ export const getShippingEmailHtml = (order, status) => {
                   <div style="margin-top: 40px; padding: 24px; background-color: #fcfbf9; border-radius: 12px; text-align: center;">
                     <h3 style="margin: 0 0 10px; font-size: 16px; color: ${brandColor};">Будемо раді вашому відгуку!</h3>
                     <p style="color: #666; font-size: 14px; line-height: 1.6; margin: 0 0 20px;">
-                      Ваша думка дуже важлива для нас. Поділіться своїми враженнями від покупки в нашому Instagram, та допоможіть іншим матусям зробити правильний вибір.
+                      Ваша думка дуже важлива для нас. Поділіться своїми враженнями від покупки в нашому магазині, та допоможіть іншим матусям зробити правильний вибір.
                     </p>
-                    <a href="https://www.instagram.com/store.olivka?igsh=cmZpdWp2dXQ2a2F4" target="_blank" style="display: inline-block; background-color: #fff; border: 1px solid ${brandColor}; color: ${brandColor}; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px;">Залишити відгук</a>
+                    <a href="${baseUrl}/?review=true" target="_blank" style="display: inline-block; background-color: #fff; border: 1px solid ${brandColor}; color: ${brandColor}; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 13px;">Залишити відгук</a>
                   </div>
 
                   <div style="margin-top: 40px; text-align: center; border-top: 1px solid #f0f0f0; padding-top: 30px;">

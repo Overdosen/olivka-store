@@ -31,6 +31,15 @@ export default function StoreReviews() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('review') === 'true') {
+        setIsReviewModalOpen(true);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     async function fetchReviews() {
       try {
         const { data, error } = await supabase
