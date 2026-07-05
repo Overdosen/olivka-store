@@ -51,7 +51,8 @@ export default function CatalogClient() {
     );
     return {
       ...target,
-      id: dbCat ? dbCat.id : target.slug
+      id: dbCat ? dbCat.id : target.slug,
+      name: dbCat ? dbCat.name : target.name
     };
   });
 
