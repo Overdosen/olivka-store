@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../lib/admin-constants';
+import { getPaginatedOrders, getOrderStatusCounts } from '../../actions/orders';
 import StatusBadge from '../../../components/admin/ui/StatusBadge';
 import PageHeader from '../../../components/admin/ui/PageHeader';
 import EmptyState from '../../../components/admin/ui/EmptyState';
@@ -18,18 +19,25 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: 'created_at', direction: 'desc' });
   const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [statusCounts, setStatusCounts] = useState({ all: 0 });
   const perPage = 20;
 
-  const fetchOrders = useCallback(async () => {
+  // Keep latest parameters in ref for the realtime subscription to avoid connection churn
+  const paramsRef = useRef({ page, statusFilter, search, sortConfig });
+  useEffect(() => {
+    paramsRef.current = { page, statusFilter, search, sortConfig };
+  }, [page, statusFilter, search, sortConfig]);
+
+  const loadData = useCallback(async (params) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setOrders(data || []);
+      const { orders: fetchedOrders, totalCount: count } = await getPaginatedOrders(params);
+      setOrders(fetchedOrders);
+      setTotalCount(count);
+      
+      const counts = await getOrderStatusCounts();
+      setStatusCounts(counts);
     } catch (err) {
       console.error('Fetch orders error:', err);
       toast.error('Помилка завантаження замовлень');
@@ -38,23 +46,49 @@ export default function OrdersPage() {
     }
   }, []);
 
+  // Fetch when filters/pagination changes (debounced search)
   useEffect(() => {
-    fetchOrders();
+    const timer = setTimeout(() => {
+      loadData({
+        page,
+        perPage,
+        statusFilter,
+        search,
+        sortKey: sortConfig.key,
+        sortDirection: sortConfig.direction,
+      });
+    }, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [page, statusFilter, search, sortConfig, loadData]);
 
+  // Realtime subscription (stable)
+  useEffect(() => {
     const channel = supabase
       .channel('admin-orders-page')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        fetchOrders();
+        const currentParams = paramsRef.current;
+        loadData({
+          page: currentParams.page,
+          perPage,
+          statusFilter: currentParams.statusFilter,
+          search: currentParams.search,
+          sortKey: currentParams.sortConfig.key,
+          sortDirection: currentParams.sortConfig.direction,
+        });
       })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchOrders]);
+  }, [loadData]);
 
   // Status update (preserved logic from customers page)
   async function updateOrderStatus(orderId, newStatus) {
     await supabase.from('orders').update({ status: newStatus }).eq('id', orderId);
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+    
+    // Also update counts since status has changed
+    const counts = await getOrderStatusCounts();
+    setStatusCounts(counts);
   }
 
   // Tracking update (preserved logic)
@@ -63,39 +97,14 @@ export default function OrdersPage() {
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, tracking_number: trackingNumber } : o));
   }
 
-  // Filter + Sort
-  const filtered = orders.filter(o => {
-    if (statusFilter !== 'all' && o.status !== statusFilter) return false;
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      const matches =
-        (o.full_name || '').toLowerCase().includes(q) ||
-        (o.email || '').toLowerCase().includes(q) ||
-        (o.phone || '').toLowerCase().includes(q) ||
-        (o.tracking_number || '').toLowerCase().includes(q) ||
-        String(o.order_number).includes(q);
-      if (!matches) return false;
-    }
-    return true;
-  });
-
-  const sorted = [...filtered].sort((a, b) => {
-    let aVal = a[sortConfig.key];
-    let bVal = b[sortConfig.key];
-    if (aVal == null) return 1;
-    if (bVal == null) return -1;
-    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const totalPages = Math.ceil(sorted.length / perPage);
-  const paginated = sorted.slice((page - 1) * perPage, page * perPage);
+  const totalPages = Math.ceil(totalCount / perPage);
+  const paginated = orders; // Already paginated from the server
 
   const requestSort = (key) => {
     let direction = 'desc';
     if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
     setSortConfig({ key, direction });
+    setPage(1); // reset to page 1 on sort change
   };
 
   const SortIcon = ({ column }) => {
@@ -104,10 +113,6 @@ export default function OrdersPage() {
       ? <ChevronUp className="w-3.5 h-3.5 text-stone-700" />
       : <ChevronDown className="w-3.5 h-3.5 text-stone-700" />;
   };
-
-  // Status counts
-  const statusCounts = {};
-  orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
 
   return (
     <div className="space-y-5">
@@ -122,7 +127,7 @@ export default function OrdersPage() {
             : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
             }`}
         >
-          Всі ({orders.length})
+          Всі ({statusCounts.all || 0})
         </button>
         {STATUS_OPTIONS.map(s => (
           statusCounts[s.id] ? (
@@ -160,7 +165,7 @@ export default function OrdersPage() {
           )}
         </div>
         <div className="text-xs text-stone-400 font-medium">
-          {filtered.length} з {orders.length}
+          Показано {orders.length} з {totalCount}
         </div>
       </div>
 
@@ -239,7 +244,7 @@ export default function OrdersPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100">
             <p className="text-xs text-stone-400">
-              {(page - 1) * perPage + 1}–{Math.min(page * perPage, sorted.length)} з {sorted.length}
+              {(page - 1) * perPage + 1}–{Math.min(page * perPage, totalCount)} з {totalCount}
             </p>
             <div className="flex items-center gap-1">
               <button

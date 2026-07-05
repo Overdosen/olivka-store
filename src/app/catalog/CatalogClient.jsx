@@ -21,6 +21,7 @@ export default function CatalogClient() {
     { name: 'Штанці', slug: 'pants' },
     { name: 'Кокони', slug: 'cocoons' },
     { name: 'Текстиль (пелюшки, пледи)', slug: 'swaddles' },
+    { name: 'Пелюшки та бокси', slug: 'boxes' },
     { name: 'Костюми, сукні', slug: 'suits' },
     { name: 'Готові рішення', slug: 'fullset' },
     { name: 'Аксесуари', slug: 'accessories' }

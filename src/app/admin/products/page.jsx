@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
 import { Trash2, Package, ChevronUp, ChevronDown, ArrowUpDown, ShoppingCart, ZoomIn, X } from 'lucide-react';
@@ -11,6 +11,7 @@ import EmptyState from '../../../components/admin/ui/EmptyState';
 import QuickSaleModal from '../../../components/admin/products/QuickSaleModal';
 import Image from 'next/image';
 import { getOptimizedUrl } from '../../../lib/image-utils';
+import { getPaginatedProducts, getSoldProductsStats } from '../../actions/products';
 
 // ── Image zoom overlay ────────────────────────────────────────────────────────
 function ImageZoom({ src, alt, onClose }) {
@@ -110,17 +111,87 @@ export default function AdminProducts() {
   const [saleProduct, setSaleProduct] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null);
 
-  // Вкладки та замовлення для Проданих товарів
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 20;
+  const totalPages = Math.ceil(totalCount / perPage);
+
+  // Tabs and Sold products
   const [activeTab, setActiveTab] = useState('general'); // 'general', 'sold'
-  const [orders, setOrders] = useState([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [soldProducts, setSoldProducts] = useState([]);
+  const [soldLoading, setSoldLoading] = useState(false);
   const [soldDateFilter, setSoldDateFilter] = useState('30d'); // 'today', '7d', '30d', '90d', 'all'
 
+  // Fetch categories on mount
   useEffect(() => {
-    fetchProducts();
+    async function fetchCategories() {
+      try {
+        const { data, error } = await supabase
+          .from('categories')
+          .select('*')
+          .order('name');
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (error) {
+        console.error('Помилка завантаження категорій:', error);
+      }
+    }
     fetchCategories();
-    fetchOrders();
   }, []);
+
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { products: fetchedProducts, totalCount: count } = await getPaginatedProducts({
+        page,
+        perPage,
+        searchTerm,
+        statusFilter,
+        categoryFilter,
+        sortKey: sortConfig.key,
+        sortDirection: sortConfig.direction,
+      });
+      setProducts(fetchedProducts || []);
+      setTotalCount(count || 0);
+    } catch (error) {
+      toast.error('Помилка завантаження товарів');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, searchTerm, statusFilter, categoryFilter, sortConfig]);
+
+  // Load products when parameters change (debounced search)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadProducts();
+    }, searchTerm ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [loadProducts, searchTerm]);
+
+  // Reset page to 1 on filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, categoryFilter]);
+
+  // Load sold products lazily
+  const loadSoldProducts = useCallback(async () => {
+    try {
+      setSoldLoading(true);
+      const data = await getSoldProductsStats(soldDateFilter);
+      setSoldProducts(data || []);
+    } catch (error) {
+      toast.error('Помилка завантаження проданих товарів');
+    } finally {
+      setSoldLoading(false);
+    }
+  }, [soldDateFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'sold') {
+      loadSoldProducts();
+    }
+  }, [activeTab, loadSoldProducts]);
 
   const getPurchasePrice = (product) => {
     if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
@@ -134,120 +205,9 @@ export default function AdminProducts() {
     return Number(product.cost_price || 0);
   };
 
-  async function fetchProducts() {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select(`*, categories (name)`)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      toast.error('Помилка завантаження товарів');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function fetchCategories() {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Помилка завантаження категорій:', error);
-    }
-  }
-
-  async function fetchOrders() {
-    try {
-      setOrdersLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('id, items, status, created_at, order_number')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setOrders(data || []);
-    } catch (error) {
-      toast.error('Помилка завантаження замовлень');
-      console.error('Помилка завантаження замовлень:', error);
-    } finally {
-      setOrdersLoading(false);
-    }
-  }
-
-  const getSoldProducts = () => {
-    const soldMap = {};
-
-    let dateLimit = null;
-    if (soldDateFilter !== 'all') {
-      const now = new Date();
-      if (soldDateFilter === 'today') {
-        dateLimit = new Date(now.setHours(0, 0, 0, 0));
-      } else {
-        const days = soldDateFilter === '7d' ? 7 : soldDateFilter === '90d' ? 90 : 30;
-        dateLimit = new Date(now.setDate(now.getDate() - days));
-      }
-    }
-
-    orders.forEach(order => {
-      if (['cancelled', 'returned', 'payment_error', 'pending_payment'].includes(order.status)) return;
-      if (dateLimit && new Date(order.created_at) < dateLimit) return;
-      if (!Array.isArray(order.items)) return;
-
-      order.items.forEach(item => {
-        const prodId = item.product_id || item.id;
-        if (!prodId) return;
-
-        const name = item.name || item.title || 'Без назви';
-        const sku = item.sku || '';
-        const size = item.size || null;
-        const qty = Number(item.quantity || item.qty || 1);
-        const price = Number(item.price || 0);
-        const image = item.image_url || '';
-
-        const key = prodId;
-
-        if (!soldMap[key]) {
-          const catalogProd = products.find(cp => cp.id === prodId);
-          const currentCostPrice = catalogProd ? getPurchasePrice(catalogProd) : Number(item.cost_price || 0);
-
-          soldMap[key] = {
-            id: prodId,
-            name,
-            sku,
-            image_url: image,
-            totalQuantity: 0,
-            totalRevenue: 0,
-            sizes: {},
-            lastSold: order.created_at,
-            costPrice: currentCostPrice,
-          };
-        }
-
-        const record = soldMap[key];
-        record.totalQuantity += qty;
-        record.totalRevenue += qty * price;
-
-        const sizeKey = size || 'Без розміру';
-        record.sizes[sizeKey] = (record.sizes[sizeKey] || 0) + qty;
-
-        if (new Date(order.created_at) > new Date(record.lastSold)) {
-          record.lastSold = order.created_at;
-        }
-      });
-    });
-
-    return Object.values(soldMap);
-  };
-
   const getSoldProductsCount = () => {
-    if (ordersLoading) return '...';
-    return getSoldProducts().length;
+    if (soldLoading) return '...';
+    return soldProducts.length;
   };
 
   const getFilteredSoldProducts = (soldProductsList) => {
@@ -257,8 +217,7 @@ export default function AdminProducts() {
 
       let matchesCategory = true;
       if (categoryFilter !== 'all') {
-        const catalogProd = products.find(cp => cp.id === p.id);
-        matchesCategory = catalogProd ? catalogProd.category_id === categoryFilter : false;
+        matchesCategory = p.categoryId === categoryFilter;
       }
 
       return matchesSearch && matchesCategory;
@@ -270,10 +229,8 @@ export default function AdminProducts() {
       if (!sortConfig.key) return 0;
       let aValue, bValue;
       if (sortConfig.key === 'category') {
-        const catA = products.find(cp => cp.id === a.id)?.categories?.name || '';
-        const catB = products.find(cp => cp.id === b.id)?.categories?.name || '';
-        aValue = catA;
-        bValue = catB;
+        aValue = a.categoryName || '';
+        bValue = b.categoryName || '';
       } else if (sortConfig.key === 'totalQuantity') {
         aValue = a.totalQuantity;
         bValue = b.totalQuantity;
@@ -317,45 +274,11 @@ export default function AdminProducts() {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
       toast.success('Товар видалено');
-      fetchProducts();
+      loadProducts();
     } catch {
       toast.error('Помилка видалення');
     }
   }
-
-  const sortedProducts = [...products].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    let aValue, bValue;
-    if (sortConfig.key === 'category') {
-      aValue = a.categories?.name || '';
-      bValue = b.categories?.name || '';
-    } else if (sortConfig.key === 'cost_price') {
-      aValue = getPurchasePrice(a);
-      bValue = getPurchasePrice(b);
-    } else {
-      aValue = a[sortConfig.key];
-      bValue = b[sortConfig.key];
-    }
-    if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const filteredProducts = sortedProducts.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    let matchesStatus = true;
-    if (statusFilter === 'active') matchesStatus = p.is_published === true;
-    if (statusFilter === 'inactive') matchesStatus = p.is_published === false;
-
-    let matchesCategory = true;
-    if (categoryFilter !== 'all') {
-      matchesCategory = p.category_id === categoryFilter;
-    }
-
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
 
   const requestSort = (key) => {
     setSortConfig(prev => ({
@@ -530,7 +453,7 @@ export default function AdminProducts() {
                       <td className="pl-4 pr-6 py-4"><div className="h-8 bg-stone-100 rounded w-16 ml-auto" /></td>
                     </tr>
                   ))
-                ) : filteredProducts.length === 0 ? (
+                ) : products.length === 0 ? (
                   <tr>
                     <td colSpan="9">
                       <EmptyState
@@ -541,7 +464,7 @@ export default function AdminProducts() {
                     </td>
                   </tr>
                 ) : (
-                  filteredProducts.map((product) => {
+                  products.map((product) => {
                     const imgSrc = getImageSrc(product);
                     return (
                       <tr key={product.id} className="hover:bg-stone-100 transition-colors">
@@ -611,6 +534,44 @@ export default function AdminProducts() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination for general catalog */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100 bg-stone-50/20">
+              <p className="text-xs text-stone-400">
+                {(page - 1) * perPage + 1}–{Math.min(page * perPage, totalCount)} з {totalCount}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-2 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 disabled:opacity-40 transition-all"
+                >
+                  ←
+                </button>
+                {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                  const p = i + 1;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-8 h-8 text-xs font-medium rounded-lg transition-all ${page === p ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="px-4 py-2 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 disabled:opacity-40 transition-all"
+                >
+                  →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-stone-200/80 overflow-hidden shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
@@ -652,7 +613,7 @@ export default function AdminProducts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-50">
-                {ordersLoading ? (
+                {soldLoading ? (
                   [...Array(6)].map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       <td className="pl-6 pr-4 py-4"><div className="h-11 w-11 bg-stone-100 rounded-lg" /></td>
@@ -665,7 +626,7 @@ export default function AdminProducts() {
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-20 mx-auto" /></td>
                     </tr>
                   ))
-                ) : getSortedSoldProducts(getFilteredSoldProducts(getSoldProducts())).length === 0 ? (
+                ) : getSortedSoldProducts(getFilteredSoldProducts(soldProducts)).length === 0 ? (
                   <tr>
                     <td colSpan="8">
                       <EmptyState
@@ -676,9 +637,9 @@ export default function AdminProducts() {
                     </td>
                   </tr>
                 ) : (
-                  getSortedSoldProducts(getFilteredSoldProducts(getSoldProducts())).map((product) => {
+                  getSortedSoldProducts(getFilteredSoldProducts(soldProducts)).map((product) => {
                     const imgSrc = getImageSrc(product);
-                    const isDeleted = !products.some(p => p.id === product.id);
+                    const isDeleted = product.isDeleted;
                     return (
                       <tr key={product.id} className="hover:bg-stone-100 transition-colors">
                         {/* Фото */}
@@ -709,7 +670,7 @@ export default function AdminProducts() {
 
                           <div className="lg:hidden flex flex-wrap gap-x-2 gap-y-1 mt-1.5 text-[10px] text-stone-400 font-medium">
                             <span className="bg-stone-50 border border-stone-200/60 px-1.5 py-0.5 rounded text-stone-600">
-                              {products.find(p => p.id === product.id)?.categories?.name || 'Без категорії'}
+                              {product.categoryName || 'Без категорії'}
                             </span>
                             <span className="bg-stone-50 border border-stone-200/60 px-1.5 py-0.5 rounded text-stone-500 tabular-nums">
                               Ост. продаж: {formatDate(product.lastSold)}
@@ -719,7 +680,7 @@ export default function AdminProducts() {
 
                         {/* Категорія */}
                         <td className="px-6 py-3.5 text-stone-500 font-medium text-center">
-                          {products.find(p => p.id === product.id)?.categories?.name || '—'}
+                          {product.categoryName || '—'}
                         </td>
 
                         {/* Продажі за розмірами */}
@@ -778,8 +739,10 @@ export default function AdminProducts() {
           onClose={() => setSaleProduct(null)}
           onSuccess={() => {
             setSaleProduct(null);
-            fetchProducts();
-            fetchOrders();
+            loadProducts();
+            if (activeTab === 'sold') {
+              loadSoldProducts();
+            }
           }}
         />
       )}

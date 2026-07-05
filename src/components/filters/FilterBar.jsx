@@ -54,6 +54,19 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
     return Array.from(colorMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [products]);
 
+  // Extract all available materials from products dynamically
+  const availableMaterials = useMemo(() => {
+    const materialsSet = new Set();
+    products.forEach(product => {
+      if (!product.material) return;
+      const materials = Array.isArray(product.material) ? product.material : [product.material];
+      materials.forEach(m => {
+        if (m) materialsSet.add(m);
+      });
+    });
+    return Array.from(materialsSet).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
   const hasActiveFilters = useMemo(() => {
     return (
       filters.gender ||
@@ -67,10 +80,16 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
 
   const genderOptions = ['Хлопчик', 'Дівчинка', 'Унісекс'];
 
+  // Gender filter is hidden only for Accessories
+  const hideGender = categoryName === 'Аксесуари';
+
+  // Size and Age filters are hidden for bedding/textiles and Accessories
+  const hideSizeAge = ['Пледи та текстиль', 'Текстиль (пелюшки, пледи)', 'Пелюшки та бокси', 'Аксесуари'].includes(categoryName);
+
   return (
     <div className="flex flex-col" style={{ gap: '14px', paddingTop: '8px' }}>
       {/* Gender Filter */}
-      {categoryName !== 'Текстиль (пелюшки, пледи)' && categoryName !== 'Аксесуари' && (
+      {!hideGender && (
         <FilterDropdown
           label=" Стать "
           options={genderOptions}
@@ -82,19 +101,18 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Size Filter */}
-      {categoryName !== 'Аксесуари' && <FilterDropdown
-        label=" Розмір  "
-        options={categoryName === 'Текстиль (пелюшки, пледи)'
-          ? ['100*80 см', '100*75 см', '75*50 см']
-          : options.sizes.filter(s => !s.includes('*'))
-        }
-        selected={filters.sizes}
-        onSelect={(val) => setFilters(prev => ({ ...prev, sizes: val }))}
-        className="rounded-sm"
-      />}
+      {!hideSizeAge && (
+        <FilterDropdown
+          label=" Розмір  "
+          options={options.sizes.filter(s => !s.includes('*'))}
+          selected={filters.sizes}
+          onSelect={(val) => setFilters(prev => ({ ...prev, sizes: val }))}
+          className="rounded-sm"
+        />
+      )}
 
       {/* Age Filter */}
-      {categoryName !== 'Текстиль (пелюшки, пледи)' && categoryName !== 'Аксесуари' && (
+      {!hideSizeAge && (
         <FilterDropdown
           label=" Вік   "
           options={options.ages}
@@ -105,16 +123,15 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Material Filter */}
-      {categoryName !== 'Аксесуари' && <FilterDropdown
-        label=" Матеріал  "
-        options={categoryName === 'Текстиль (пелюшки, пледи)'
-          ? ['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча']
-          : options.materials.filter(m => !['Бавовна', 'Фланель', 'Непромокаюча'].includes(m))
-        }
-        selected={filters.materials}
-        onSelect={(val) => setFilters(prev => ({ ...prev, materials: val }))}
-        className="rounded-sm"
-      />}
+      {categoryName !== 'Аксесуари' && availableMaterials.length > 0 && (
+        <FilterDropdown
+          label=" Матеріал  "
+          options={availableMaterials}
+          selected={filters.materials}
+          onSelect={(val) => setFilters(prev => ({ ...prev, materials: val }))}
+          className="rounded-sm"
+        />
+      )}
 
       {/* Colors Filter */}
       {availableColors.length > 0 && categoryName !== 'Аксесуари' && (

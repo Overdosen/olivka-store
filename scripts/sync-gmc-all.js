@@ -66,7 +66,7 @@ const GENDER_MAP = {
 // Маппінг вікової групи за категорією
 // ───────────────────────────────────────────────
 function getAgeGroup(categoryId) {
-  const newborn = ['swaddles', 'cocoons'];
+  const newborn = ['swaddles', 'cocoons', 'boxes'];
   return newborn.includes(categoryId) ? 'newborn' : 'infant';
 }
 
