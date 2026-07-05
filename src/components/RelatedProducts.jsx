@@ -160,27 +160,28 @@ export default function RelatedProducts({ products }) {
           marginBottom: '1.5rem',
           padding: '0 0.5rem',
         }}>
-          <div>
-            <p style={{
-              margin: '0 0 2px',
-              fontSize: '0.65rem',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: 'rgba(82,79,37,0.4)',
-              fontWeight: 500,
-            }}>
-              Може сподобатись
-            </p>
-            <h2 style={{
-              margin: 0,
-              fontFamily: 'var(--font-serif, Georgia, serif)',
-              fontSize: 'clamp(1.1rem, 3vw, 1.4rem)',
-              fontWeight: 600,
-              color: '#524f25',
-              letterSpacing: '-0.01em',
-            }}>
-              Схожі товари
-            </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{
+                display: 'inline-block',
+                width: '28px',
+                height: '2px',
+                background: 'linear-gradient(90deg, #b5a44e, rgba(181,164,78,0.3))',
+                borderRadius: '2px',
+                flexShrink: 0,
+              }} />
+              <p style={{
+                margin: 0,
+                fontSize: 'clamp(1.05rem, 2.5vw, 1.35rem)',
+                fontFamily: 'var(--font-serif, Georgia, serif)',
+                fontWeight: 600,
+                color: '#524f25',
+                letterSpacing: '-0.01em',
+                fontStyle: 'italic',
+              }}>
+                Може сподобатись
+              </p>
+            </div>
           </div>
 
           {/* Кнопки навігації (desktop) */}

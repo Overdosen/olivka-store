@@ -1,8 +1,16 @@
 import { supabase } from '../../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import ProductClient from './ProductClient';
 import Breadcrumbs from '../../../components/Breadcrumbs';
 import RelatedProducts from '../../../components/RelatedProducts';
 import { notFound } from 'next/navigation';
+
+// Server-safe Supabase client (no localStorage, no persistSession)
+const supabaseServer = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } }
+);
 
 // Dynamic SEO tags on the server
 export async function generateMetadata({ params }) {
@@ -210,9 +218,71 @@ export default async function ProductPage({ params }) {
     { label: data.name }
   ];
 
-  // Fetch related products from the same category (exclude current, only in stock)
+  // ── Fetch related_products_settings ──────────────────────────────────────
+  let relatedSettings = { enabled: false, categories: [] };
+  try {
+    const { data: relSettingsData, error: relErr } = await supabaseServer
+      .from('global_settings')
+      .select('value')
+      .eq('id', 'related_products_settings')
+      .maybeSingle();
+    if (!relErr && relSettingsData?.value) {
+      const parsed = typeof relSettingsData.value === 'string'
+        ? JSON.parse(relSettingsData.value)
+        : relSettingsData.value;
+      relatedSettings = parsed;
+    }
+    if (relErr) console.error('[RelatedSettings] fetch error:', relErr.message);
+  } catch (e) { console.error('[RelatedSettings] exception:', e); }
+
+  // ── Fetch related products ────────────────────────────────────────────────
   let relatedProducts = [];
-  if (data.category_id) {
+
+  if (relatedSettings.enabled && relatedSettings.categories?.length > 0) {
+    // Custom pool: fetch from each configured category and pick random subset
+    const fetchPromises = relatedSettings.categories.map(async ({ categoryId, count }) => {
+      // Fetch more than needed so we can shuffle and pick
+      const { data: pool } = await supabase
+        .from('products')
+        .select('id, name, price, image_url, stock, sizes')
+        .eq('category_id', categoryId)
+        .eq('is_published', true)
+        .neq('id', id)
+        .or('stock.gt.0,sizes.cs.[{"quantity":1}]')
+        .limit(50);
+
+      // Filter in-stock
+      const inStock = (pool || []).filter(p => {
+        if (p.sizes && p.sizes.length > 0) return p.sizes.some(s => s.quantity > 0);
+        return p.stock > 0;
+      });
+
+      // Shuffle (server-side random)
+      for (let i = inStock.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [inStock[i], inStock[j]] = [inStock[j], inStock[i]];
+      }
+
+      return inStock.slice(0, count);
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const combined = results.flat();
+
+    // Deduplicate by id
+    const seen = new Set();
+    const deduped = combined.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
+
+    // Final shuffle of the combined list
+    for (let i = deduped.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [deduped[i], deduped[j]] = [deduped[j], deduped[i]];
+    }
+
+    relatedProducts = deduped;
+  } else if (data.category_id) {
+    // Fallback: same category
+    const defaultCount = relatedSettings.categories?.[0]?.count || 8;
     const { data: related } = await supabase
       .from('products')
       .select('id, name, price, image_url, stock, sizes')
@@ -220,15 +290,20 @@ export default async function ProductPage({ params }) {
       .eq('is_published', true)
       .neq('id', id)
       .or('stock.gt.0,sizes.cs.[{"quantity":1}]')
-      .limit(8);
+      .limit(defaultCount + 10);
 
-    // Додаткова клієнтська фільтрація для коректної перевірки sizes
-    relatedProducts = (related || []).filter(p => {
-      if (p.sizes && p.sizes.length > 0) {
-        return p.sizes.some(s => s.quantity > 0);
-      }
+    const filtered = (related || []).filter(p => {
+      if (p.sizes && p.sizes.length > 0) return p.sizes.some(s => s.quantity > 0);
       return p.stock > 0;
     });
+
+    // Shuffle
+    for (let i = filtered.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [filtered[i], filtered[j]] = [filtered[j], filtered[i]];
+    }
+
+    relatedProducts = filtered.slice(0, defaultCount);
   }
 
   return (
