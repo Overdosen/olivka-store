@@ -22,6 +22,15 @@ export default function Header() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('login') === 'true') {
+        setIsAuthOpen(true);
+      }
+    }
+  }, []);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     setIsMounted(true);
