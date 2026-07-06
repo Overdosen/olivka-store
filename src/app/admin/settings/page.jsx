@@ -267,66 +267,76 @@ function CategoryRow({ category, count, onCountChange, onRemove }) {
   return (
     <div style={{
       display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
+      flexDirection: 'column',
+      gap: '10px',
       padding: '14px 16px',
       background: 'white',
       border: '1.5px solid #e7e5e4',
       borderRadius: '12px',
       transition: 'border-color 0.15s',
     }}>
-      <div style={{
-        width: '32px', height: '32px',
-        borderRadius: '8px',
-        background: '#eff6ff',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <FolderOpen size={15} color="#3b82f6" />
+      {/* Рядок 1: іконка + назва + кнопка видалення */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{
+          width: '28px', height: '28px',
+          borderRadius: '7px',
+          background: '#eff6ff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0,
+        }}>
+          <FolderOpen size={14} color="#3b82f6" />
+        </div>
+
+        <span style={{
+          flex: 1,
+          fontSize: '14px',
+          fontWeight: 600,
+          color: '#1c1917',
+          minWidth: 0,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}>
+          {category.name}
+        </span>
+
+        <button
+          type="button"
+          onClick={onRemove}
+          style={{
+            width: '28px', height: '28px',
+            borderRadius: '7px',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#d6d3d1',
+            flexShrink: 0,
+            transition: 'color 0.15s, background 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
+          onMouseLeave={e => { e.currentTarget.style.color = '#d6d3d1'; e.currentTarget.style.background = 'transparent'; }}
+          aria-label="Видалити"
+        >
+          <X size={15} />
+        </button>
       </div>
 
-      <span style={{
-        flex: 1,
-        fontSize: '14px',
-        fontWeight: 500,
-        color: '#1c1917',
-        minWidth: 0,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
+      {/* Рядок 2: контроли кількості */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        paddingLeft: '38px',   /* вирівнювання під назвою */
       }}>
-        {category.name}
-      </span>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
         <span style={{ fontSize: '12px', color: '#a8a29e', fontWeight: 500 }}>показати</span>
         <CountStepper value={count} onChange={onCountChange} />
         <span style={{ fontSize: '12px', color: '#a8a29e', fontWeight: 500 }}>шт.</span>
       </div>
-
-      <button
-        type="button"
-        onClick={onRemove}
-        style={{
-          width: '30px', height: '30px',
-          borderRadius: '8px',
-          border: 'none',
-          background: 'transparent',
-          cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#d6d3d1',
-          flexShrink: 0,
-          transition: 'color 0.15s, background 0.15s',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; e.currentTarget.style.background = '#fef2f2'; }}
-        onMouseLeave={e => { e.currentTarget.style.color = '#d6d3d1'; e.currentTarget.style.background = 'transparent'; }}
-        aria-label="Видалити"
-      >
-        <X size={16} />
-      </button>
     </div>
   );
 }
+
 
 /* ═════════════════════════════════════════════════════════════════════════════
    MAIN PAGE
