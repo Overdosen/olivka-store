@@ -55,6 +55,43 @@ const THEMES = {
   }
 };
 
+// ─── Unified field styles (Settings-style) ────────────────────────────────────
+const F = {
+  label: {
+    display: 'block',
+    fontSize: '11px',
+    fontWeight: 700,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: '#a8a29e',
+    marginBottom: '8px',
+  },
+  input: {
+    width: '100%',
+    padding: '11px 14px',
+    background: '#fafaf9',
+    border: '1.5px solid #e7e5e4',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#1c1917',
+    outline: 'none',
+    transition: 'border-color 0.15s, background 0.15s',
+    boxSizing: 'border-box',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  },
+  hint: {
+    fontSize: '11px',
+    color: '#a8a29e',
+    marginTop: '6px',
+    fontStyle: 'italic',
+  },
+  req: { color: '#f87171', marginLeft: '2px' },
+};
+
+const handleFocus = (e) => { e.target.style.borderColor = '#a8a29e'; e.target.style.background = '#fff'; };
+const handleBlur  = (e) => { e.target.style.borderColor = '#e7e5e4'; e.target.style.background = '#fafaf9'; };
+
 const Section = ({ icon: Icon, title, children, theme = 'stone', className = '' }) => {
   const t = THEMES[theme] || THEMES.stone;
   return (
@@ -637,37 +674,39 @@ export default function ProductFormClient({ id }) {
 
         {/* 📦 Основна інформація */}
         <Section icon={Package} title="Основна інформація" theme="blue">
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="md:col-span-2">
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Назва товару <span className="text-red-400">*</span></label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={F.label}>Назва товару<span style={F.req}>*</span></label>
                 <input type="text" required value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                  style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="Напр., В'язаний кардиган" />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Артикул</label>
+                <label style={F.label}>Артикул</label>
                 <input type="text" value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                  className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                  style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="OLV-001" />
               </div>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Категорія <span className="text-red-400">*</span></label>
+              <label style={F.label}>Категорія<span style={F.req}>*</span></label>
               <select required value={formData.category_id}
                 onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium appearance-none">
+                style={{ ...F.input, appearance: 'none', cursor: 'pointer' }}
+                onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="">Оберіть категорію...</option>
                 {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
               </select>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Опис</label>
-              <textarea rows="4" value={formData.description}
+              <label style={F.label}>Опис</label>
+              <textarea rows="5" value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none"
+                style={{ ...F.input, resize: 'vertical', minHeight: '110px' }}
+                onFocus={handleFocus} onBlur={handleBlur}
                 placeholder="Детальний опис товару..." />
             </div>
           </div>
@@ -675,45 +714,53 @@ export default function ProductFormClient({ id }) {
 
         {/* 💰 Ціни та фінанси */}
         <Section icon={DollarSign} title="Ціни та фінанси" theme="amber">
-          <div className="space-y-5">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px' }}>
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Ціна продажу ₴ <span className="text-red-400">*</span></label>
+                <label style={F.label}>Ціна продажу ₴<span style={F.req}>*</span></label>
                 <input type="number" required min="0" step="10.00" value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-semibold text-lg"
-                  placeholder="0.00" />
+                  style={{ ...F.input, fontWeight: 700, fontSize: '16px' }}
+                  onFocus={handleFocus} onBlur={handleBlur} placeholder="0.00" />
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Кількість на складі (без розмірів)</label>
+                <label style={F.label}>Кількість на складі</label>
                 <input type="number" min="0" value={formData.stock}
                   disabled={formData.sizes && formData.sizes.length > 0}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                  className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white disabled:bg-stone-100 disabled:text-stone-400 disabled:cursor-not-allowed transition-all text-stone-800 font-medium"
+                  style={{ ...F.input, opacity: (formData.sizes && formData.sizes.length > 0) ? 0.5 : 1, cursor: (formData.sizes && formData.sizes.length > 0) ? 'not-allowed' : 'auto' }}
+                  onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="0" />
                 {formData.sizes && formData.sizes.length > 0 && (
-                  <p className="text-[10px] text-stone-400 mt-1 italic">Розраховується автоматично з доданих розмірів</p>
+                  <p style={F.hint}>Розраховується з розмірів</p>
                 )}
               </div>
               <div>
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Закупівельна ціна (без розмірів) ₴</label>
+                <label style={F.label}>Закупівельна ціна ₴</label>
                 <input type="number" min="0" step="10.00" value={formData.cost_price}
                   onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
-                  className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                  style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="0.00" />
               </div>
             </div>
             {margin !== null && formData.cost_price && (
-              <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border ${margin > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                <TrendingUp className={`w-4 h-4 ${margin > 0 ? 'text-emerald-600' : 'text-red-500'}`} />
-                <span className="text-sm font-semibold text-stone-700">
-                  Маржа: <span className={margin > 0 ? 'text-emerald-700' : 'text-red-600'}>{margin > 0 ? '+' : ''}{margin.toFixed(0)} ₴</span>
-                  {marginPct !== null && <span className="text-stone-400 font-normal ml-1">({marginPct}%)</span>}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                padding: '12px 16px', borderRadius: '10px',
+                background: margin > 0 ? '#f0fdf4' : '#fef2f2',
+                border: `1.5px solid ${margin > 0 ? '#bbf7d0' : '#fecaca'}`,
+              }}>
+                <TrendingUp style={{ width: '16px', height: '16px', color: margin > 0 ? '#16a34a' : '#dc2626', flexShrink: 0 }} />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>
+                  Маржа:&nbsp;
+                  <span style={{ color: margin > 0 ? '#15803d' : '#dc2626' }}>{margin > 0 ? '+' : ''}{margin.toFixed(0)} ₴</span>
+                  {marginPct !== null && <span style={{ color: '#a8a29e', fontWeight: 400, marginLeft: '4px' }}>({marginPct}%)</span>}
                 </span>
               </div>
             )}
           </div>
         </Section>
+
 
         {/* Sizes / Colors */}
         <Section icon={Ruler} title="Варіанти (розміри або кольори)" theme="emerald">
@@ -866,29 +913,31 @@ export default function ProductFormClient({ id }) {
             )}
             <p className="text-sm text-stone-500 leading-relaxed">Якщо ви додасте хоча б один розмір, на сторінці товару з'явиться вибір розміру для клієнта.</p>
             
-            <div className="pt-4 border-t border-stone-200/60 mt-4">
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Заміри виробу (для лінійки)</label>
+            <div style={{ paddingTop: '20px', borderTop: '1.5px solid #f5f5f4', marginTop: '8px' }}>
+              <label style={F.label}>Заміри виробу (для лінійки)</label>
               <textarea
                 rows="4"
                 value={formData.measurements || ''}
                 onChange={(e) => setFormData({ ...formData, measurements: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none"
-                placeholder="Введіть заміри виробу (наприклад: Довжина - 50 см, Ширина - 30 см...)"
+                style={{ ...F.input, resize: 'vertical', minHeight: '90px' }}
+                onFocus={handleFocus} onBlur={handleBlur}
+                placeholder="Довжина - 50 см, Ширина - 30 см..."
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Цей текст буде показано клієнтам при натисканні на іконку лінійки поруч з розмірами.</p>
+              <p style={F.hint}>Текст показується клієнтам при натисканні на іконку лінійки.</p>
             </div>
           </div>
         </Section>
 
         {/* Filters */}
         <Section icon={Palette} title="Характеристики для фільтрів" theme="purple">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Стать</label>
+              <label style={F.label}>Стать</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full px-5 py-3.5 bg-white rounded-md border border-stone-200/80 focus:outline-none focus:ring-2 focus:ring-stone-400/50 transition-all text-stone-800 font-medium appearance-none"
+                style={{ ...F.input, appearance: 'none', cursor: 'pointer' }}
+                onFocus={handleFocus} onBlur={handleBlur}
               >
                 <option value="">Не обрано</option>
                 <option value="Хлопчик">Хлопчик</option>
@@ -1086,10 +1135,10 @@ export default function ProductFormClient({ id }) {
 
         {/* SEO Settings */}
         <Section icon={Search} title="SEO Налаштування" theme="stone">
-          <div className="grid grid-cols-1 gap-6">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25]">SEO Заголовок (Title)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ ...F.label, marginBottom: 0 }}>SEO Заголовок (Title)</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -1097,7 +1146,7 @@ export default function ProductFormClient({ id }) {
                     setFormData({ ...formData, seo_title: `${formData.name}${colorSuffix}` });
                     toast.success('Заголовок згенеровано');
                   }}
-                  className="text-[10px] uppercase font-bold text-amber-600 hover:text-amber-700 underline"
+                  style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
                 >
                   Згенерувати автоматично
                 </button>
@@ -1106,32 +1155,33 @@ export default function ProductFormClient({ id }) {
                 type="text"
                 value={formData.seo_title}
                 onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                 placeholder="Назва товару (Колір)"
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Це главний заголовок для Google. Має бути унікальним для кожного товару.</p>
+              <p style={F.hint}>Головний заголовок для Google. Має бути унікальним для кожного товару.</p>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">SEO Ключові слова (через кому)</label>
+              <label style={F.label}>SEO Ключові слова (через кому)</label>
               <input
                 type="text"
                 value={formData.meta_keywords}
                 onChange={(e) => setFormData({ ...formData, meta_keywords: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 font-medium"
+                style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                 placeholder="напр., дитячий одяг, боді для малюка, подарунок"
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Допомагає Google зрозуміти тематику товару.</p>
+              <p style={F.hint}>Допомагає Google зрозуміти тематику товару.</p>
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">SEO Опис (Description)</label>
+              <label style={F.label}>SEO Опис (Description)</label>
               <textarea
                 rows="3"
                 value={formData.meta_description}
                 onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                className="w-full px-4 py-3 bg-stone-50 rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/30 focus:border-stone-400 focus:bg-white transition-all text-stone-800 resize-none"
+                style={{ ...F.input, resize: 'vertical', minHeight: '80px' }}
+                onFocus={handleFocus} onBlur={handleBlur}
                 placeholder="Короткий привабливий текст для результатів пошуку..."
               />
-              <p className="text-[10px] text-stone-400 mt-2 italic">Відображається під назвою в Google. Рекомендується до 160 символів.</p>
+              <p style={F.hint}>Відображається під назвою в Google. До 160 символів.</p>
             </div>
           </div>
         </Section>
