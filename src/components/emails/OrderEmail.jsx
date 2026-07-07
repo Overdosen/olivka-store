@@ -151,7 +151,7 @@ export const getOrderEmailHtml = (order, { isNew = false, last7 = '', magicLink 
             Ви можете змінити пароль в особистому кабінеті.
           </p>
           <div style="text-align: center; margin-top: 16px;">
-            <a href="${baseUrl}/?login=true"
+            <a href="${baseUrl}/?login=true&email=${encodeURIComponent(email)}&p=${last7}"
                style="display: inline-block; padding: 12px 28px;
                       background: #524f25; color: white; text-decoration: none;
                       border-radius: 10px; font-size: 13px; font-weight: 600;

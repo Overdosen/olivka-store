@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { X, User, Lock, Mail, Phone, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/useAuth';
@@ -24,13 +23,24 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
   const [phoneUa, setPhoneUa] = useState('');
   const [isInternational, setIsInternational] = useState(false);
 
-  // Скидаємо при відкритті
+  // Скидаємо при відкритті та зчитуємо дані з URL якщо вони є
   useEffect(() => {
     if (isOpen) {
       setError(''); setSuccess(''); setLoading(false); setMode(initialMode || 'login');
-      setFirstName(''); setLastName(''); setEmail(''); setPassword(''); 
-      setPhoneUa(isInternational ? '' : formatUaMasked(''));
+      setFirstName(''); setLastName('');
+      setPhoneUa(formatUaMasked(''));
       setIsInternational(false);
+
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const emailParam = params.get('email');
+        const passParam = params.get('password') || params.get('p');
+        setEmail(emailParam || '');
+        setPassword(passParam || '');
+      } else {
+        setEmail('');
+        setPassword('');
+      }
     }
   }, [isOpen, initialMode]);
 
@@ -144,19 +154,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     }
   }
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   // Lock body scroll when AuthModal is open
   useEffect(() => {
-    if (isOpen && mounted) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
       // Prevent background from shifting on touch devices
       document.body.style.touchAction = 'none';
-    } else if (mounted) {
+    } else {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     }
@@ -164,7 +168,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     };
-  }, [isOpen, mounted]);
+  }, [isOpen]);
 
   function parseError(msg) {
     const message = msg?.toString() || '';
@@ -179,9 +183,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
     return message;
   }
 
-  if (!mounted || typeof document === 'undefined') return null;
-
-  return createPortal(
+  return (
     <AnimatePresence>
       {isOpen && (
         // Overlay — закривається при кліку в будь-яку область ПОЗА модалом
@@ -394,8 +396,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>,
-    document.body
+    </AnimatePresence>
   );
 }
 
