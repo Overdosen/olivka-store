@@ -25,7 +25,14 @@ import {
 
 export default function Dashboard() {
   const router = useRouter();
-  const [dateRange, setDateRange] = useState('30d');
+  
+  // Default to current year and month
+  const currentYearStr = String(new Date().getFullYear());
+  const currentMonthStr = String(new Date().getMonth() + 1);
+
+  const [selectedYear, setSelectedYear] = useState(currentYearStr);
+  const [dateRange, setDateRange] = useState(currentMonthStr);
+  
   const [stats, setStats] = useState(null);
   const [revenueData, setRevenueData] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
@@ -38,7 +45,7 @@ export default function Dashboard() {
     async function fetchDashboard() {
       try {
         setLoading(true);
-        const data = await getDashboardStats(dateRange);
+        const data = await getDashboardStats(dateRange, selectedYear);
         setStats(data.stats);
         setRevenueData(data.revenueData);
         setRecentOrders(data.recentOrders);
@@ -53,7 +60,7 @@ export default function Dashboard() {
     }
 
     fetchDashboard();
-  }, [dateRange]);
+  }, [dateRange, selectedYear]);
 
   if (loading) {
     return (
@@ -69,13 +76,26 @@ export default function Dashboard() {
     );
   }
 
+  const monthNames = {
+    '1': 'Січень',
+    '2': 'Лютий',
+    '3': 'Березень',
+    '4': 'Квітень',
+    '5': 'Травень',
+    '6': 'Червень',
+    '7': 'Липень',
+    '8': 'Серпень',
+    '9': 'Вересень',
+    '10': 'Жовтень',
+    '11': 'Листопад',
+    '12': 'Грудень'
+  };
+
   const chartTitleSuffix = {
     'today': 'сьогодні',
     '7d': '7 днів',
-    '30d': '30 днів',
-    '90d': '90 днів',
-    '1y': 'рік'
-  }[dateRange];
+    '1y': `рік (${selectedYear})`
+  }[dateRange] || `${monthNames[dateRange]} ${selectedYear}`;
 
   return (
     <div className="space-y-6">
@@ -83,7 +103,25 @@ export default function Dashboard() {
         title="Dashboard"
         subtitle="Статистика магазину"
       >
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          {/* Year selector */}
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            disabled={dateRange === 'today' || dateRange === '7d'}
+            className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-[14px] font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-300 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {Array.from({ length: 6 }, (_, i) => {
+              const y = new Date().getFullYear() + i;
+              return (
+                <option key={y} value={String(y)}>
+                  {y} рік
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Period selector */}
           <select
             value={dateRange}
             onChange={(e) => setDateRange(e.target.value)}
@@ -91,8 +129,18 @@ export default function Dashboard() {
           >
             <option value="today">Сьогодні</option>
             <option value="7d">Останні 7 днів</option>
-            <option value="30d">Останні 30 днів</option>
-            <option value="90d">Останні 90 днів</option>
+            <option value="1">Січень</option>
+            <option value="2">Лютий</option>
+            <option value="3">Березень</option>
+            <option value="4">Квітень</option>
+            <option value="5">Травень</option>
+            <option value="6">Червень</option>
+            <option value="7">Липень</option>
+            <option value="8">Серпень</option>
+            <option value="9">Вересень</option>
+            <option value="10">Жовтень</option>
+            <option value="11">Листопад</option>
+            <option value="12">Грудень</option>
             <option value="1y">Рік</option>
           </select>
         </div>

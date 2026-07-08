@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
-import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette } from 'lucide-react';
+import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette, Check } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -91,6 +91,51 @@ const F = {
 
 const handleFocus = (e) => { e.target.style.borderColor = '#a8a29e'; e.target.style.background = '#fff'; };
 const handleBlur  = (e) => { e.target.style.borderColor = '#e7e5e4'; e.target.style.background = '#fafaf9'; };
+
+const CheckboxChip = ({ checked, onChange, label, color = '#1c1917' }) => {
+  return (
+    <label
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '9px 14px',
+        background: checked ? '#f5f5f4' : 'white',
+        border: checked ? `1.5px solid ${color}` : '1.5px solid #e7e5e4',
+        borderRadius: '10px',
+        cursor: 'pointer',
+        transition: 'all 0.15s',
+        userSelect: 'none'
+      }}
+      className="hover:border-stone-400"
+    >
+      <div style={{
+        position: 'relative',
+        width: '18px',
+        height: '18px',
+        borderRadius: '5px',
+        border: checked ? 'none' : '1.5px solid #d6d3d1',
+        background: checked ? color : 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        transition: 'all 0.15s'
+      }}>
+        {checked && <Check size={13} color="white" strokeWidth={3} />}
+      </div>
+      <input
+        type="checkbox"
+        style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 0, height: 0 }}
+        checked={checked}
+        onChange={onChange}
+      />
+      <span style={{ fontSize: '13px', fontWeight: checked ? 700 : 500, color: '#1c1917' }}>
+        {label}
+      </span>
+    </label>
+  );
+};
 
 const Section = ({ icon: Icon, title, children, theme = 'stone', className = '' }) => {
   const t = THEMES[theme] || THEMES.stone;
@@ -930,13 +975,14 @@ export default function ProductFormClient({ id }) {
 
         {/* Filters */}
         <Section icon={Palette} title="Характеристики для фільтрів" theme="purple">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Стать */}
             <div>
               <label style={F.label}>Стать</label>
               <select
                 value={formData.gender}
                 onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                style={{ ...F.input, appearance: 'none', cursor: 'pointer' }}
+                style={{ ...F.input, appearance: 'none', cursor: 'pointer', maxWidth: '320px' }}
                 onFocus={handleFocus} onBlur={handleBlur}
               >
                 <option value="">Не обрано</option>
@@ -946,99 +992,114 @@ export default function ProductFormClient({ id }) {
               </select>
             </div>
 
+            {/* Колір */}
             <div>
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Колір (оберіть один або декілька)</label>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <label style={F.label}>Колір (оберіть один або декілька)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                 {['Молочний', 'Рожевий/пудра', 'Сірий', 'Беж/коричневий', 'Гірчичний', 'Інші кольори'].map((color) => (
-                  <label key={color} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
-                      checked={formData.color.includes(color)}
-                      onChange={(e) => {
-                        const newColors = e.target.checked
-                          ? [...formData.color, color]
-                          : formData.color.filter(c => c !== color);
-                        setFormData({ ...formData, color: newColors });
-                      }}
-                    />
-                    <span className="text-sm font-medium text-stone-700">{color}</span>
-                  </label>
+                  <CheckboxChip
+                    key={color}
+                    label={color}
+                    checked={formData.color.includes(color)}
+                    onChange={(e) => {
+                      const newColors = e.target.checked
+                        ? [...formData.color, color]
+                        : formData.color.filter(c => c !== color);
+                      setFormData({ ...formData, color: newColors });
+                    }}
+                  />
                 ))}
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Вік</label>
-              <div className="flex flex-wrap gap-2 mt-2">
+            {/* Вік */}
+            <div>
+              <label style={F.label}>Вік</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                 {['0-1 місяць', '0-3 місяці', '1-3 місяці', '3-6 місяців', '6-9 місяців', '9-12 місяців', '12-18 місяців', '2 роки'].map((age) => (
-                  <label key={age} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
-                      checked={formData.age.includes(age)}
-                      onChange={(e) => {
-                        const newAges = e.target.checked
-                          ? [...formData.age, age]
-                          : formData.age.filter(a => a !== age);
-                        setFormData({ ...formData, age: newAges });
-                      }}
-                    />
-                    <span className="text-sm font-medium text-stone-700">{age}</span>
-                  </label>
+                  <CheckboxChip
+                    key={age}
+                    label={age}
+                    checked={formData.age.includes(age)}
+                    onChange={(e) => {
+                      const newAges = e.target.checked
+                        ? [...formData.age, age]
+                        : formData.age.filter(a => a !== age);
+                      setFormData({ ...formData, age: newAges });
+                    }}
+                  />
                 ))}
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Матеріал (оберіть один або декілька)</label>
-              <div className="flex flex-wrap gap-2 mt-2">
+            {/* Матеріал */}
+            <div>
+              <label style={F.label}>Матеріал (оберіть один або декілька)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                 {['Бавовна', 'Фланель', 'Муслін', 'Непромокаюча', 'Інтерлок', 'Футер', 'Перфорація'].map((mat) => (
-                  <label key={mat} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
-                      checked={formData.material ? formData.material.includes(mat) : false}
-                      onChange={(e) => {
-                        const currentMaterial = formData.material || [];
-                        const newMaterials = e.target.checked
-                          ? [...currentMaterial, mat]
-                          : currentMaterial.filter(m => m !== mat);
-                        setFormData({ ...formData, material: newMaterials });
-                      }}
-                    />
-                    <span className="text-sm font-medium text-stone-700">{mat}</span>
-                  </label>
+                  <CheckboxChip
+                    key={mat}
+                    label={mat}
+                    checked={formData.material ? formData.material.includes(mat) : false}
+                    onChange={(e) => {
+                      const currentMaterial = formData.material || [];
+                      const newMaterials = e.target.checked
+                        ? [...currentMaterial, mat]
+                        : currentMaterial.filter(m => m !== mat);
+                      setFormData({ ...formData, material: newMaterials });
+                    }}
+                  />
                 ))}
               </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider font-bold text-[#524f25] mb-2">Особливості моделі (оберіть одну або декілька)</label>
-              <div className="flex flex-wrap gap-2 mt-2">
+            {/* Особливості моделі (одяг) */}
+            <div>
+              <label style={F.label}>Особливості моделі — Одяг (оберіть одну або декілька)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                 {[
                   'З боді', 'З сорочкою', 'З шапочкою', 'Без шапочки',
                   'Короткий рукав', 'Довгий рукав',
                   'Пісочник', 'Ромпер',
                   'Шапочка-вузлик', 'Чепчик',
-                  'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани',
+                  'Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'
+                ].map((feat) => (
+                  <CheckboxChip
+                    key={feat}
+                    label={feat}
+                    checked={formData.features ? formData.features.includes(feat) : false}
+                    onChange={(e) => {
+                      const currentFeatures = formData.features || [];
+                      const newFeatures = e.target.checked
+                        ? [...currentFeatures, feat]
+                        : currentFeatures.filter(f => f !== feat);
+                      setFormData({ ...formData, features: newFeatures });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Особливості моделі (аксесуари та пустушки) */}
+            <div style={{ paddingTop: '20px', borderTop: '1px dashed #e7e5e4' }}>
+              <label style={{ ...F.label, color: '#9333ea' }}>Аксесуари (оберіть одну або декілька)</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                {[
                   'Пустушки', 'Прорізувачі', 'Контейнери', 'Ланцюжки для пустушок'
                 ].map((feat) => (
-                  <label key={feat} className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="rounded border-stone-300 text-stone-800 focus:ring-stone-800"
-                      checked={formData.features ? formData.features.includes(feat) : false}
-                      onChange={(e) => {
-                        const currentFeatures = formData.features || [];
-                        const newFeatures = e.target.checked
-                          ? [...currentFeatures, feat]
-                          : currentFeatures.filter(f => f !== feat);
-                        setFormData({ ...formData, features: newFeatures });
-                      }}
-                    />
-                    <span className="text-sm font-medium text-stone-700">{feat}</span>
-                  </label>
+                  <CheckboxChip
+                    key={feat}
+                    label={feat}
+                    color="#9333ea"
+                    checked={formData.features ? formData.features.includes(feat) : false}
+                    onChange={(e) => {
+                      const currentFeatures = formData.features || [];
+                      const newFeatures = e.target.checked
+                        ? [...currentFeatures, feat]
+                        : currentFeatures.filter(f => f !== feat);
+                      setFormData({ ...formData, features: newFeatures });
+                    }}
+                  />
                 ))}
               </div>
             </div>
@@ -1047,30 +1108,19 @@ export default function ProductFormClient({ id }) {
 
         {/* Toggles */}
         <Section icon={Settings} title="Відображення та статус" theme="rose">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-8">
-            <label className="flex items-center space-x-3 cursor-pointer group">
-              <div className="relative flex items-center justify-center w-6 h-6">
-                <input
-                  type="checkbox"
-                  checked={formData.is_published}
-                  onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                  className="w-5 h-5 rounded border-stone-300 text-stone-800 focus:ring-stone-800 transition-all peer"
-                />
-              </div>
-              <span className="font-bold text-xs uppercase tracking-wider text-[#524f25] transition-colors">Опубліковано на сайті</span>
-            </label>
-
-            <label className="flex items-center space-x-3 cursor-pointer group">
-              <div className="relative flex items-center justify-center w-6 h-6">
-                <input
-                  type="checkbox"
-                  checked={formData.is_new}
-                  onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
-                  className="w-5 h-5 rounded border-stone-300 text-stone-800 focus:ring-stone-800 transition-all peer"
-                />
-              </div>
-              <span className="font-bold text-xs uppercase tracking-wider text-[#524f25] transition-colors">Популярні товари (головна сторінка)</span>
-            </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+            <CheckboxChip
+              label="Опубліковано на сайті"
+              color="#e11d48"
+              checked={formData.is_published}
+              onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+            />
+            <CheckboxChip
+              label="Популярні товари (головна сторінка)"
+              color="#e11d48"
+              checked={formData.is_new}
+              onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
+            />
           </div>
         </Section>
 

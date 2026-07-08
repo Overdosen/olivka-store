@@ -5,30 +5,66 @@ import { STATUS_MAP } from '../../lib/admin-constants';
 
 const dbClient = supabaseService || supabase;
 
-export async function getDashboardStats(dateRange) {
+export async function getDashboardStats(dateRange, selectedYear) {
   try {
+    const year = selectedYear ? parseInt(selectedYear, 10) : new Date().getFullYear();
     let periodStart = new Date();
+    let periodEnd = null;
     let prevPeriodStart = new Date();
+    let prevPeriodEnd = null;
+
+    const monthNum = parseInt(dateRange, 10);
+    const isMonth = !isNaN(monthNum) && monthNum >= 1 && monthNum <= 12;
 
     if (dateRange === 'today') {
       periodStart.setHours(0, 0, 0, 0);
+      periodEnd = new Date(periodStart);
+      periodEnd.setDate(periodEnd.getDate() + 1);
+      
       prevPeriodStart = new Date(periodStart);
       prevPeriodStart.setDate(prevPeriodStart.getDate() - 1);
+      prevPeriodEnd = new Date(periodStart);
     } else if (dateRange === '1y') {
-      periodStart = new Date(periodStart.getFullYear(), 0, 1, 0, 0, 0, 0);
-      prevPeriodStart = new Date(periodStart.getFullYear() - 1, 0, 1, 0, 0, 0, 0);
+      periodStart = new Date(year, 0, 1, 0, 0, 0, 0);
+      periodEnd = new Date(year + 1, 0, 1, 0, 0, 0, 0);
+      
+      prevPeriodStart = new Date(year - 1, 0, 1, 0, 0, 0, 0);
+      prevPeriodEnd = new Date(year, 0, 1, 0, 0, 0, 0);
+    } else if (isMonth) {
+      periodStart = new Date(year, monthNum - 1, 1, 0, 0, 0, 0);
+      periodEnd = new Date(year, monthNum, 1, 0, 0, 0, 0);
+      
+      prevPeriodStart = new Date(year, monthNum - 2, 1, 0, 0, 0, 0);
+      prevPeriodEnd = new Date(year, monthNum - 1, 1, 0, 0, 0, 0);
     } else {
       const rangeMap = {
         '7d': 7,
-        '30d': 30,
-        '90d': 90,
       };
-      const days = rangeMap[dateRange] || 30;
+      const days = rangeMap[dateRange] || 7;
       periodStart.setHours(0, 0, 0, 0);
       periodStart.setDate(periodStart.getDate() - (days - 1));
+      periodEnd = null;
 
       prevPeriodStart = new Date(periodStart);
       prevPeriodStart.setDate(prevPeriodStart.getDate() - days);
+      prevPeriodEnd = new Date(periodStart);
+    }
+
+    let ordersQuery = dbClient
+      .from('orders')
+      .select('id, order_number, full_name, email, phone, total, status, created_at, items, tracking_number, packaging_cost')
+      .gte('created_at', prevPeriodStart.toISOString());
+    if (periodEnd) {
+      ordersQuery = ordersQuery.lt('created_at', periodEnd.toISOString());
+    }
+    ordersQuery = ordersQuery.order('created_at', { ascending: false });
+
+    let profilesQuery = dbClient
+      .from('profiles')
+      .select('email, created_at')
+      .gte('created_at', periodStart.toISOString());
+    if (periodEnd) {
+      profilesQuery = profilesQuery.lt('created_at', periodEnd.toISOString());
     }
 
     // Fetch all dashboard data in parallel to reduce database roundtrip times
@@ -39,11 +75,7 @@ export async function getDashboardStats(dateRange) {
       profilesRes,
       stockDataRes
     ] = await Promise.all([
-      dbClient
-        .from('orders')
-        .select('id, order_number, full_name, email, phone, total, status, created_at, items, tracking_number, packaging_cost')
-        .gte('created_at', prevPeriodStart.toISOString())
-        .order('created_at', { ascending: false }),
+      ordersQuery,
 
       dbClient
         .from('orders')
@@ -55,10 +87,7 @@ export async function getDashboardStats(dateRange) {
         .from('products')
         .select('*', { count: 'exact', head: true }),
 
-      dbClient
-        .from('profiles')
-        .select('email, created_at')
-        .gte('created_at', periodStart.toISOString()),
+      profilesQuery,
 
       dbClient
         .from('products')
@@ -88,7 +117,10 @@ export async function getDashboardStats(dateRange) {
     });
 
     // Also count unique customers from the orders in this period (using email, or phone if email is missing)
-    const periodOrdersForClients = orders.filter(o => new Date(o.created_at) >= periodStart);
+    const periodOrdersForClients = orders.filter(o => {
+      const d = new Date(o.created_at);
+      return d >= periodStart && (periodEnd ? d < periodEnd : true);
+    });
     periodOrdersForClients.forEach(o => {
       if (o.email) {
         customerIdentifiers.add(o.email.toLowerCase());
@@ -120,15 +152,19 @@ export async function getDashboardStats(dateRange) {
     // Period revenue
     const periodOrders = orders.filter(o => {
       const d = new Date(o.created_at);
-      return d >= periodStart && !['cancelled', 'returned', 'payment_error', 'pending_payment'].includes(o.status);
+      const isWithinPeriod = d >= periodStart && (periodEnd ? d < periodEnd : true);
+      return isWithinPeriod && !['cancelled', 'returned', 'payment_error', 'pending_payment'].includes(o.status);
     });
     const periodRevenue = periodOrders.reduce((s, o) => s + (o.total || 0), 0);
 
     // Previous period comparison
-    const currentOrdersCount = orders.filter(o => new Date(o.created_at) >= periodStart).length;
+    const currentOrdersCount = orders.filter(o => {
+      const d = new Date(o.created_at);
+      return d >= periodStart && (periodEnd ? d < periodEnd : true);
+    }).length;
     const prevOrdersCount = orders.filter(o => {
       const d = new Date(o.created_at);
-      return d >= prevPeriodStart && d < periodStart;
+      return d >= prevPeriodStart && (prevPeriodEnd ? d < prevPeriodEnd : d < periodStart);
     }).length;
     const periodTrend = prevOrdersCount > 0
       ? Math.round(((currentOrdersCount - prevOrdersCount) / prevOrdersCount) * 100)
@@ -188,13 +224,12 @@ export async function getDashboardStats(dateRange) {
     // Revenue chart
     const chartData = [];
     if (dateRange === '1y') {
-      const currentYear = new Date().getFullYear();
       const monthMap = {};
       const monthsOrder = [];
 
       for (let month = 0; month < 12; month++) {
-        const d = new Date(currentYear, month, 1);
-        const key = `${currentYear}-${String(month + 1).padStart(2, '0')}`;
+        const d = new Date(year, month, 1);
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
         const label = d.toLocaleDateString('uk-UA', { month: 'short' }).replace('.', '');
         const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
@@ -209,8 +244,8 @@ export async function getDashboardStats(dateRange) {
 
       periodOrders.forEach(o => {
         const d = new Date(o.created_at);
-        if (d.getFullYear() === currentYear) {
-          const key = `${currentYear}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (d.getFullYear() === year) {
+          const key = `${year}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           if (monthMap[key]) {
             monthMap[key].revenue += o.total || 0;
             monthMap[key].orders += 1;
@@ -251,14 +286,35 @@ export async function getDashboardStats(dateRange) {
       hoursOrder.forEach(key => {
         chartData.push(hourlyMap[key]);
       });
+    } else if (isMonth) {
+      const dailyMap = {};
+      const daysInMonth = new Date(year, monthNum, 0).getDate();
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const d = new Date(year, monthNum - 1, day, 12, 0, 0);
+        const key = `${year}-${String(monthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        dailyMap[key] = {
+          date: key,
+          revenue: 0,
+          orders: 0,
+          label: d.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' }).replace('.', '')
+        };
+      }
+
+      periodOrders.forEach(o => {
+        const key = new Date(o.created_at).toISOString().slice(0, 10);
+        if (dailyMap[key]) {
+          dailyMap[key].revenue += o.total || 0;
+          dailyMap[key].orders += 1;
+        }
+      });
+      chartData.push(...Object.values(dailyMap));
     } else {
       const dailyMap = {};
       const rangeMap = {
         '7d': 7,
-        '30d': 30,
-        '90d': 90,
       };
-      const days = rangeMap[dateRange] || 30;
+      const days = rangeMap[dateRange] || 7;
       for (let i = days - 1; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -304,7 +360,10 @@ export async function getDashboardStats(dateRange) {
 
     // Status breakdown
     const statusCounts = {};
-    const periodAllOrders = orders.filter(o => new Date(o.created_at) >= periodStart);
+    const periodAllOrders = orders.filter(o => {
+      const d = new Date(o.created_at);
+      return d >= periodStart && (periodEnd ? d < periodEnd : true);
+    });
     periodAllOrders.forEach(o => {
       statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
     });

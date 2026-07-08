@@ -7,7 +7,6 @@ import { supabase } from '../../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../../lib/admin-constants';
 import { getOptimizedUrl } from '../../../../lib/image-utils';
 import StatusBadge from '../../../../components/admin/ui/StatusBadge';
-import PageHeader from '../../../../components/admin/ui/PageHeader';
 import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn, Trash2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -444,11 +443,11 @@ export default function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 w-48 bg-stone-200 rounded-lg" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-2 h-96 bg-stone-100 rounded-lg" />
-          <div className="h-64 bg-stone-100 rounded-lg" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div style={{ height: '36px', width: '240px', background: '#f0efed', borderRadius: '10px' }} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+          <div className="lg:col-span-2" style={{ height: '400px', background: '#f0efed', borderRadius: '16px' }} />
+          <div style={{ height: '300px', background: '#f0efed', borderRadius: '16px' }} />
         </div>
       </div>
     );
@@ -468,158 +467,276 @@ export default function OrderDetailPage() {
   }, 0);
 
   return (
-    <div className="space-y-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <Link
           href="/admin/orders"
-          className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-all"
+          style={{
+            padding: '10px',
+            color: '#78716c',
+            background: 'white',
+            border: '1.5px solid #e7e5e4',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.15s',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          }}
+          className="hover:bg-stone-50 hover:border-stone-400"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft size={18} />
         </Link>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-xl md:text-2xl font-semibold text-stone-900">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1c1917', margin: 0, letterSpacing: '-0.03em' }}>
               Замовлення #{order.order_number}
             </h1>
             <StatusBadge status={order.status} size="md" />
           </div>
-          <p className="text-xs text-stone-400 mt-1">{dateStr}, {timeStr}</p>
+          <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0', fontWeight: 400 }}>{dateStr}, {timeStr}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         {/* Left column — items */}
-        <div className="lg:col-span-2 space-y-5">
-          {/* Products */}
-          <div className="bg-white rounded-lg border border-stone-200/80 overflow-hidden">
-            <div className="px-5 py-4 border-b border-stone-100">
-              <h2 className="text-sm font-semibold text-stone-800">Товари ({items.length})</h2>
+        <div className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Products SectionCard */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            border: '1px solid rgba(231,229,228,0.8)',
+            boxShadow: '0 2px 12px rgba(28,25,23,0.04), 0 1px 3px rgba(28,25,23,0.03)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '22px 28px',
+              borderBottom: '1px solid #f5f5f4',
+              background: 'linear-gradient(to bottom, #fafaf9, white)'
+            }}>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: '#f0fdf4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Package size={20} color="#16a34a" />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.02em' }}>
+                  Товари ({items.length})
+                </h2>
+                <p style={{ fontSize: '13px', color: '#a8a29e', margin: '3px 0 0', fontWeight: 400 }}>
+                  Список товарів та розрахунок вартості
+                </p>
+              </div>
             </div>
-            <div className="divide-y divide-stone-50">
+
+            <div style={{ divideWidth: '1px', divideColor: '#f5f5f4' }}>
               {items.map((item, i) => {
                 const prodId = item.product_id || item.id;
                 return (
-                <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-stone-50/50 transition-colors">
                   <div 
-                    className="relative w-11 h-11 rounded-lg bg-stone-100 overflow-hidden flex-shrink-0 border border-stone-200/50 block group cursor-pointer"
-                    onClick={() => {
-                      if (item.image_url) setZoomedImage(item.image_url);
+                    key={i} 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '18px 28px',
+                      borderBottom: '1px solid #f5f5f4',
+                      transition: 'background 0.15s'
                     }}
+                    className="hover:bg-stone-50/60 group"
                   >
-                    {item.image_url ? (
-                      <>
-                        <Image src={item.image_url} alt={item.name} fill sizes="44px" className="object-cover transition-transform duration-300 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <ZoomIn className="w-4 h-4 text-white" />
+                    <div 
+                      style={{
+                        position: 'relative',
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '10px',
+                        background: '#f5f5f4',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        border: '1px solid #e7e5e4',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        if (item.image_url) setZoomedImage(item.image_url);
+                      }}
+                    >
+                      {item.image_url ? (
+                        <>
+                          <Image src={item.image_url} alt={item.name} fill sizes="48px" className="object-cover transition-transform duration-300 group-hover:scale-110" />
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }} className="group-hover:opacity-100">
+                            <ZoomIn size={16} color="white" />
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Package size={20} color="#a8a29e" strokeWidth={1.5} />
                         </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Package className="w-5 h-5 text-stone-400" strokeWidth={1.5} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <Link href={`/admin/products/${prodId}`} className="text-[12px] md:text-[13px] font-semibold text-stone-900 hover:text-emerald-600 transition-colors truncate block">
-                      {item.name}
-                    </Link>
-                    <div className="flex items-center gap-2 mt-1">
-                      {item.size && <span className="text-[11px] text-stone-500 font-medium">Розмір: {item.size}</span>}
-                      {item.sku && <span className="text-[11px] text-stone-500 font-medium font-mono">Арт: {item.sku}</span>}
+                      )}
                     </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-[12px] md:text-[13px] font-bold text-stone-900 tabular-nums">{formatMoney(item.price * (item.qty || item.quantity || 1))} ₴</p>
-                    <div className="flex flex-col items-end gap-1 mt-1">
-                      {order.status === 'new' ? (
-                        editingQtyIndex === i ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-[11px] text-stone-400">×</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Link href={`/admin/products/${prodId}`} style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} className="hover:text-emerald-600 transition-colors">
+                        {item.name}
+                      </Link>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
+                        {item.size && <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Розмір: {item.size}</span>}
+                        {item.sku && <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500, fontFamily: 'monospace' }}>Арт: {item.sku}</span>}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <p style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatMoney(item.price * (item.qty || item.quantity || 1))} ₴
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px', marginTop: '4px' }}>
+                        {order.status === 'new' ? (
+                          editingQtyIndex === i ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '12px', color: '#a8a29e' }}>×</span>
+                              <input
+                                type="number"
+                                min="1"
+                                value={editQty}
+                                onChange={(e) => setEditQty(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSaveQty(i)}
+                                style={{
+                                  width: '48px',
+                                  textAlign: 'center',
+                                  padding: '2px 6px',
+                                  background: 'white',
+                                  border: '1.5px solid #e7e5e4',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  outline: 'none'
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => handleSaveQty(i)}
+                                disabled={updating}
+                                style={{ width: '20px', height: '20px', background: '#10b981', color: 'white', borderRadius: '999px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                              >
+                                <Check size={10} strokeWidth={3} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              style={{ fontSize: '12px', color: '#78716c', fontWeight: 600, cursor: 'pointer' }}
+                              className="hover:text-emerald-600 transition-colors"
+                              onClick={() => { setEditingQtyIndex(i); setEditingItemIndex(null); setEditQty(String(item.qty || item.quantity || 1)); }}
+                              title="Натисніть, щоб змінити кількість"
+                            >
+                              × {item.qty || item.quantity || 1}
+                            </div>
+                          )
+                        ) : (
+                          <p style={{ fontSize: '12px', color: '#78716c', fontWeight: 600, margin: 0 }}>× {item.qty || item.quantity || 1}</p>
+                        )}
+                        {editingItemIndex === i ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                             <input
                               type="number"
-                              min="1"
-                              value={editQty}
-                              onChange={(e) => setEditQty(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && handleSaveQty(i)}
-                              className="w-12 text-center px-1 py-0.5 bg-white border border-stone-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold"
+                              min="0"
+                              value={editItemCost}
+                              onChange={(e) => setEditItemCost(e.target.value)}
+                              onKeyDown={(e) => e.key === 'Enter' && handleSaveItemCost(i)}
+                              style={{
+                                width: '64px',
+                                textAlign: 'right',
+                                padding: '2px 6px',
+                                background: 'white',
+                                border: '1.5px solid #e7e5e4',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                outline: 'none'
+                              }}
                               autoFocus
                             />
+                            <span style={{ fontSize: '12px', color: '#78716c' }}>₴</span>
                             <button
-                              onClick={() => handleSaveQty(i)}
+                              onClick={() => handleSaveItemCost(i)}
                               disabled={updating}
-                              className="w-4 h-4 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all shrink-0"
+                              style={{ width: '20px', height: '20px', background: '#10b981', color: 'white', borderRadius: '999px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                             >
-                              <Check size={8} strokeWidth={3} />
+                              <Check size={10} strokeWidth={3} />
                             </button>
                           </div>
                         ) : (
-                          <div
-                            className="text-[11px] text-stone-500 font-medium cursor-pointer hover:text-emerald-600 transition-colors"
-                            onClick={() => { setEditingQtyIndex(i); setEditingItemIndex(null); setEditQty(String(item.qty || item.quantity || 1)); }}
-                            title="Натисніть, щоб змінити кількість"
+                          <div 
+                            style={{
+                              background: '#f5f5f4',
+                              color: '#57534e',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              border: '1px solid transparent',
+                              transition: 'all 0.15s'
+                            }}
+                            className="hover:bg-stone-200 hover:text-stone-800"
+                            onClick={() => {
+                              setEditingItemIndex(i);
+                              setEditingQtyIndex(null);
+                              setEditItemCost(String(calculateItemCost(item)));
+                            }}
+                            title="Натисніть, щоб змінити собівартість для цього замовлення"
                           >
-                            × {item.qty || item.quantity || 1}
+                            закупка: {formatMoney(calculateItemCost(item))} ₴
                           </div>
-                        )
-                      ) : (
-                        <p className="text-[11px] text-stone-500 font-medium">× {item.qty || item.quantity || 1}</p>
-                      )}
-                      {editingItemIndex === i ? (
-                        <div className="flex items-center gap-1 mt-1">
-                          <input
-                            type="number"
-                            min="0"
-                            value={editItemCost}
-                            onChange={(e) => setEditItemCost(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSaveItemCost(i)}
-                            className="w-16 text-right px-1.5 py-0.5 bg-white border border-stone-200 rounded text-[11px] focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold"
-                            autoFocus
-                          />
-                          <span className="text-[11px] text-stone-500">₴</span>
-                          <button
-                            onClick={() => handleSaveItemCost(i)}
-                            disabled={updating}
-                            className="w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all shadow-sm shrink-0"
-                          >
-                            <Check size={10} strokeWidth={3} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div 
-                          className="bg-stone-100 text-stone-600 font-normal px-1.5 py-0.5 rounded text-[10px] md:text-[11px] inline-block cursor-pointer hover:bg-stone-200 hover:text-stone-800 transition-colors border border-transparent hover:border-stone-300"
-                          onClick={() => {
-                            setEditingItemIndex(i);
-                            setEditingQtyIndex(null);
-                            setEditItemCost(String(calculateItemCost(item)));
-                          }}
-                          title="Натисніть, щоб змінити собівартість для цього замовлення"
-                        >
-                          закупка: {formatMoney(calculateItemCost(item))} ₴
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
+                    {order.status === 'new' && (
+                      <button
+                        onClick={() => handleDeleteItem(i)}
+                        disabled={updating}
+                        style={{ padding: '6px', color: '#d6d3d1', background: 'transparent', border: 'none', borderRadius: '8px', cursor: 'pointer', flexShrink: 0 }}
+                        className="hover:text-red-500 hover:bg-red-50 transition-all"
+                        title="Видалити товар із замовлення"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </div>
-                  {order.status === 'new' && (
-                    <button
-                      onClick={() => handleDeleteItem(i)}
-                      disabled={updating}
-                      className="p-1.5 text-stone-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all flex-shrink-0"
-                      title="Видалити товар із замовлення"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-              );
+                );
               })}
             </div>
+
             {order.status === 'new' && (
-              <div className="px-5 py-4 border-t border-stone-100">
+              <div style={{ padding: '16px 28px', borderTop: '1px solid #f5f5f4' }}>
                 <button
                   onClick={() => setShowAddProduct(true)}
                   disabled={updating}
-                  className="w-full flex items-center justify-center gap-2 text-[13px] font-bold text-stone-700 hover:text-stone-900 bg-stone-50 hover:bg-stone-100 border-2 border-dashed border-stone-200 hover:border-stone-300 px-4 py-3.5 rounded-xl transition-all"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#44403c',
+                    background: '#fafaf9',
+                    border: '2px dashed #e7e5e4',
+                    padding: '14px',
+                    borderRadius: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  className="hover:bg-stone-100 hover:border-stone-400 hover:text-stone-900"
                 >
                   <Plus size={16} />
                   Додати товар
@@ -628,65 +745,85 @@ export default function OrderDetailPage() {
             )}
             
             {/* Фінансова статистика замовлення */}
-            <div className="px-5 py-5 border-t border-stone-100 bg-stone-50/40 space-y-4">
+            <div style={{ padding: '24px 28px', borderTop: '1px solid #f0efed', background: '#fafaf9', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Сума товарів */}
-              <div className="flex justify-between items-center text-[17px] md:text-[18px] font-bold text-stone-700">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '16px', fontWeight: 700, color: '#44403c' }}>
                 <span>Загалом по товарах</span>
-                <span className="tabular-nums text-stone-900 font-black text-[20px] md:text-[22px]">{formatMoney(order.total)} ₴</span>
+                <span style={{ color: '#1c1917', fontWeight: 900, fontSize: '20px', fontVariantNumeric: 'tabular-nums' }}>{formatMoney(order.total)} ₴</span>
               </div>
 
               {/* Ручні витрати на пакування */}
-              <div className="flex justify-between items-center text-[16px] md:text-[17px] font-semibold text-stone-600">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '15px', fontWeight: 600, color: '#57534e' }}>
                 <span>Вартість пакування</span>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex items-center">
-                    <input
-                      type="number"
-                      min="0"
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="number"
+                    min="0"
+                    disabled={updating}
+                    value={packagingCost}
+                    onChange={(e) => {
+                      setPackagingCost(e.target.value);
+                      setIsPackagingChanged(e.target.value !== String(order.packaging_cost || 0));
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && isPackagingChanged && handlePackagingSave()}
+                    style={{
+                      width: '88px',
+                      textAlign: 'right',
+                      padding: '6px 10px',
+                      background: 'white',
+                      border: '1.5px solid #e7e5e4',
+                      borderRadius: '8px',
+                      fontSize: '15px',
+                      fontWeight: 700,
+                      color: '#1c1917',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#a8a29e' }}>₴</span>
+                  
+                  {isPackagingChanged && (
+                    <button
+                      onClick={handlePackagingSave}
                       disabled={updating}
-                      value={packagingCost}
-                      onChange={(e) => {
-                        setPackagingCost(e.target.value);
-                        setIsPackagingChanged(e.target.value !== String(order.packaging_cost || 0));
-                      }}
-                      onKeyDown={(e) => e.key === 'Enter' && isPackagingChanged && handlePackagingSave()}
-                      className="w-20 text-right px-2 py-1 bg-white border border-stone-200/80 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 text-[15px] font-bold text-stone-800"
-                    />
-                    <span className="text-sm font-semibold text-stone-400 ml-1.5">₴</span>
-                    
-                    {isPackagingChanged && (
-                      <button
-                        onClick={handlePackagingSave}
-                        disabled={updating}
-                        className="ml-2 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all shadow-sm"
-                        title="Зберегти пакування"
-                      >
-                        <Check size={12} strokeWidth={3} />
-                      </button>
-                    )}
-                  </div>
+                      style={{ width: '24px', height: '24px', background: '#10b981', color: 'white', borderRadius: '999px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      title="Зберегти пакування"
+                    >
+                      <Check size={14} strokeWidth={3} />
+                    </button>
+                  )}
                 </div>
               </div>
 
-              <div className="border-t border-stone-200/60 my-2" />
+              <div style={{ height: '1px', background: '#e7e5e4', margin: '4px 0' }} />
 
-              {/* Розрахункова собівартість (COGS + пакування) */}
-              <div className="flex justify-between items-start text-[15px] font-semibold text-stone-500">
-                <div className="flex flex-col">
+              {/* Розрахункова собівартість */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '14px', fontWeight: 600, color: '#78716c' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span>Собівартість замовлення</span>
-                  <span className="text-xs font-normal text-stone-400/90 mt-0.5">
+                  <span style={{ fontSize: '12px', fontWeight: 400, color: '#a8a29e', marginTop: '2px' }}>
                     (товари: {formatMoney(itemsTotalCost)} ₴ + пакування: {formatMoney(Number(packagingCost) || 0)} ₴)
                   </span>
                 </div>
-                <span className="tabular-nums text-stone-800 font-bold text-[16px] md:text-[17px]">{formatMoney(itemsTotalCost + (Number(packagingCost) || 0))} ₴</span>
+                <span style={{ color: '#1c1917', fontWeight: 700, fontSize: '16px', fontVariantNumeric: 'tabular-nums' }}>
+                  {formatMoney(itemsTotalCost + (Number(packagingCost) || 0))} ₴
+                </span>
               </div>
 
               {/* Чистий прибуток */}
-              <div className="flex justify-between items-center p-3 bg-emerald-50/60 rounded-xl border border-emerald-100/80 shadow-[0_1px_3px_rgba(16,185,129,0.03)] mt-2">
-                <span className="text-[15px] md:text-[16px] text-emerald-850 font-bold">Чистий прибуток</span>
-                <div className="flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
-                  <span className="text-[16px] md:text-[17px] font-extrabold text-emerald-700 tabular-nums">
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                padding: '16px 20px', 
+                background: '#f0fdf4', 
+                borderRadius: '12px', 
+                border: '1px solid #bbf7d0', 
+                marginTop: '4px' 
+              }}>
+                <span style={{ fontSize: '16px', color: '#14532d', fontWeight: 700 }}>Чистий прибуток</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={18} color="#16a34a" />
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#15803d', fontVariantNumeric: 'tabular-nums' }}>
                     +{formatMoney(Number(order.total || 0) - (itemsTotalCost + (Number(packagingCost) || 0)))} ₴
                   </span>
                 </div>
@@ -696,178 +833,381 @@ export default function OrderDetailPage() {
 
           {/* Notes */}
           {order.notes && (
-            <div className="bg-amber-50/60 rounded-lg border border-amber-200/60 p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-semibold text-stone-800">Коментар клієнта</h2>
+            <div style={{
+              background: '#fffbeb',
+              borderRadius: '16px',
+              border: '1px solid rgba(251,191,36,0.3)',
+              padding: '20px 28px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <FileText size={16} color="#d97706" />
+                <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#92400e', margin: 0 }}>Коментар клієнта</h2>
               </div>
-              <p className="text-sm text-stone-600 italic">"{order.notes}"</p>
+              <p style={{ fontSize: '14px', color: '#78350f', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>"{order.notes}"</p>
             </div>
           )}
         </div>
 
         {/* Right column — info */}
-        <div className="space-y-[5px] lg:sticky lg:top-5">
-          {/* Status management */}
-          <div className="bg-white rounded-lg border border-stone-200/80 p-5">
-            <h2 className="text-sm font-semibold text-stone-800 mb-4">Статус</h2>
-            <select
-              value={order.status}
-              onChange={(e) => promptStatusChange(e.target.value)}
-              disabled={updating}
-              style={{ color: status.color, backgroundColor: status.bg }}
-              className="w-full text-sm font-semibold px-4 py-2.5 rounded-lg border-0 cursor-pointer outline-none focus:ring-2 focus:ring-stone-300 transition-all mb-4"
-            >
-              {STATUS_OPTIONS.map(s => (
-                <option key={s.id} value={s.id}>{s.label}</option>
-              ))}
-            </select>
-
-            {/* TTN */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">ТТН</label>
-              <div className="flex items-center gap-2">
-                {order.delivery_method === 'nova_poshta' && (
-                  <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" className="w-6 h-6 object-contain opacity-80 shrink-0" />
-                )}
-                {order.delivery_method === 'ukrposhta' && (
-                  <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" className="w-6 h-6 object-contain opacity-80 shrink-0" />
-                )}
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    type="text"
-                    placeholder="Введіть номер ТТН"
-                    value={ttn}
-                    onChange={(e) => {
-                      setTtn(e.target.value);
-                      setIsTtnChanged(e.target.value !== (order.tracking_number || ''));
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && isTtnChanged && handleTtnSave()}
-                    className="w-full text-sm font-mono px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition"
-                  />
-                  {isTtnChanged && (
-                    <button
-                      onClick={handleTtnSave}
-                      disabled={updating}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all"
-                    >
-                      <Check size={14} strokeWidth={3} />
-                    </button>
-                  )}
-                </div>
-                {order.tracking_number && (
-                  <button
-                    onClick={handleSyncStatus}
-                    disabled={updating}
-                    className={`p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-all ${updating ? 'animate-spin opacity-50' : ''}`}
-                    title="Синхронізація з поштою"
-                  >
-                    <RefreshCw size={16} />
-                  </button>
-                )}
+        <div className="space-y-[20px] lg:sticky lg:top-5" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Status management SectionCard */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            border: '1px solid rgba(231,229,228,0.8)',
+            boxShadow: '0 2px 12px rgba(28,25,23,0.04), 0 1px 3px rgba(28,25,23,0.03)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '18px 24px',
+              borderBottom: '1px solid #f5f5f4',
+              background: 'linear-gradient(to bottom, #fafaf9, white)'
+            }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: '#f0fdf4',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <ShoppingBag size={18} color="#16a34a" />
               </div>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>Статус та відправка</h2>
             </div>
 
-            {/* Чек (посилання) */}
-            <div className="space-y-2 mt-5 pt-5 border-t border-stone-100">
-              <label className="text-xs font-semibold text-stone-500 uppercase tracking-wider">Чек (посилання)</label>
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 min-w-0">
-                  <input
-                    type="text"
-                    placeholder="Введіть посилання на чек"
-                    value={fiscalReceiptUrl}
-                    onChange={(e) => {
-                      setFiscalReceiptUrl(e.target.value);
-                      setIsReceiptUrlChanged(e.target.value !== (order.fiscal_receipt_url || ''));
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && isReceiptUrlChanged && handleReceiptUrlSave()}
-                    className="w-full text-sm font-mono px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition"
-                  />
-                  {isReceiptUrlChanged && (
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <select
+                value={order.status}
+                onChange={(e) => promptStatusChange(e.target.value)}
+                disabled={updating}
+                style={{
+                  color: status.color,
+                  backgroundColor: status.bg,
+                  width: '100%',
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  border: '1.5px solid rgba(0,0,0,0.05)',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {STATUS_OPTIONS.map(s => (
+                  <option key={s.id} value={s.id}>{s.label}</option>
+                ))}
+              </select>
+
+              {/* TTN */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Номер ТТН
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {order.delivery_method === 'nova_poshta' && (
+                    <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" style={{ width: '24px', height: '24px', objectFit: 'contain', opacity: 0.9, flexShrink: 0 }} />
+                  )}
+                  {order.delivery_method === 'ukrposhta' && (
+                    <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" style={{ width: '24px', height: '24px', objectFit: 'contain', opacity: 0.9, flexShrink: 0 }} />
+                  )}
+                  <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                    <input
+                      type="text"
+                      placeholder="Введіть номер ТТН"
+                      value={ttn}
+                      onChange={(e) => {
+                        setTtn(e.target.value);
+                        setIsTtnChanged(e.target.value !== (order.tracking_number || ''));
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && isTtnChanged && handleTtnSave()}
+                      style={{
+                        width: '100%',
+                        fontSize: '14px',
+                        fontFamily: 'monospace',
+                        padding: '10px 36px 10px 14px',
+                        background: '#fafaf9',
+                        border: '1.5px solid #e7e5e4',
+                        borderRadius: '10px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        color: '#1c1917'
+                      }}
+                    />
+                    {isTtnChanged && (
+                      <button
+                        onClick={handleTtnSave}
+                        disabled={updating}
+                        style={{
+                          position: 'absolute',
+                          right: '6px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '24px',
+                          height: '24px',
+                          background: '#10b981',
+                          color: 'white',
+                          borderRadius: '999px',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <Check size={14} strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
+                  {order.tracking_number && (
                     <button
-                      onClick={handleReceiptUrlSave}
+                      onClick={handleSyncStatus}
                       disabled={updating}
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all"
-                      title="Зберегти чек"
+                      style={{
+                        padding: '10px',
+                        color: '#78716c',
+                        background: '#fafaf9',
+                        border: '1.5px solid #e7e5e4',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                      className={`hover:bg-stone-100 transition-all ${updating ? 'animate-spin opacity-50' : ''}`}
+                      title="Синхронізація з поштою"
                     >
-                      <Check size={14} strokeWidth={3} />
+                      <RefreshCw size={16} />
                     </button>
                   )}
                 </div>
-                {order.fiscal_receipt_url && (
-                  <a
-                    href={order.fiscal_receipt_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-all shrink-0"
-                    title="Переглянути чек у новій вкладці"
-                  >
-                    <ExternalLink size={16} />
-                  </a>
-                )}
+              </div>
+
+              {/* Чек (посилання) */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '16px', borderTop: '1px solid #f5f5f4' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Чек (посилання)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+                    <input
+                      type="text"
+                      placeholder="Введіть посилання на чек"
+                      value={fiscalReceiptUrl}
+                      onChange={(e) => {
+                        setFiscalReceiptUrl(e.target.value);
+                        setIsReceiptUrlChanged(e.target.value !== (order.fiscal_receipt_url || ''));
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && isReceiptUrlChanged && handleReceiptUrlSave()}
+                      style={{
+                        width: '100%',
+                        fontSize: '14px',
+                        fontFamily: 'monospace',
+                        padding: '10px 36px 10px 14px',
+                        background: '#fafaf9',
+                        border: '1.5px solid #e7e5e4',
+                        borderRadius: '10px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        color: '#1c1917'
+                      }}
+                    />
+                    {isReceiptUrlChanged && (
+                      <button
+                        onClick={handleReceiptUrlSave}
+                        disabled={updating}
+                        style={{
+                          position: 'absolute',
+                          right: '6px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '24px',
+                          height: '24px',
+                          background: '#10b981',
+                          color: 'white',
+                          borderRadius: '999px',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer'
+                        }}
+                        title="Зберегти чек"
+                      >
+                        <Check size={14} strokeWidth={3} />
+                      </button>
+                    )}
+                  </div>
+                  {order.fiscal_receipt_url && (
+                    <a
+                      href={order.fiscal_receipt_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '10px',
+                        color: '#78716c',
+                        background: '#fafaf9',
+                        border: '1.5px solid #e7e5e4',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        textDecoration: 'none'
+                      }}
+                      className="hover:bg-stone-100 transition-all shrink-0"
+                      title="Переглянути чек у новій вкладці"
+                    >
+                      <ExternalLink size={16} />
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Customer info */}
-          <div className="bg-white rounded-lg border border-stone-200/80 p-5">
-            <h2 className="text-sm font-semibold text-stone-800 mb-4">Клієнт</h2>
-            <div className="space-y-3">
+          {/* Customer info SectionCard */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            border: '1px solid rgba(231,229,228,0.8)',
+            boxShadow: '0 2px 12px rgba(28,25,23,0.04), 0 1px 3px rgba(28,25,23,0.03)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '18px 24px',
+              borderBottom: '1px solid #f5f5f4',
+              background: 'linear-gradient(to bottom, #fafaf9, white)'
+            }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: '#eff6ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <User size={18} color="#3b82f6" />
+              </div>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>Дані клієнта</h2>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {order.full_name && (
-                <div className="flex items-center gap-2.5">
-                  <User className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                  <span className="text-sm text-stone-700">{order.full_name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <User size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>{order.full_name}</span>
                 </div>
               )}
               {order.phone && (
-                <div className="flex items-center gap-2.5">
-                  <Phone className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                  <span className="text-sm text-stone-700">{order.phone}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Phone size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c' }}>{order.phone}</span>
                 </div>
               )}
               {order.email && (
-                <div className="flex items-center gap-2.5">
-                  <Mail className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                  <span className="text-sm text-stone-700 truncate">{order.email}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Mail size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.email}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Delivery & Payment */}
-          <div className="bg-white rounded-lg border border-stone-200/80 p-5">
-            <h2 className="text-sm font-semibold text-stone-800 mb-4">Доставка та оплата</h2>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2.5">
-                <Truck className="w-4 h-4 text-stone-400 flex-shrink-0 mt-0.5" />
+          {/* Delivery & Payment SectionCard */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            border: '1px solid rgba(231,229,228,0.8)',
+            boxShadow: '0 2px 12px rgba(28,25,23,0.04), 0 1px 3px rgba(28,25,23,0.03)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '14px',
+              padding: '18px 24px',
+              borderBottom: '1px solid #f5f5f4',
+              background: 'linear-gradient(to bottom, #fafaf9, white)'
+            }}>
+              <div style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '10px',
+                background: '#fef3c7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Truck size={18} color="#d97706" />
+              </div>
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>Доставка та оплата</h2>
+            </div>
+
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <Truck size={16} color="#a8a29e" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>
-                  <p className="text-sm text-stone-700">{DELIVERY_LABELS[order.delivery_method] || order.delivery_method}</p>
-                  {order.address && <p className="text-xs text-stone-400 mt-0.5">{order.address}</p>}
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: 0 }}>
+                    {DELIVERY_LABELS[order.delivery_method] || order.delivery_method}
+                  </p>
+                  {order.address && <p style={{ fontSize: '13px', color: '#78716c', margin: '4px 0 0', lineHeight: 1.4 }}>{order.address}</p>}
                 </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <CreditCard className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                <span className="text-sm text-stone-700">{PAYMENT_LABELS[order.payment_method] || order.payment_method}</span>
+              <div style={{ height: '1px', background: '#f5f5f4' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CreditCard size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>
+                  {PAYMENT_LABELS[order.payment_method] || order.payment_method}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Global Notes */}
-          <div className="bg-amber-50/80 rounded-lg border border-amber-200/60 p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
-            <div className="flex items-center gap-2 mb-3">
-              <FileText className="w-4 h-4 text-amber-600" />
-              <h2 className="text-sm font-bold text-amber-900">Блокнот</h2>
+          {/* Global Notes SectionCard */}
+          <div style={{
+            background: '#fffbeb',
+            borderRadius: '16px',
+            border: '1px solid rgba(251,191,36,0.3)',
+            padding: '20px 24px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.02)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <FileText size={16} color="#d97706" />
+              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#92400e', margin: 0 }}>Глобальний блокнот</h2>
             </div>
             <textarea
-              className="w-full text-sm px-3 py-2 bg-white/80 border border-amber-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-400 transition resize-none custom-scrollbar text-amber-950 font-medium"
+              style={{
+                width: '100%',
+                fontSize: '14px',
+                padding: '12px 14px',
+                background: 'rgba(255,255,255,0.8)',
+                border: '1.5px solid rgba(251,191,36,0.4)',
+                borderRadius: '10px',
+                outline: 'none',
+                resize: 'none',
+                color: '#78350f',
+                fontWeight: 500,
+                fontFamily: 'Inter, system-ui, sans-serif',
+                boxSizing: 'border-box'
+              }}
               rows={5}
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
               onBlur={handleAdminNotesSave}
+              placeholder="Замітки адміністраторів (зберігаються глобально)..."
             />
             {isNotesSaving && (
-              <p className="text-xs text-stone-400 mt-2 flex items-center gap-1">
+              <p style={{ fontSize: '12px', color: '#a8a29e', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <RefreshCw size={12} className="animate-spin" /> Збереження...
               </p>
             )}
@@ -888,7 +1228,6 @@ export default function OrderDetailPage() {
           onClose={() => setShowAddProduct(false)}
         />
       )}
-      {/* Модальне вікно для збільшеного фото */}
       {zoomedImage && (
         <ImageZoom 
           src={zoomedImage} 

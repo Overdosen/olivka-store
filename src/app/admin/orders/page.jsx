@@ -5,7 +5,6 @@ import { supabase } from '../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../lib/admin-constants';
 import { getPaginatedOrders, getOrderStatusCounts } from '../../actions/orders';
 import StatusBadge from '../../../components/admin/ui/StatusBadge';
-import PageHeader from '../../../components/admin/ui/PageHeader';
 import EmptyState from '../../../components/admin/ui/EmptyState';
 import { Search, X, ShoppingBag, Filter, ChevronDown, ChevronUp, ArrowUpDown, RefreshCw, Check, ExternalLink, Truck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +20,7 @@ export default function OrdersPage() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [statusCounts, setStatusCounts] = useState({ all: 0 });
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const perPage = 20;
 
   // Keep latest parameters in ref for the realtime subscription to avoid connection churn
@@ -108,24 +108,41 @@ export default function OrdersPage() {
   };
 
   const SortIcon = ({ column }) => {
-    if (sortConfig.key !== column) return <ArrowUpDown className="w-3 h-3 text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity" />;
+    if (sortConfig.key !== column) {
+      return <ArrowUpDown size={12} style={{ color: '#d6d3d1', opacity: 0, transition: 'opacity 0.2s' }} className="group-hover:opacity-100" />;
+    }
     return sortConfig.direction === 'asc'
-      ? <ChevronUp className="w-3.5 h-3.5 text-stone-700" />
-      : <ChevronDown className="w-3.5 h-3.5 text-stone-700" />;
+      ? <ChevronUp size={14} style={{ color: '#44403c' }} />
+      : <ChevronDown size={14} style={{ color: '#44403c' }} />;
   };
 
   return (
-    <div className="space-y-5">
-      <PageHeader title="Замовлення" />
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      {/* Page Header (Settings Style) */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#1c1917', margin: 0, letterSpacing: '-0.03em', lineHeight: 1.2 }}>Замовлення</h1>
+          <p style={{ fontSize: '14px', color: '#78716c', margin: '6px 0 0', fontWeight: 400 }}>Управління замовленнями та відправленнями магазину</p>
+        </div>
+      </div>
 
       {/* Status filter chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }} className="scrollbar-none">
         <button
           onClick={() => { setStatusFilter('all'); setPage(1); }}
-          className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${statusFilter === 'all'
-            ? 'bg-stone-900 text-white'
-            : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-50'
-            }`}
+          style={{
+            padding: '8px 16px',
+            borderRadius: '999px',
+            fontSize: '12px',
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+            transition: 'all 0.2s',
+            cursor: 'pointer',
+            border: statusFilter === 'all' ? 'none' : '1.5px solid #e7e5e4',
+            background: statusFilter === 'all' ? '#1c1917' : 'white',
+            color: statusFilter === 'all' ? 'white' : '#57534e',
+            boxShadow: statusFilter === 'all' ? '0 2px 6px rgba(28,25,23,0.15)' : 'none'
+          }}
         >
           Всі ({statusCounts.all || 0})
         </button>
@@ -134,11 +151,19 @@ export default function OrdersPage() {
             <button
               key={s.id}
               onClick={() => { setStatusFilter(s.id); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${statusFilter === s.id
-                ? 'text-white shadow-sm'
-                : 'bg-white border border-stone-200 hover:bg-stone-50'
-                }`}
-              style={statusFilter === s.id ? { backgroundColor: s.color, color: '#fff' } : { color: s.color }}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '999px',
+                fontSize: '12px',
+                fontWeight: 700,
+                whiteSpace: 'nowrap',
+                transition: 'all 0.2s',
+                cursor: 'pointer',
+                border: statusFilter === s.id ? 'none' : '1.5px solid #e7e5e4',
+                backgroundColor: statusFilter === s.id ? s.color : 'white',
+                color: statusFilter === s.id ? '#fff' : s.color,
+                boxShadow: statusFilter === s.id ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
+              }}
             >
               {s.label} ({statusCounts[s.id]})
             </button>
@@ -147,78 +172,142 @@ export default function OrdersPage() {
       </div>
 
       {/* Search + toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="relative w-full sm:max-w-sm">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }} className="sm:flex-row sm:items-center sm:justify-between">
+        <div style={{ position: 'relative', width: '100%', maxWidth: '400px' }}>
+          <Search 
+            size={16} 
+            style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#a8a29e', pointerEvents: 'none' }} 
+          />
           <input
             type="text"
             placeholder="Пошук за ім'ям, №, ТТН, телефоном..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-10 pr-10 py-3 bg-white rounded-lg border border-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-400/20 focus:border-stone-400 transition-all text-sm"
-            style={{ paddingLeft: '44px', paddingRight: '40px' }}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            style={{
+              width: '100%',
+              padding: '12px 38px 12px 44px',
+              background: isSearchFocused ? 'white' : '#fafaf9',
+              borderRadius: '10px',
+              border: isSearchFocused ? '1.5px solid #a8a29e' : '1.5px solid #e7e5e4',
+              fontSize: '14px',
+              color: '#1c1917',
+              outline: 'none',
+              transition: 'all 0.2s',
+              boxSizing: 'border-box',
+              fontFamily: 'Inter, system-ui, sans-serif'
+            }}
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 p-1">
-              <X className="w-4 h-4" />
+            <button 
+              onClick={() => setSearch('')} 
+              style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: '#a8a29e', cursor: 'pointer', padding: '4px', display: 'flex' }}
+            >
+              <X size={16} />
             </button>
           )}
         </div>
-        <div className="text-xs text-stone-400 font-medium">
+        <div style={{ fontSize: '13px', color: '#a8a29e', fontWeight: 500 }}>
           Показано {orders.length} з {totalCount}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-lg border border-stone-200/80 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm min-w-[700px]">
+      {/* Table SectionCard */}
+      <div style={{ 
+        background: 'white', 
+        borderRadius: '16px', 
+        border: '1px solid rgba(231,229,228,0.8)', 
+        boxShadow: '0 2px 12px rgba(28,25,23,0.04), 0 1px 3px rgba(28,25,23,0.03)', 
+        overflow: 'hidden' 
+      }}>
+        {/* Card Header with Gradient */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '14px', 
+          padding: '22px 28px', 
+          borderBottom: '1px solid #f5f5f4', 
+          background: 'linear-gradient(to bottom, #fafaf9, white)' 
+        }}>
+          <div style={{ 
+            width: '44px', 
+            height: '44px', 
+            borderRadius: '12px', 
+            background: '#f0fdf4', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            flexShrink: 0 
+          }}>
+            <ShoppingBag size={20} color="#16a34a" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#1c1917', margin: 0, letterSpacing: '-0.02em' }}>
+              Список замовлень
+            </h2>
+            <p style={{ fontSize: '13px', color: '#a8a29e', margin: '3px 0 0', fontWeight: 400 }}>
+              Клікніть на заголовок колонки для сортування або на номер для деталей
+            </p>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
-              <tr className="border-b border-stone-100 bg-stone-50/50">
+              <tr style={{ borderBottom: '1px solid #f0efed', background: '#fafaf9' }}>
                 {[
-                  { label: '№', key: 'order_number', cls: 'w-20' },
-                  { label: 'Клієнт', key: 'full_name', cls: 'w-56 sm:w-64 lg:w-72 text-center' },
-                  { label: 'Сума', key: 'total', cls: 'w-28' },
-                  { label: 'Статус', key: 'status', cls: 'w-36 text-center' },
-                  { label: 'ТТН', key: 'tracking_number', cls: 'w-56 hidden lg:table-cell text-center' },
-                  { label: 'Дата', key: 'created_at', cls: 'w-28 hidden md:table-cell' },
-                  { label: '', key: null, cls: 'w-14' },
-                  { label: '', key: null, cls: 'w-auto' },
-                ].map((h, idx) => {
-                  const isCentered = h.cls?.includes('text-center');
-                  return (
-                    <th
-                      key={h.key || h.label || `col-${idx}`}
-                      className={`px-6 py-5 text-xs uppercase tracking-widest font-bold text-stone-700 bg-stone-100/50 ${h.key ? 'cursor-pointer hover:text-stone-900 transition-colors group' : ''} ${h.cls}`}
-                      onClick={() => h.key && requestSort(h.key)}
-                    >
-                      {h.key ? (
-                        <div className={`flex items-center gap-1 ${isCentered ? 'justify-center' : ''}`}>
-                          {h.label} <SortIcon column={h.key} />
-                        </div>
-                      ) : h.label}
-                    </th>
-                  );
-                })}
+                  { label: '№', key: 'order_number', width: '60px', center: false },
+                  { label: 'Клієнт', key: 'full_name', width: 'auto', center: true },
+                  { label: 'Сума', key: 'total', width: '90px', center: false },
+                  { label: 'Статус', key: 'status', width: '160px', center: true },
+                  { label: 'ТТН', key: 'tracking_number', width: '220px', center: true, hiddenCls: 'hidden lg:table-cell' },
+                  { label: 'Дата', key: 'created_at', width: '95px', center: false, hiddenCls: 'hidden md:table-cell' },
+                  { label: '', key: null, width: '45px', center: true },
+                ].map((h, idx) => (
+                  <th
+                    key={h.key || h.label || `col-${idx}`}
+                    onClick={() => h.key && requestSort(h.key)}
+                    style={{
+                      padding: '14px 12px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: '#a8a29e',
+                      width: h.width,
+                      cursor: h.key ? 'pointer' : 'default',
+                      userSelect: 'none'
+                    }}
+                    className={`${h.hiddenCls || ''} ${h.key ? 'group hover:text-stone-900 transition-colors' : ''}`}
+                  >
+                    {h.key ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: h.center ? 'center' : 'flex-start' }}>
+                        {h.label} <SortIcon column={h.key} />
+                      </div>
+                    ) : h.label}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-50">
+            <tbody style={{ divideWidth: '1px', divideColor: '#f5f5f4' }}>
               {loading ? (
                 [...Array(5)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-10" /></td>
-                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-32" /></td>
-                    <td className="px-6 py-5"><div className="h-4 bg-stone-100 rounded w-16" /></td>
-                    <td className="px-6 py-5"><div className="h-5 bg-stone-100 rounded-full w-24" /></td>
-                    <td className="px-6 py-5 hidden lg:table-cell"><div className="h-4 bg-stone-100 rounded w-28" /></td>
-                    <td className="px-6 py-5 hidden md:table-cell"><div className="h-4 bg-stone-100 rounded w-20" /></td>
-                    <td className="px-6 py-5" />
-                    <td className="px-6 py-5 w-auto" />
+                  <tr key={i} style={{ borderBottom: '1px solid #f5f5f4' }}>
+                    <td style={{ padding: '16px 24px' }}><div style={{ height: '16px', background: '#f0efed', borderRadius: '6px', width: '40px' }} /></td>
+                    <td style={{ padding: '16px 24px' }}><div style={{ height: '16px', background: '#f0efed', borderRadius: '6px', width: '130px', margin: '0 auto' }} /></td>
+                    <td style={{ padding: '16px 24px' }}><div style={{ height: '16px', background: '#f0efed', borderRadius: '6px', width: '64px' }} /></td>
+                    <td style={{ padding: '16px 24px' }}><div style={{ height: '24px', background: '#f0efed', borderRadius: '999px', width: '96px', margin: '0 auto' }} /></td>
+                    <td style={{ padding: '16px 24px' }} className="hidden lg:table-cell"><div style={{ height: '16px', background: '#f0efed', borderRadius: '6px', width: '110px', margin: '0 auto' }} /></td>
+                    <td style={{ padding: '16px 24px' }} className="hidden md:table-cell"><div style={{ height: '16px', background: '#f0efed', borderRadius: '6px', width: '80px' }} /></td>
+                    <td style={{ padding: '16px 24px' }} />
+                    <td style={{ padding: '16px 24px' }} />
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan="8">
+                  <td colSpan="8" style={{ padding: '32px 24px' }}>
                     <EmptyState
                       icon={ShoppingBag}
                       title="Замовлень не знайдено"
@@ -242,26 +331,48 @@ export default function OrdersPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100">
-            <p className="text-xs text-stone-400">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderTop: '1px solid #f5f5f4', background: '#fafaf9' }}>
+            <p style={{ fontSize: '13px', color: '#78716c', margin: 0, fontWeight: 500 }}>
               {(page - 1) * perPage + 1}–{Math.min(page * perPage, totalCount)} з {totalCount}
             </p>
-            <div className="flex items-center gap-1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 disabled:opacity-40 transition-all"
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: page === 1 ? '#a8a29e' : '#44403c',
+                  background: 'white',
+                  border: '1.5px solid #e7e5e4',
+                  borderRadius: '10px',
+                  cursor: page === 1 ? 'default' : 'pointer',
+                  opacity: page === 1 ? 0.5 : 1,
+                  transition: 'all 0.15s'
+                }}
               >
                 ←
               </button>
               {[...Array(Math.min(totalPages, 5))].map((_, i) => {
                 const p = i + 1;
+                const isActive = page === p;
                 return (
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`w-8 h-8 text-xs font-medium rounded-lg transition-all ${page === p ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100'
-                      }`}
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      fontSize: '13px',
+                      fontWeight: isActive ? 700 : 600,
+                      borderRadius: '10px',
+                      border: isActive ? 'none' : '1px solid transparent',
+                      background: isActive ? '#1c1917' : 'transparent',
+                      color: isActive ? 'white' : '#57534e',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
                   >
                     {p}
                   </button>
@@ -270,7 +381,18 @@ export default function OrdersPage() {
               <button
                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 text-xs font-medium text-stone-600 bg-stone-100 rounded-lg hover:bg-stone-200 disabled:opacity-40 transition-all"
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: page === totalPages ? '#a8a29e' : '#44403c',
+                  background: 'white',
+                  border: '1.5px solid #e7e5e4',
+                  borderRadius: '10px',
+                  cursor: page === totalPages ? 'default' : 'pointer',
+                  opacity: page === totalPages ? 0.5 : 1,
+                  transition: 'all 0.15s'
+                }}
               >
                 →
               </button>
@@ -288,6 +410,7 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
   const [updating, setUpdating] = useState(false);
   const [ttn, setTtn] = useState(order.tracking_number || '');
   const [isTtnChanged, setIsTtnChanged] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const status = STATUS_MAP[order.status] || STATUS_MAP.new;
 
   async function handleStatusChange(e) {
@@ -373,54 +496,82 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
   const items = Array.isArray(order.items) ? order.items : [];
 
   return (
-    <tr className="hover:bg-stone-50/60 transition-colors group">
+    <tr 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ 
+        borderBottom: '1px solid #f5f5f4',
+        background: isHovered ? '#fafaf9' : 'transparent',
+        transition: 'background 0.15s'
+      }}
+    >
       {/* № або платформа */}
-      <td className="px-6 py-5">
+      <td style={{ padding: '14px 12px' }}>
         {order.marketplace_platform ? (
-          <Link href={`/admin/orders/${order.id}`} className="flex flex-col items-center gap-1 w-fit">
+          <Link href={`/admin/orders/${order.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', width: 'fit-content' }}>
             {order.marketplace_platform === 'instagram' ? (
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 shadow-sm">
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="white" strokeWidth="1.8">
+              <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #a855f7, #ec4899, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
+                <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px' }} fill="none" stroke="white" strokeWidth="1.8">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
                   <circle cx="12" cy="12" r="4"/>
                   <circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/>
                 </svg>
               </div>
             ) : (
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-red-500 to-orange-400 shadow-sm">
-                <span className="text-white font-black text-sm">K</span>
+              <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #ef4444, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
+                <span style={{ color: 'white', fontWeight: 900, fontSize: '14px' }}>K</span>
               </div>
             )}
-            <span className="text-[10px] text-stone-400 font-medium">#{order.order_number}</span>
+            <span style={{ fontSize: '11px', color: '#a8a29e', fontWeight: 600 }}>#{order.order_number}</span>
           </Link>
         ) : (
-          <Link href={`/admin/orders/${order.id}`} className="text-sm font-semibold text-stone-800 hover:text-stone-600 transition-colors">
+          <Link href={`/admin/orders/${order.id}`} style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', textDecoration: 'none' }}>
             #{order.order_number}
           </Link>
         )}
       </td>
 
       {/* Client */}
-      <td className="px-6 py-5 text-center">
-        <Link href={`/admin/orders/${order.id}`} className="min-w-0 block hover:opacity-80 transition-opacity">
-          <p className="text-sm font-medium text-stone-800 truncate">{order.full_name || 'Гість'}</p>
-          <p className="text-xs text-stone-400 truncate">{order.phone || order.email || '—'}</p>
+      <td style={{ padding: '14px 12px', textAlign: 'center' }}>
+        <Link href={`/admin/orders/${order.id}`} style={{ textDecoration: 'none', display: 'block', minWidth: 0 }}>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {order.full_name || 'Гість'}
+          </p>
+          <p style={{ fontSize: '12px', color: '#a8a29e', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {order.phone || order.email || '—'}
+          </p>
         </Link>
       </td>
 
       {/* Total */}
-      <td className="px-6 py-5">
-        <span className="text-sm font-semibold text-stone-800 tabular-nums">{formatMoney(order.total)} ₴</span>
+      <td style={{ padding: '14px 12px' }}>
+        <span style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', fontVariantNumeric: 'tabular-nums' }}>
+          {formatMoney(order.total)} ₴
+        </span>
       </td>
 
       {/* Status */}
-      <td className="px-6 py-5">
+      <td style={{ padding: '14px 12px', textAlign: 'center' }}>
         <select
           value={order.status}
           onChange={handleStatusChange}
           disabled={updating}
-          style={{ color: status.color, backgroundColor: status.bg, textAlignLast: 'center' }}
-          className="text-[11px] font-semibold px-2.5 py-1.5 rounded-full border-0 cursor-pointer outline-none focus:ring-2 focus:ring-stone-300 transition-all w-full max-w-[130px] text-center"
+          style={{ 
+            color: status.color, 
+            backgroundColor: status.bg, 
+            textAlignLast: 'center',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '7px 22px 7px 14px',
+            borderRadius: '999px',
+            border: 'none',
+            cursor: 'pointer',
+            outline: 'none',
+            width: 'auto',
+            minWidth: '150px',
+            maxWidth: '180px',
+            display: 'inline-block'
+          }}
         >
           {STATUS_OPTIONS.map(s => (
             <option key={s.id} value={s.id}>{s.label}</option>
@@ -429,15 +580,15 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
       </td>
 
       {/* TTN */}
-      <td className="px-5 py-4 whitespace-nowrap hidden lg:table-cell">
-        <div className="flex items-center gap-2 w-[180px] mr-4">
+      <td style={{ padding: '14px 12px', whiteSpace: 'nowrap' }} className="hidden lg:table-cell">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '215px', margin: '0 auto' }}>
           {order.delivery_method === 'nova_poshta' && (
-            <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" className="w-5 h-5 object-contain opacity-80 shrink-0" />
+            <img src="/footerlogos/NP-mini-icon.svg" alt="Нова Пошта" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.8, flexShrink: 0 }} />
           )}
           {order.delivery_method === 'ukrposhta' && (
-            <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" className="w-5 h-5 object-contain opacity-80 shrink-0" />
+            <img src="/footerlogos/Ukrposhta-mini-icon.svg" alt="Укрпошта" style={{ width: '20px', height: '20px', objectFit: 'contain', opacity: 0.8, flexShrink: 0 }} />
           )}
-          <div className="relative flex-1 min-w-0">
+          <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
             <input
               type="text"
               placeholder="—"
@@ -447,13 +598,39 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
                 setIsTtnChanged(e.target.value !== (order.tracking_number || ''));
               }}
               onKeyDown={(e) => e.key === 'Enter' && isTtnChanged && handleTtnSave()}
-              className="text-[11px] font-mono px-2 py-1.5 w-full bg-stone-50 border border-stone-200 rounded-md focus:outline-none focus:ring-1 focus:ring-stone-400 transition"
+              style={{
+                fontSize: '12.5px',
+                fontFamily: 'monospace',
+                padding: '6px 26px 6px 8px',
+                width: '100%',
+                background: '#fafaf9',
+                border: '1.5px solid #e7e5e4',
+                borderRadius: '8px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                color: '#1c1917'
+              }}
             />
             {isTtnChanged && (
               <button
                 onClick={handleTtnSave}
                 disabled={updating}
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center hover:bg-emerald-600 transition-all"
+                style={{
+                  position: 'absolute',
+                  right: '4px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '20px',
+                  height: '20px',
+                  background: '#10b981',
+                  color: 'white',
+                  borderRadius: '999px',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
               >
                 <Check size={12} strokeWidth={3} />
               </button>
@@ -463,7 +640,18 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
             <button
               onClick={handleSyncStatus}
               disabled={updating}
-              className={`p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-all flex-shrink-0 ${updating ? 'animate-spin opacity-50' : ''}`}
+              style={{
+                padding: '6px',
+                color: '#a8a29e',
+                background: 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                flexShrink: 0
+              }}
+              className={`hover:bg-stone-100 transition-all ${updating ? 'animate-spin opacity-50' : ''}`}
               title="Синхронізація з поштою"
             >
               <RefreshCw size={14} />
@@ -473,23 +661,27 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
       </td>
 
       {/* Date */}
-      <td className="px-6 py-5 hidden md:table-cell">
-        <span className="text-xs text-stone-400">{formatDateShort(order.created_at)}</span>
+      <td style={{ padding: '14px 12px' }} className="hidden md:table-cell">
+        <span style={{ fontSize: '13px', color: '#a8a29e', fontWeight: 500 }}>{formatDateShort(order.created_at)}</span>
       </td>
 
       {/* Actions */}
-      <td className="px-6 py-5">
+      <td style={{ padding: '14px 12px', textAlign: 'center' }}>
         <Link
           href={`/admin/orders/${order.id}`}
-          className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-all inline-flex"
+          style={{
+            padding: '8px',
+            color: '#a8a29e',
+            borderRadius: '8px',
+            display: 'inline-flex',
+            transition: 'all 0.15s'
+          }}
+          className="hover:text-stone-800 hover:bg-stone-100"
           title="Деталі"
         >
-          <ExternalLink size={14} />
+          <ExternalLink size={15} />
         </Link>
       </td>
-
-      {/* Spacer to push columns left */}
-      <td className="px-6 py-5 w-auto"></td>
     </tr>
   );
 }
