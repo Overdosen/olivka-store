@@ -228,7 +228,7 @@ export default function AccountClient() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
               {/* Ім'я і прізвище поруч */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <EditInput label="Ім'я"     value={firstName} onChange={e => setFirstName(e.target.value)} />
                 <EditInput label="Прізвище" value={lastName}  onChange={e => setLastName(e.target.value)} />
               </div>
@@ -263,7 +263,7 @@ export default function AccountClient() {
               <div style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(82,79,37,0.1)' }}>
                 <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#524f25', marginBottom: '0.875rem' }}>Зміна пароля (необов'язково)</h3>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Новий пароль */}
                   <div>
                     <label style={{ display: 'block', fontFamily: 'var(--font-sans)', fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(82,79,37,0.45)', marginBottom: '0.4rem' }}>Новий пароль</label>

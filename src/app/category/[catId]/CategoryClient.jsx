@@ -113,12 +113,13 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
     }
     return true;
   }).sort((a, b) => {
-    const aHasSizes = a.sizes && a.sizes.length > 0;
-    const aIsAvailable = aHasSizes ? a.sizes.some(s => s.quantity > 0) : a.stock > 0;
-
-    const bHasSizes = b.sizes && b.sizes.length > 0;
-    const bIsAvailable = bHasSizes ? b.sizes.some(s => s.quantity > 0) : b.stock > 0;
-
+    const getAvail = (p) => {
+      if (p.bundleAvailable !== undefined) return p.bundleAvailable;
+      const hasSizes = p.sizes && p.sizes.length > 0;
+      return hasSizes ? p.sizes.some(s => s.quantity > 0) : p.stock > 0;
+    };
+    const aIsAvailable = getAvail(a);
+    const bIsAvailable = getAvail(b);
     if (aIsAvailable === bIsAvailable) return 0;
     return aIsAvailable ? -1 : 1;
   });
@@ -235,7 +236,10 @@ function ProductCard({ product, index }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef(null);
   const hasSizes = product.sizes && product.sizes.length > 0;
-  const isAvailable = hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0;
+  // bundleAvailable is set server-side for fullset products (computed from component stocks)
+  const isAvailable = product.bundleAvailable !== undefined
+    ? product.bundleAvailable
+    : (hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0);
 
   useEffect(() => {
     if (imgRef.current?.complete) {

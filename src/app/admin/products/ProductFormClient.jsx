@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
-import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette, Check } from 'lucide-react';
+import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette, Check, Boxes, Plus, X as XIcon, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -172,6 +172,14 @@ export default function ProductFormClient({ id }) {
   const [targetUrl, setTargetUrl] = useState(null);
   const [mounted, setMounted] = useState(false);
 
+  // ── Bundle components (Готові рішення) ───────────────────────────────────
+  const [bundleComponents, setBundleComponents] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [componentSearch, setComponentSearch] = useState('');
+  const [showComponentDropdown, setShowComponentDropdown] = useState(false);
+  // pendingProduct: товар обраний в dropdown, чекає вибору розміру
+  const [pendingProduct, setPendingProduct] = useState(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -290,6 +298,7 @@ export default function ProductFormClient({ id }) {
 
   useEffect(() => {
     fetchCategories();
+    fetchAllProductsForBundle();
     if (isEditing) {
       fetchProduct();
     }
@@ -304,6 +313,46 @@ export default function ProductFormClient({ id }) {
     }
   }, [formData.sizes]);
 
+  // Auto-calculate stock/price/cost_price from bundle components (Готові рішення)
+  useEffect(() => {
+    if (formData.category_id !== 'fullset') return;
+
+    // Якщо компоненти видалено — скидаємо залишок до 0, але ціни залишаємо (щоб не було "0 грн" на сайті)
+    if (bundleComponents.length === 0) {
+      setFormData(prev => ({ ...prev, stock: 0 }));
+      return;
+    }
+
+    // Stock = мінімум серед компонентів (по вибраному розміру або загальному)
+    const getCompStock = (comp) => {
+      if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
+        const sizeObj = comp.sizes.find(s => s.name === comp.selectedSize);
+        return sizeObj ? (parseInt(sizeObj.quantity) || 0) : 0;
+      }
+      if (comp.sizes && comp.sizes.length > 0) {
+        return comp.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+      }
+      return comp.stock || 0;
+    };
+
+    const minStock = Math.min(...bundleComponents.map(getCompStock));
+
+    // Price = сума цін компонентів
+    const sumPrice = bundleComponents.reduce((sum, c) => sum + (parseFloat(c.price) || 0), 0);
+
+    // Cost price = сума закупівельних цін
+    const sumCostPrice = bundleComponents.reduce((sum, c) => sum + (parseFloat(c.cost_price) || 0), 0);
+
+    setFormData(prev => ({
+      ...prev,
+      stock: minStock,
+      price: String(Math.round(sumPrice)),
+      cost_price: String(sumCostPrice.toFixed(2)),
+    }));
+  }, [bundleComponents, formData.category_id]);
+
+
+
   async function fetchCategories() {
     const { data } = await supabase.from('categories').select('*').order('name');
     if (data) {
@@ -313,6 +362,43 @@ export default function ProductFormClient({ id }) {
       } else {
         setCategories(data);
       }
+    }
+  }
+
+  async function fetchAllProductsForBundle() {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, sku, stock, sizes, price, cost_price')
+      .order('name');
+    if (data) {
+      setAllProducts(data.filter(p => p.id !== id));
+    }
+  }
+
+  async function fetchBundleComponents(bundleId) {
+    const { data } = await supabase
+      .from('product_components')
+      .select('component_id, size, products!component_id(id, name, sku, stock, sizes, price, cost_price)')
+      .eq('bundle_id', bundleId);
+    if (data) {
+      setBundleComponents(
+        data
+          .map(row => row.products ? { ...row.products, selectedSize: row.size || null } : null)
+          .filter(Boolean)
+      );
+    }
+  }
+
+  async function saveBundleComponents(bundleId) {
+    await supabase.from('product_components').delete().eq('bundle_id', bundleId);
+    if (bundleComponents.length > 0) {
+      const rows = bundleComponents.map(c => ({
+        bundle_id: bundleId,
+        component_id: c.id,
+        size: c.selectedSize || null
+      }));
+      const { error } = await supabase.from('product_components').insert(rows);
+      if (error) throw error;
     }
   }
 
@@ -346,6 +432,11 @@ export default function ProductFormClient({ id }) {
       };
 
       setFormData(fetchedProductData);
+
+      // Load bundle components if this is a fullset product
+      if (data.category_id === 'fullset') {
+        await fetchBundleComponents(id);
+      }
 
       const fetchedImages = [];
       if (data.image_url) {
@@ -571,6 +662,11 @@ export default function ProductFormClient({ id }) {
 
       if (error) throw error;
 
+      // Save bundle components if this is a fullset product
+      if (formData.category_id === 'fullset') {
+        await saveBundleComponents(currentId);
+      }
+
       toast.success(isEditing ? 'Товар оновлено' : 'Товар створено');
 
       if (duplicate) {
@@ -739,13 +835,284 @@ export default function ProductFormClient({ id }) {
             <div>
               <label style={F.label}>Категорія<span style={F.req}>*</span></label>
               <select required value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, category_id: e.target.value });
+                  if (e.target.value === 'fullset' && isEditing) {
+                    fetchBundleComponents(id);
+                  } else if (e.target.value !== 'fullset') {
+                    setBundleComponents([]);
+                  }
+                }}
                 style={{ ...F.input, appearance: 'none', cursor: 'pointer' }}
                 onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="">Оберіть категорію...</option>
                 {categories.map((cat) => (<option key={cat.id} value={cat.id}>{cat.name}</option>))}
               </select>
             </div>
+
+            {/* ── Склад набору (тільки для Готових рішень) ── */}
+            {formData.category_id === 'fullset' && (() => {
+              // Якщо зберігається selectedSize — враховуємо сток тільки цього розміру
+              const getComponentStock = (comp) => {
+                if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
+                  const sizeObj = comp.sizes.find(s => s.name === comp.selectedSize);
+                  return sizeObj ? (parseInt(sizeObj.quantity) || 0) : 0;
+                }
+                if (comp.sizes && comp.sizes.length > 0) {
+                  return comp.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0);
+                }
+                return comp.stock || 0;
+              };
+              const hasOutOfStock = bundleComponents.some(c => getComponentStock(c) === 0);
+              const filteredProducts = allProducts.filter(p =>
+                !bundleComponents.some(c => c.id === p.id) &&
+                (componentSearch === '' ||
+                  p.name.toLowerCase().includes(componentSearch.toLowerCase()) ||
+                  (p.sku && p.sku.toLowerCase().includes(componentSearch.toLowerCase())))
+              );
+              return (
+                <div style={{
+                  border: hasOutOfStock ? '1.5px solid #fca5a5' : '1.5px solid #d1fae5',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  background: hasOutOfStock ? '#fff7f7' : '#f0fdf4',
+                  transition: 'all 0.3s'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <Boxes size={18} style={{ color: hasOutOfStock ? '#ef4444' : '#16a34a' }} />
+                    <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: hasOutOfStock ? '#dc2626' : '#15803d' }}>
+                      Склад набору
+                    </span>
+                    {hasOutOfStock && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#dc2626', fontWeight: 600, marginLeft: 'auto' }}>
+                        <AlertCircle size={14} /> Один із товарів відсутній — набір недоступний
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Список доданих компонентів */}
+                  {bundleComponents.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                      {bundleComponents.map((comp, idx) => {
+                        const compStock = getComponentStock(comp);
+                        const outOfStock = compStock === 0;
+                        return (
+                          <div key={`${comp.id}-${comp.selectedSize || idx}`} style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '10px 14px',
+                            background: 'white',
+                            borderRadius: '10px',
+                            border: outOfStock ? '1.5px solid #fca5a5' : '1.5px solid #e7e5e4',
+                            gap: '12px'
+                          }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1c1917', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {comp.name}
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', marginTop: '3px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                {comp.sku && <span style={{ fontSize: '11px', color: '#a8a29e' }}>Арт: {comp.sku}</span>}
+                                {comp.selectedSize && (
+                                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#524f25', background: '#fef9c3', border: '1px solid #fde68a', padding: '1px 6px', borderRadius: '5px' }}>
+                                    📏 {comp.selectedSize}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{
+                              fontSize: '12px', fontWeight: 700,
+                              color: outOfStock ? '#dc2626' : '#16a34a',
+                              whiteSpace: 'nowrap',
+                              padding: '3px 8px',
+                              background: outOfStock ? '#fee2e2' : '#dcfce7',
+                              borderRadius: '6px'
+                            }}>
+                              {outOfStock ? '⚠ 0 шт.' : `${compStock} шт.`}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setBundleComponents(prev => prev.filter((_, i) => i !== idx))}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a8a29e', display: 'flex', padding: '4px', borderRadius: '6px', flexShrink: 0 }}
+                              className="hover:bg-red-50 hover:text-red-500 transition-colors"
+                            >
+                              <XIcon size={16} />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Вибір розміру для pending-товару */}
+                  {pendingProduct && (
+                    <div style={{
+                      marginBottom: '12px',
+                      background: 'white',
+                      border: '1.5px solid #fde68a',
+                      borderRadius: '10px',
+                      padding: '12px 14px'
+                    }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#92400e', marginBottom: '8px' }}>
+                        📏 Оберіть розмір для «{pendingProduct.name}»:
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {pendingProduct.sizes.map(s => {
+                          const qty = parseInt(s.quantity) || 0;
+                          return (
+                            <button
+                              key={s.name}
+                              type="button"
+                              onClick={() => {
+                                setBundleComponents(prev => [...prev, { ...pendingProduct, selectedSize: s.name }]);
+                                setPendingProduct(null);
+                                setComponentSearch('');
+                              }}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '8px',
+                                border: qty === 0 ? '1.5px solid #fca5a5' : '1.5px solid #d1fae5',
+                                background: qty === 0 ? '#fff7f7' : '#f0fdf4',
+                                color: qty === 0 ? '#dc2626' : '#15803d',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s'
+                              }}
+                              className="hover:opacity-80 active:scale-95"
+                            >
+                              {s.name} <span style={{ fontWeight: 400, fontSize: '11px', opacity: 0.8 }}>({qty} шт.)</span>
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setPendingProduct(null)}
+                          style={{ padding: '6px 10px', borderRadius: '8px', border: '1.5px solid #e7e5e4', background: 'white', color: '#a8a29e', fontSize: '12px', cursor: 'pointer' }}
+                        >
+                          Скасувати
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Пошук і додавання нових компонентів */}
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#a8a29e', pointerEvents: 'none' }} />
+                        <input
+                          type="text"
+                          value={componentSearch}
+                          onChange={e => { setComponentSearch(e.target.value); setShowComponentDropdown(true); }}
+                          onFocus={() => setShowComponentDropdown(true)}
+                          placeholder="Пошук товару для додавання..."
+                          style={{ ...F.input, paddingLeft: '36px' }}
+                          onFocus={e => { handleFocus(e); setShowComponentDropdown(true); }}
+                          onBlur={e => { handleBlur(e); setTimeout(() => setShowComponentDropdown(false), 200); }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Dropdown */}
+                    {showComponentDropdown && filteredProducts.length > 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 4px)',
+                        left: 0,
+                        right: 0,
+                        background: 'white',
+                        border: '1.5px solid #e7e5e4',
+                        borderRadius: '12px',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                        zIndex: 50,
+                        maxHeight: '260px',
+                        overflowY: 'auto'
+                      }}>
+                        {filteredProducts.slice(0, 30).map(p => {
+                          const pStock = p.sizes && p.sizes.length > 0
+                            ? p.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0)
+                            : (p.stock || 0);
+                          const oos = pStock === 0;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onMouseDown={() => {
+                                if (p.sizes && p.sizes.length > 0) {
+                                  // Є розміри — показуємо picker
+                                  setPendingProduct(p);
+                                  setShowComponentDropdown(false);
+                                } else {
+                                  // Немає розмірів — додаємо одразу
+                                  setBundleComponents(prev => [...prev, { ...p, selectedSize: null }]);
+                                  setComponentSearch('');
+                                  setShowComponentDropdown(false);
+                                }
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                justifyContent: 'space-between',
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'none',
+                                border: 'none',
+                                borderBottom: '1px solid #f5f5f4',
+                                cursor: 'pointer',
+                                textAlign: 'left',
+                                gap: '12px'
+                              }}
+                              className="hover:bg-stone-50 transition-colors"
+                            >
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#1c1917', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {p.name}
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '3px', alignItems: 'center' }}>
+                                  {p.sku && <span style={{ fontSize: '11px', color: '#a8a29e' }}>Арт: {p.sku}</span>}
+                                  {p.price && <span style={{ fontSize: '11px', color: '#78716c', fontWeight: 600 }}>💰 {p.price} ₴</span>}
+                                  {p.cost_price && <span style={{ fontSize: '11px', color: '#a8a29e' }}>📦 {p.cost_price} ₴</span>}
+                                  {p.sizes && p.sizes.length > 0 && (
+                                    <span style={{ fontSize: '10px', color: '#78716c', background: '#f5f5f4', padding: '1px 5px', borderRadius: '4px' }}>
+                                      {p.sizes.map(s => `${s.name}:${s.quantity}`).join(' · ')}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div style={{
+                                fontSize: '11px', fontWeight: 700,
+                                color: oos ? '#dc2626' : '#16a34a',
+                                whiteSpace: 'nowrap',
+                                padding: '2px 7px',
+                                background: oos ? '#fee2e2' : '#dcfce7',
+                                borderRadius: '5px',
+                                flexShrink: 0,
+                                marginTop: '2px'
+                              }}>
+                                {oos ? '0 шт.' : `${pStock} шт.`}
+                              </div>
+                              <Plus size={14} style={{ color: '#a8a29e', flexShrink: 0, marginTop: '3px' }} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {showComponentDropdown && componentSearch && filteredProducts.length === 0 && (
+                      <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'white', border: '1.5px solid #e7e5e4', borderRadius: '12px', padding: '16px', textAlign: 'center', fontSize: '13px', color: '#a8a29e', zIndex: 50 }}>
+                        Нічого не знайдено
+                      </div>
+                    )}
+                  </div>
+
+                  {bundleComponents.length === 0 && (
+                    <p style={{ fontSize: '12px', color: '#a8a29e', marginTop: '12px', fontStyle: 'italic' }}>
+                      Додайте товари-компоненти цього набору. Якщо хоча б один закінчиться — набір піде в «Немає в наявності».
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             <div>
               <label style={F.label}>Опис</label>
               <textarea rows="5" value={formData.description}
@@ -767,17 +1134,33 @@ export default function ProductFormClient({ id }) {
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   style={{ ...F.input, fontWeight: 700, fontSize: '16px' }}
                   onFocus={handleFocus} onBlur={handleBlur} placeholder="0.00" />
+                {formData.category_id === 'fullset' && bundleComponents.length > 0 && (
+                  <p style={F.hint}>💡 Авто-сума компонентів. Можна редагувати</p>
+                )}
               </div>
               <div>
                 <label style={F.label}>Кількість на складі</label>
                 <input type="number" min="0" value={formData.stock}
-                  disabled={formData.sizes && formData.sizes.length > 0}
+                  disabled={
+                    (formData.sizes && formData.sizes.length > 0) ||
+                    (formData.category_id === 'fullset' && bundleComponents.length > 0)
+                  }
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value === '' ? '' : parseInt(e.target.value) })}
-                  style={{ ...F.input, opacity: (formData.sizes && formData.sizes.length > 0) ? 0.5 : 1, cursor: (formData.sizes && formData.sizes.length > 0) ? 'not-allowed' : 'auto' }}
+                  style={{
+                    ...F.input,
+                    opacity: ((formData.sizes && formData.sizes.length > 0) || (formData.category_id === 'fullset' && bundleComponents.length > 0)) ? 0.6 : 1,
+                    cursor: ((formData.sizes && formData.sizes.length > 0) || (formData.category_id === 'fullset' && bundleComponents.length > 0)) ? 'not-allowed' : 'auto',
+                    background: (formData.category_id === 'fullset' && bundleComponents.length > 0) ? '#f0fdf4' : undefined,
+                    fontWeight: (formData.category_id === 'fullset' && bundleComponents.length > 0) ? 700 : undefined,
+                    color: (formData.category_id === 'fullset' && bundleComponents.length > 0 && formData.stock === 0) ? '#dc2626' : '#16a34a',
+                  }}
                   onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="0" />
                 {formData.sizes && formData.sizes.length > 0 && (
                   <p style={F.hint}>Розраховується з розмірів</p>
+                )}
+                {formData.category_id === 'fullset' && bundleComponents.length > 0 && (
+                  <p style={F.hint}>⚡ Мінімум серед компонентів</p>
                 )}
               </div>
               <div>
@@ -786,8 +1169,12 @@ export default function ProductFormClient({ id }) {
                   onChange={(e) => setFormData({ ...formData, cost_price: e.target.value })}
                   style={F.input} onFocus={handleFocus} onBlur={handleBlur}
                   placeholder="0.00" />
+                {formData.category_id === 'fullset' && bundleComponents.length > 0 && (
+                  <p style={F.hint}>💡 Авто-сума компонентів. Можна редагувати</p>
+                )}
               </div>
             </div>
+
             {margin !== null && formData.cost_price && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '10px',

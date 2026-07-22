@@ -195,7 +195,7 @@ export default function CartDrawer() {
               {cartItems.length === 0 ? (
                 <div style={{ textAlign: 'center', color: 'var(--color-stone-500)', marginTop: '4rem' }}>
                   <ShoppingBagEmptyIcon />
-                  <p style={{ marginTop: '1.5rem', fontSize: '1.125rem', color: '#524f25' }}>Упс! Кошик наразі порожній</p>
+                  <p style={{ marginTop: '1.5rem', fontSize: '1.125rem', color: '#524f25' }}>Кошик наразі порожній</p>
                   <Link
                     href="/catalog"
                     onClick={() => setIsCartOpen(false)}

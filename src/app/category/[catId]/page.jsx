@@ -86,7 +86,47 @@ export default async function CategoryPage({ params }) {
   if (catId) query = query.eq('category_id', catId);
   const { data: prodData } = await query;
 
-  const products = (prodData || []).map(p => ({ ...p, image: p.image_url }));
+  let products = (prodData || []).map(p => ({ ...p, image: p.image_url }));
+
+  // For 'fullset' category: compute availability from component stocks
+  if (catId === 'fullset' && products.length > 0) {
+    const bundleIds = products.map(p => p.id);
+    const { data: compLinks } = await supabase
+      .from('product_components')
+      .select('bundle_id, size, products!component_id(id, stock, sizes)')
+      .in('bundle_id', bundleIds);
+
+    // Group components by bundle_id (include size)
+    const componentsByBundle = {};
+    if (compLinks && compLinks.length > 0) {
+      compLinks.forEach(row => {
+        if (!componentsByBundle[row.bundle_id]) componentsByBundle[row.bundle_id] = [];
+        if (row.products) componentsByBundle[row.bundle_id].push({ ...row.products, selectedSize: row.size || null });
+      });
+    }
+
+    // Mark each bundle product with computed availability
+    products = products.map(p => {
+      const components = componentsByBundle[p.id];
+      // If no components linked, the bundle is explicitly unavailable
+      if (!components || components.length === 0) {
+        return { ...p, bundleAvailable: false };
+      }
+      const allAvailable = components.every(comp => {
+        // If a specific size is linked, check only that size
+        if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
+          const sizeObj = comp.sizes.find(s => s.name === comp.selectedSize);
+          return sizeObj ? (parseInt(sizeObj.quantity) || 0) > 0 : false;
+        }
+        if (comp.sizes && comp.sizes.length > 0) {
+          return comp.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0) > 0;
+        }
+        return (comp.stock || 0) > 0;
+      });
+      return { ...p, bundleAvailable: allAvailable };
+    });
+  }
+
   const categoryWithId = { ...category, id: catId || 'all' };
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://olivka.store';

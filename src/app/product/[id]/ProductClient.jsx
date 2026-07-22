@@ -35,7 +35,12 @@ export default function ProductClient({ product }) {
   }, []);
 
   const hasSizes = product && product.sizes && product.sizes.length > 0;
-  const isAvailable = product && (hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0);
+  // bundleAvailable is set server-side for fullset products (computed from component stocks)
+  const isAvailable = product && (
+    product.bundleAvailable !== undefined
+      ? product.bundleAvailable
+      : (hasSizes ? product.sizes.some(s => s.quantity > 0) : product.stock > 0)
+  );
 
   const galleryImages = [product.image, ...product.galleryLinks].filter(Boolean);
 

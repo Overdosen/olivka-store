@@ -105,6 +105,35 @@ export default async function ProductPage({ params }) {
     reviews: []
   };
 
+  // For fullset products: compute availability from component stocks
+  if (data.category_id === 'fullset') {
+    const { data: compLinks } = await supabaseServer
+      .from('product_components')
+      .select('size, products!component_id(id, stock, sizes)')
+      .eq('bundle_id', id);
+
+    if (compLinks && compLinks.length > 0) {
+      const components = compLinks
+        .map(row => row.products ? { ...row.products, selectedSize: row.size || null } : null)
+        .filter(Boolean);
+      const allAvailable = components.every(comp => {
+        // If a specific size is linked, check only that size
+        if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
+          const sizeObj = comp.sizes.find(s => s.name === comp.selectedSize);
+          return sizeObj ? (parseInt(sizeObj.quantity) || 0) > 0 : false;
+        }
+        if (comp.sizes && comp.sizes.length > 0) {
+          return comp.sizes.reduce((sum, s) => sum + (parseInt(s.quantity) || 0), 0) > 0;
+        }
+        return (comp.stock || 0) > 0;
+      });
+      productWithParsedData.bundleAvailable = allAvailable;
+    } else {
+      // Якщо немає компонентів — набір не може бути зібраний, тому він не в наявності
+      productWithParsedData.bundleAvailable = false;
+    }
+  }
+
   // Use global store rating for product SEO consistency
   const averageRating = "4.9";
   const reviewCount = 154;
