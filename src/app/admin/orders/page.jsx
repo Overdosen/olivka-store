@@ -507,28 +507,26 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
     >
       {/* № або платформа */}
       <td style={{ padding: '14px 12px' }}>
-        {order.marketplace_platform ? (
-          <Link href={`/admin/orders/${order.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', width: 'fit-content' }}>
-            {order.marketplace_platform === 'instagram' ? (
-              <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #a855f7, #ec4899, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
-                <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px' }} fill="none" stroke="white" strokeWidth="1.8">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-                  <circle cx="12" cy="12" r="4"/>
-                  <circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/>
-                </svg>
-              </div>
-            ) : (
-              <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #ef4444, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
-                <span style={{ color: 'white', fontWeight: 900, fontSize: '14px' }}>K</span>
-              </div>
-            )}
-            <span style={{ fontSize: '11px', color: '#a8a29e', fontWeight: 600 }}>#{order.order_number}</span>
-          </Link>
-        ) : (
-          <Link href={`/admin/orders/${order.id}`} style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', textDecoration: 'none' }}>
-            #{order.order_number}
-          </Link>
-        )}
+        <Link href={`/admin/orders/${order.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', width: 'fit-content' }}>
+          {order.marketplace_platform === 'instagram' ? (
+            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #a855f7, #ec4899, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
+              <svg viewBox="0 0 24 24" style={{ width: '20px', height: '20px' }} fill="none" stroke="white" strokeWidth="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none"/>
+              </svg>
+            </div>
+          ) : order.marketplace_platform ? (
+            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #ef4444, #fb923c)', boxShadow: '0 2px 4px rgba(0,0,0,0.08)' }}>
+              <span style={{ color: 'white', fontWeight: 900, fontSize: '14px' }}>K</span>
+            </div>
+          ) : (
+            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafaf9', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: '1px solid #e7e5e4', overflow: 'hidden' }}>
+              <img src="/favicon-96x96.png" alt="Сайт" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            </div>
+          )}
+          <span style={{ fontSize: '11px', color: '#a8a29e', fontWeight: 600 }}>#{order.order_number}</span>
+        </Link>
       </td>
 
       {/* Client */}
