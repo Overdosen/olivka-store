@@ -16,7 +16,7 @@ const NAV_SECTIONS = [
   {
     label: null,
     items: [
-      { name: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+      { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
       { name: 'Замовлення', path: '/admin/orders', icon: ShoppingBag, badge: true },
       { name: 'Клієнти', path: '/admin/customers', icon: Users },
       { name: 'Відгуки', path: '/admin/reviews', icon: MessageSquare, reviewsBadge: true },
@@ -353,11 +353,11 @@ export default function AdminLayout({ children }) {
 
               {/* Breadcrumb (desktop) */}
               <div className="hidden md:flex items-center gap-2" style={{ fontSize: '13px', color: '#a8a29e' }}>
-                {pathname === '/admin' ? (
+                {pathname === '/admin/dashboard' ? (
                   <span style={{ color: '#44403c', fontWeight: '600' }}>Dashboard</span>
                 ) : (
                   <>
-                    <Link href="/admin" style={{ transition: 'color 0.15s' }}
+                    <Link href="/admin/dashboard" style={{ transition: 'color 0.15s' }}
                       onMouseEnter={e => e.currentTarget.style.color = '#57534e'}
                       onMouseLeave={e => e.currentTarget.style.color = '#a8a29e'}
                     >

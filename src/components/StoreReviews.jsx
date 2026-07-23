@@ -187,7 +187,7 @@ export default function StoreReviews() {
                 "ratingValue": String(r.rating)
               }
             }))
-          })
+          }).replace(/</g, '\\u003c')
         }}
       />
     </section>

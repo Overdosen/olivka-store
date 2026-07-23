@@ -156,12 +156,17 @@ export async function getSoldProductsStats(soldDateFilter) {
             categoryName: catalogProd?.categories?.name || '',
             categoryId: catalogProd?.category_id || null,
             isDeleted: !catalogProd,
+            orders: [],
           };
         }
 
         const record = soldMap[key];
         record.totalQuantity += qty;
         record.totalRevenue += qty * price;
+
+        if (!record.orders.find(o => o.id === order.id)) {
+          record.orders.push({ id: order.id, number: order.order_number });
+        }
 
         const sizeKey = size || 'Без розміру';
         record.sizes[sizeKey] = (record.sizes[sizeKey] || 0) + qty;

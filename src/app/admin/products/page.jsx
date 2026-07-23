@@ -598,6 +598,7 @@ export default function AdminProducts() {
                     </select>
                   </th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-stone-500 text-center w-[110px]">Розмір</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-stone-500 text-center w-[140px]">Замовлення</th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-wider font-bold text-stone-500 cursor-pointer hover:text-stone-600 transition-colors group text-center w-[110px]" onClick={() => requestSort('totalQuantity')}>
                     <div className="flex items-center justify-center gap-1.5">Кількість <SortIcon column="totalQuantity" /></div>
                   </th>
@@ -620,6 +621,7 @@ export default function AdminProducts() {
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-48 mb-1.5" /><div className="h-3 bg-stone-100 rounded w-20" /></td>
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-24" /></td>
                       <td className="px-6 py-4 text-center"><div className="h-5 bg-stone-100 rounded w-20 mx-auto" /></td>
+                      <td className="px-6 py-4 text-center"><div className="h-5 bg-stone-100 rounded w-24 mx-auto" /></td>
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-10 mx-auto" /></td>
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-16 mx-auto" /></td>
                       <td className="px-6 py-4"><div className="h-4 bg-stone-100 rounded w-16 mx-auto" /></td>
@@ -628,7 +630,7 @@ export default function AdminProducts() {
                   ))
                 ) : getSortedSoldProducts(getFilteredSoldProducts(soldProducts)).length === 0 ? (
                   <tr>
-                    <td colSpan="8">
+                    <td colSpan="9">
                       <EmptyState
                         icon={Package}
                         title="Проданих товарів не знайдено"
@@ -690,6 +692,17 @@ export default function AdminProducts() {
                               <span key={size} className="inline-flex items-center px-2 py-0.5 rounded-md bg-stone-50 text-[10px] font-bold text-stone-600 border border-stone-200/40 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
                                 {size}: <span className="ml-1 text-stone-800">{qty} шт</span>
                               </span>
+                            ))}
+                          </div>
+                        </td>
+
+                        {/* Замовлення */}
+                        <td className="px-6 py-3.5 text-center">
+                          <div className="flex flex-wrap justify-center gap-1.5 max-w-[140px] mx-auto max-h-[80px] overflow-y-auto">
+                            {product.orders && product.orders.map((o) => (
+                              <Link key={o.id} href={`/admin/orders/${o.id}`} className="inline-flex items-center px-1.5 py-0.5 rounded bg-blue-50 text-[10px] font-bold text-blue-600 border border-blue-200/60 hover:bg-blue-100 transition-colors">
+                                #{o.number}
+                              </Link>
                             ))}
                           </div>
                         </td>
