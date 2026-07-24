@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 
 export async function POST(request) {
   try {
