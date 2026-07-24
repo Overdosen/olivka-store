@@ -4,11 +4,17 @@ import { useEffect } from 'react';
 
 export default function VisitorTracker() {
   useEffect(() => {
-    // Check if we already tracked this session
+    // Visitor ID (Permanent across tabs and reloads)
+    let visitorId = localStorage.getItem('olivka_visitor_id');
+    if (!visitorId) {
+      visitorId = Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('olivka_visitor_id', visitorId);
+    }
+
+    // Session ID (Per tab)
     const sessionId = sessionStorage.getItem('tracking_session_id');
     
     if (!sessionId) {
-      // Generate a new session ID (simple random string)
       const newSessionId = Math.random().toString(36).substring(2, 15);
       sessionStorage.setItem('tracking_session_id', newSessionId);
 
@@ -25,6 +31,7 @@ export default function VisitorTracker() {
           event: 'new_visit',
           data: {
             session_id: newSessionId,
+            visitor_id: visitorId,
             referrer,
             url: currentUrl
           }
@@ -33,5 +40,5 @@ export default function VisitorTracker() {
     }
   }, []);
 
-  return null; // This component doesn't render anything
+  return null;
 }

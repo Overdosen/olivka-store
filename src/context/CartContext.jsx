@@ -59,8 +59,15 @@ export function CartProvider({ children }) {
     
     // Tracking n8n event
     try {
+      let visitorId = null;
       let sessionId = null;
       if (typeof window !== 'undefined') {
+        visitorId = localStorage.getItem('olivka_visitor_id');
+        if (!visitorId) {
+          visitorId = Math.random().toString(36).substring(2, 15);
+          localStorage.setItem('olivka_visitor_id', visitorId);
+        }
+
         sessionId = sessionStorage.getItem('tracking_session_id');
         if (!sessionId) {
           sessionId = Math.random().toString(36).substring(2, 15);
@@ -74,6 +81,7 @@ export function CartProvider({ children }) {
         body: JSON.stringify({
           event: 'add_to_cart',
           data: {
+            visitor_id: visitorId,
             session_id: sessionId,
             product_id: product.id,
             product_name: product.name,
