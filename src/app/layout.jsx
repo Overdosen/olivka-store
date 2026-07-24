@@ -66,7 +66,7 @@ export const viewport = {
   initialScale: 1,
 };
 
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/next';
 
 export default function RootLayout({ children }) {
   return (
