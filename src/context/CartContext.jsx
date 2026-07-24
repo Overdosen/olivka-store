@@ -56,6 +56,28 @@ export function CartProvider({ children }) {
       }
       return [...prev, { ...product, size: selectedSize, quantity, stock: stockLimit }];
     });
+    
+    // Tracking n8n event
+    try {
+      const sessionId = typeof window !== 'undefined' ? sessionStorage.getItem('tracking_session_id') : null;
+      fetch('/api/tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'add_to_cart',
+          data: {
+            session_id: sessionId,
+            product_id: product.id,
+            product_name: product.name,
+            price: product.price,
+            size: selectedSize,
+            quantity: quantity
+          }
+        })
+      }).catch(err => console.error('Tracking error:', err));
+    } catch (e) {
+      // ignore
+    }
   }, []);
 
   const removeFromCart = useCallback((productId, size) => {

@@ -67,6 +67,7 @@ export const viewport = {
 };
 
 import { Analytics } from '@vercel/analytics/next';
+import VisitorTracker from '../components/VisitorTracker';
 
 export default function RootLayout({ children }) {
   return (
@@ -76,6 +77,7 @@ export default function RootLayout({ children }) {
           {children}
         </ClientProviders>
         <Analytics />
+        <VisitorTracker />
       </body>
     </html>
   );
