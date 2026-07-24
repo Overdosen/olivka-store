@@ -66,6 +66,8 @@ export const viewport = {
   initialScale: 1,
 };
 
+import { Analytics } from '@vercel/analytics/react';
+
 export default function RootLayout({ children }) {
   return (
     <html lang="uk" className={inter.variable}>
@@ -73,6 +75,7 @@ export default function RootLayout({ children }) {
         <ClientProviders>
           {children}
         </ClientProviders>
+        <Analytics />
       </body>
     </html>
   );
