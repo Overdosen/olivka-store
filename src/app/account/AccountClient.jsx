@@ -33,6 +33,26 @@ export default function AccountClient() {
   const [saveError, setSaveError] = useState('');
   const [isSignOutLoading, setIsSignOutLoading] = useState(false);
 
+  // Tracking n8n event
+  useEffect(() => {
+    try {
+      let visitorId = localStorage.getItem('olivka_visitor_id');
+      let sessionId = sessionStorage.getItem('tracking_session_id');
+      
+      fetch('/api/tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'account_view',
+          data: {
+            visitor_id: visitorId,
+            session_id: sessionId
+          }
+        })
+      }).catch(err => console.error('Tracking error:', err));
+    } catch (e) {}
+  }, []);
+
   // Поля редагування
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName]   = useState('');

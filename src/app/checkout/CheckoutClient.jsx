@@ -67,6 +67,26 @@ export default function CheckoutClient() {
   const { vacationMode } = useVacation();
   const [vacationAccepted, setVacationAccepted] = useState(false);
 
+  // Tracking n8n event
+  useEffect(() => {
+    try {
+      let visitorId = localStorage.getItem('olivka_visitor_id');
+      let sessionId = sessionStorage.getItem('tracking_session_id');
+      
+      fetch('/api/tracking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'checkout_start',
+          data: {
+            visitor_id: visitorId,
+            session_id: sessionId
+          }
+        })
+      }).catch(err => console.error('Tracking error:', err));
+    } catch (e) {}
+  }, []);
+
   // Форма
   const [fullName, setFullName]     = useState('');
   const [phone, setPhone]           = useState('');
