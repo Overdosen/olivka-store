@@ -85,6 +85,7 @@ export function CartProvider({ children }) {
             session_id: sessionId,
             product_id: product.id,
             product_name: product.name,
+            article: product.sku || product.article || '',
             price: product.price,
             size: selectedSize,
             quantity: quantity
