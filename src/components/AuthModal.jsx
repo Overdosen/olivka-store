@@ -8,7 +8,7 @@ import { formatUaMasked, isPhoneFull } from '../lib/utils';
  * AuthModal — модальне вікно реєстрації та входу
  * Закривається при кліку поза вікном.
  */
-export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
+export default function AuthModal({ isOpen, onClose, onSuccess, initialMode, initialEmail, initialPassword }) {
   const { signUp, signIn } = useAuth();
   const [mode, setMode] = useState(initialMode || 'login'); // 'login' | 'register'
   const [error, setError] = useState('');
@@ -30,19 +30,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess, initialMode }) {
       setFirstName(''); setLastName('');
       setPhoneUa(formatUaMasked(''));
       setIsInternational(false);
-
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const emailParam = params.get('email');
-        const passParam = params.get('password') || params.get('p');
-        setEmail(emailParam || '');
-        setPassword(passParam || '');
-      } else {
-        setEmail('');
-        setPassword('');
-      }
+      setEmail(initialEmail || '');
+      setPassword(initialPassword || '');
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialEmail, initialPassword]);
 
   // ── Форматування UA-номера ──────────────────────────────────────────────────
   function handlePhoneChange(e) {

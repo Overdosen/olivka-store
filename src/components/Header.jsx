@@ -12,6 +12,27 @@ import { useAuth } from '../context/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import AuthModal from './AuthModal';
+import { useSearchParams } from 'next/navigation';
+import { Suspense, useCallback } from 'react';
+
+function AuthQueryHandler({ onOpen, onParams }) {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+    const login = searchParams.get('login');
+    const email = searchParams.get('email');
+    const password = searchParams.get('password') || searchParams.get('p');
+    
+    if (login === 'true') {
+      onOpen();
+    }
+    if (email || password) {
+      onParams({ email: email || '', password: password || '' });
+    }
+  }, [searchParams, onOpen, onParams]);
+
+  return null;
+}
 
 export default function Header() {
   const { cartCount, setIsCartOpen } = useCart();
@@ -21,14 +42,14 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [authParams, setAuthParams] = useState({ email: '', password: '' });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('login') === 'true') {
-        setIsAuthOpen(true);
-      }
-    }
+  const handleOpenAuth = useCallback(() => {
+    setIsAuthOpen(true);
+  }, []);
+
+  const handleAuthParams = useCallback((params) => {
+    setAuthParams(params);
   }, []);
 
   // Lock body scroll when mobile menu is open
@@ -220,7 +241,15 @@ export default function Header() {
         )}
       </AnimatePresence>
 
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <Suspense fallback={null}>
+        <AuthQueryHandler onOpen={handleOpenAuth} onParams={handleAuthParams} />
+      </Suspense>
+      <AuthModal 
+        isOpen={isAuthOpen} 
+        onClose={() => setIsAuthOpen(false)} 
+        initialEmail={authParams.email}
+        initialPassword={authParams.password}
+      />
     </>
   );
 }
