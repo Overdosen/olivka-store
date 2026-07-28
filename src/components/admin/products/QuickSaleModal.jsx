@@ -136,6 +136,12 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
 
   const [zoomedImage, setZoomedImage] = useState(null);
 
+  // Bundle composition state (for bundle/box products)
+  const [bundleSearchQuery, setBundleSearchQuery] = useState({}); // { [cartItemId]: string }
+  const [bundleSearchResults, setBundleSearchResults] = useState({}); // { [cartItemId]: Product[] }
+  const [bundleSearching, setBundleSearching] = useState({}); // { [cartItemId]: bool }
+  const bundleSearchTimeoutRef = useRef({});
+
   const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
@@ -161,7 +167,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, sku, price, cost_price, sizes, stock, image_url')
+          .select('id, name, sku, price, cost_price, sizes, stock, image_url, is_bundle')
           .or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`)
           .limit(30);
 
@@ -195,6 +201,102 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
     setSearchResults([]);
   };
 
+  // Fetch default bundle components from product_components table
+  const fetchDefaultBundleItems = async (cartItemId, productId) => {
+    try {
+      const { data } = await supabase
+        .from('product_components')
+        .select('component_id, size, products!component_id(id, name, sku, stock, sizes, price, cost_price, image_url)')
+        .eq('bundle_id', productId);
+
+      if (data && data.length > 0) {
+        const bundleItems = data
+          .map(row => row.products ? {
+            product_id: row.products.id,
+            name: row.products.name,
+            sku: row.products.sku || null,
+            size: row.size || null,
+            quantity: 1,
+            cost_price: row.products.cost_price || 0,
+            image_url: row.products.image_url || '',
+          } : null)
+          .filter(Boolean);
+
+        setCart(prev => prev.map(item =>
+          item.id === cartItemId ? { ...item, bundle_items: bundleItems } : item
+        ));
+      }
+    } catch (e) {
+      console.error('[QuickSaleModal] fetchDefaultBundleItems:', e);
+    }
+  };
+
+  // Bundle component search
+  const handleBundleSearch = (cartItemId, query) => {
+    setBundleSearchQuery(prev => ({ ...prev, [cartItemId]: query }));
+    if (bundleSearchTimeoutRef.current[cartItemId]) clearTimeout(bundleSearchTimeoutRef.current[cartItemId]);
+    if (!query || query.trim().length < 2) {
+      setBundleSearchResults(prev => ({ ...prev, [cartItemId]: [] }));
+      return;
+    }
+    setBundleSearching(prev => ({ ...prev, [cartItemId]: true }));
+    bundleSearchTimeoutRef.current[cartItemId] = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, sku, stock, sizes, cost_price, image_url')
+          .or(`name.ilike.%${query}%,sku.ilike.%${query}%`)
+          .limit(20);
+        setBundleSearchResults(prev => ({ ...prev, [cartItemId]: data || [] }));
+      } catch (e) {
+        console.error('[bundle search]', e);
+      } finally {
+        setBundleSearching(prev => ({ ...prev, [cartItemId]: false }));
+      }
+    }, 300);
+  };
+
+  const handleAddBundleItem = (cartItemId, product, size = null) => {
+    const costPrice = (size && product.sizes?.find(s => s.name === size)?.cost_price) || product.cost_price || 0;
+    const bundleItem = {
+      product_id: product.id,
+      name: product.name,
+      sku: product.sku || null,
+      size: size || null,
+      quantity: 1,
+      cost_price: costPrice,
+      image_url: product.image_url || '',
+    };
+    setCart(prev => prev.map(item =>
+      item.id === cartItemId
+        ? { ...item, bundle_items: [...(item.bundle_items || []), bundleItem] }
+        : item
+    ));
+    setBundleSearchResults(prev => ({ ...prev, [cartItemId]: [] }));
+    setBundleSearchQuery(prev => ({ ...prev, [cartItemId]: '' }));
+  };
+
+  const handleRemoveBundleItem = (cartItemId, idx) => {
+    setCart(prev => prev.map(item =>
+      item.id === cartItemId
+        ? { ...item, bundle_items: (item.bundle_items || []).filter((_, i) => i !== idx) }
+        : item
+    ));
+  };
+
+  const handleBundleItemQty = (cartItemId, idx, delta) => {
+    setCart(prev => prev.map(item =>
+      item.id === cartItemId
+        ? {
+            ...item,
+            bundle_items: (item.bundle_items || []).map((bi, i) =>
+              i === idx ? { ...bi, quantity: Math.max(1, (bi.quantity || 1) + delta) } : bi
+            )
+          }
+        : item
+    ));
+  };
+
   // Add to sandbox cart
   const handleAddToCart = () => {
     if (!selectedProduct) return toast.error('Оберіть товар');
@@ -217,6 +319,9 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
       qty: quantity,
       size: selectedSize || null,
       image_url: selectedProduct.image_url || '',
+      is_bundle: Boolean(selectedProduct.is_bundle || /бокс|набір/i.test(selectedProduct.name)),
+      show_bundle_ui: Boolean(selectedProduct.is_bundle || /бокс|набір/i.test(selectedProduct.name)),
+      bundle_items: [],
     };
 
     setCart(prev => {
@@ -237,6 +342,12 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
     });
 
     toast.success('Додано в кошик!');
+
+    // If bundle product — fetch pre-defined default components
+    if (selectedProduct.is_bundle) {
+      fetchDefaultBundleItems(cartItem.id, selectedProduct.id);
+    }
+
     // Reset selected product state so admin can search again
     setSelectedProduct(null);
     setSelectedSize('');
@@ -306,6 +417,23 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
           .from('orders')
           .update({ marketplace_sale_id: salesData[0].id })
           .eq('id', orderData.id);
+      }
+
+      // 4. Deduct stock for bundle component items (box/набір)
+      const allBundleItems = cart.flatMap(item =>
+        item.is_bundle && item.bundle_items && item.bundle_items.length > 0
+          ? item.bundle_items.map(bi => ({
+              ...bi,
+              quantity: (bi.quantity || 1) * (item.quantity || 1),
+            }))
+          : []
+      );
+      if (allBundleItems.length > 0) {
+        await fetch('/api/admin/orders/deduct-bundle-stock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: allBundleItems }),
+        });
       }
 
       toast.success(`Замовлення #${orderData.order_number} успішно сформовано!`, { duration: 4500 });
@@ -656,42 +784,159 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                     </div>
                   ) : (
                     cart.map(item => (
-                      <div 
-                        key={item.id} 
-                        className="bg-white border border-stone-200/60 rounded-xl flex items-center justify-between gap-3 shadow-sm hover:shadow transition"
-                        style={{ padding: '14px 16px' }}
+                      <div
+                        key={item.id}
+                        className="bg-white border border-stone-200/60 rounded-xl shadow-sm hover:shadow transition flex flex-col"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {item.image_url ? (
-                            <div className="relative w-12 h-12 rounded-lg bg-stone-50 border border-stone-100 flex-shrink-0 shadow-sm overflow-hidden">
-                              <Image 
-                                src={item.image_url.startsWith('http') ? item.image_url : `/images/${item.image_url}`} 
-                                alt={item.name} 
-                                fill sizes="48px"
-                                className="object-cover"
-                              />
+                        {/* Main item row */}
+                        <div className="flex items-center justify-between gap-3" style={{ padding: '14px 16px' }}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            {item.image_url ? (
+                              <div className="relative w-12 h-12 rounded-lg bg-stone-50 border border-stone-100 flex-shrink-0 shadow-sm overflow-hidden">
+                                <Image
+                                  src={item.image_url.startsWith('http') ? item.image_url : `/images/${item.image_url}`}
+                                  alt={item.name}
+                                  fill sizes="48px"
+                                  className="object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0">
+                                <ShoppingBag className="w-6 h-6 text-stone-400" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <p className="text-xs font-extrabold text-stone-850 truncate leading-snug">{item.name}</p>
+                                {(item.is_bundle || item.show_bundle_ui) && (
+                                  <span className="text-[9px] font-black px-1.5 py-0.5 bg-violet-100 text-violet-700 rounded-full border border-violet-200 flex-shrink-0">БОКС</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-stone-450 font-bold mt-0.5">
+                                {item.size ? `Розмір: ${item.size} • ` : ''}{item.quantity} шт
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <p className="text-[11px] text-stone-850 font-extrabold tabular-nums">
+                                  {item.price} ₴
+                                </p>
+                                {!item.show_bundle_ui && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setCart(prev => prev.map(c => c.id === item.id ? { ...c, show_bundle_ui: true, is_bundle: true } : c))}
+                                    className="text-[10px] font-bold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 border border-violet-200 px-2 py-0.5 rounded transition"
+                                  >
+                                    + Вказати складові (пелюшки/пледи)
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <div className="w-12 h-12 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0">
-                              <ShoppingBag className="w-6 h-6 text-stone-400" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-xs font-extrabold text-stone-850 truncate leading-snug mb-1">{item.name}</p>
-                            <p className="text-[10px] text-stone-450 font-bold">
-                              {item.size ? `${item.variant_type === 'color' ? 'Колір' : 'Розмір'}: ${item.size} • ` : ''}{item.quantity} шт
-                            </p>
-                            <p className="text-[11px] text-stone-850 font-extrabold mt-1.5 tabular-nums">
-                              {item.price} ₴
-                            </p>
                           </div>
+                          <button
+                            onClick={() => handleRemoveFromCart(item.id)}
+                            className="p-2 text-stone-450 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                          >
+                            <Trash2 className="w-4.5 h-4.5" />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => handleRemoveFromCart(item.id)}
-                          className="p-2 text-stone-450 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
-                        >
-                          <Trash2 className="w-4.5 h-4.5" />
-                        </button>
+
+                        {/* Bundle composition section */}
+                        {(item.is_bundle || item.show_bundle_ui) && (
+                          <div className="border-t border-violet-100 mx-3 mb-3 pt-3 space-y-2">
+                            <p className="text-[10px] font-black text-violet-600 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>📦</span> Складові боксу
+                              <span className="ml-auto text-violet-400 font-bold normal-case tracking-normal">
+                                {(item.bundle_items || []).length} шт.
+                              </span>
+                            </p>
+
+                            {/* Added bundle items */}
+                            {(item.bundle_items || []).length > 0 && (
+                              <div className="space-y-1.5">
+                                {(item.bundle_items || []).map((bi, idx) => (
+                                  <div key={idx} className="flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-lg px-2.5 py-1.5">
+                                    <span className="text-[11px] font-bold text-violet-800 truncate flex-1 min-w-0">
+                                      {bi.name}
+                                      {bi.size && <span className="ml-1 text-violet-500">({bi.size})</span>}
+                                    </span>
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBundleItemQty(item.id, idx, -1)}
+                                        className="w-5 h-5 rounded bg-white border border-violet-200 text-violet-600 text-xs font-black flex items-center justify-center hover:bg-violet-100 transition"
+                                      >−</button>
+                                      <span className="text-[11px] font-black text-violet-700 w-5 text-center">{bi.quantity}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBundleItemQty(item.id, idx, 1)}
+                                        className="w-5 h-5 rounded bg-white border border-violet-200 text-violet-600 text-xs font-black flex items-center justify-center hover:bg-violet-100 transition"
+                                      >+</button>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveBundleItem(item.id, idx)}
+                                      className="p-0.5 text-violet-300 hover:text-red-500 transition flex-shrink-0"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Bundle component search */}
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="+ Додати складову..."
+                                value={bundleSearchQuery[item.id] || ''}
+                                onChange={e => handleBundleSearch(item.id, e.target.value)}
+                                className="w-full px-3 py-2 text-[11px] bg-violet-50 border border-violet-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 transition font-medium placeholder:text-violet-300"
+                              />
+                              {bundleSearching[item.id] && (
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-violet-400 animate-pulse font-bold">шукаємо...</span>
+                              )}
+
+                              {/* Bundle search results dropdown */}
+                              {(bundleSearchResults[item.id] || []).length > 0 && (
+                                <div className="absolute left-0 right-0 mt-1 bg-white border border-violet-200 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                                  {(bundleSearchResults[item.id] || []).map(prod => {
+                                    const hasProdSizes = Array.isArray(prod.sizes) && prod.sizes.length > 0;
+                                    return (
+                                      <div key={prod.id} className="border-b border-stone-100 last:border-0">
+                                        {hasProdSizes ? (
+                                          <div>
+                                            <p className="text-[11px] font-bold text-stone-700 px-3 pt-2 pb-1">{prod.name}</p>
+                                            <div className="flex flex-wrap gap-1 px-3 pb-2">
+                                              {prod.sizes.map(s => (
+                                                <button
+                                                  key={s.name}
+                                                  type="button"
+                                                  onClick={() => handleAddBundleItem(item.id, prod, s.name)}
+                                                  className="px-2 py-0.5 text-[10px] font-bold bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 rounded transition"
+                                                >
+                                                  {s.name} ({s.quantity}шт)
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleAddBundleItem(item.id, prod)}
+                                            className="w-full text-left px-3 py-2 hover:bg-violet-50 transition"
+                                          >
+                                            <p className="text-[11px] font-bold text-stone-700">{prod.name}</p>
+                                            <p className="text-[10px] text-stone-400">Залишок: {prod.stock} шт</p>
+                                          </button>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

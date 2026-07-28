@@ -193,6 +193,7 @@ export default function ProductFormClient({ id }) {
     category_id: '',
     is_new: false,
     is_published: true,
+    is_bundle: false,
     image_url: '',
     stock: 0,
     sizes: [],
@@ -224,6 +225,7 @@ export default function ProductFormClient({ id }) {
           category_id: '',
           is_new: false,
           is_published: true,
+          is_bundle: false,
           image_url: '',
           stock: 0,
           sizes: [],
@@ -416,6 +418,7 @@ export default function ProductFormClient({ id }) {
         category_id: data.category_id || '',
         is_new: data.is_new || false,
         is_published: data.is_published ?? true,
+        is_bundle: data.is_bundle ?? false,
         image_url: data.image_url || '',
         stock: data.stock || 0,
         sizes: data.sizes || [],
@@ -433,8 +436,8 @@ export default function ProductFormClient({ id }) {
 
       setFormData(fetchedProductData);
 
-      // Load bundle components if this is a fullset product
-      if (data.category_id === 'fullset') {
+      // Load bundle components if this is a fullset product or a bundle
+      if (data.category_id === 'fullset' || data.is_bundle) {
         await fetchBundleComponents(id);
       }
 
@@ -662,8 +665,8 @@ export default function ProductFormClient({ id }) {
 
       if (error) throw error;
 
-      // Save bundle components if this is a fullset product
-      if (formData.category_id === 'fullset') {
+      // Save bundle components if this is a fullset product or a bundle
+      if (formData.category_id === 'fullset' || formData.is_bundle) {
         await saveBundleComponents(currentId);
       }
 
@@ -850,8 +853,8 @@ export default function ProductFormClient({ id }) {
               </select>
             </div>
 
-            {/* ── Склад набору (тільки для Готових рішень) ── */}
-            {formData.category_id === 'fullset' && (() => {
+            {/* ── Склад набору (для Готових рішень або товарів-наборів) ── */}
+            {(formData.category_id === 'fullset' || formData.is_bundle) && (() => {
               // Якщо зберігається selectedSize — враховуємо сток тільки цього розміру
               const getComponentStock = (comp) => {
                 if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
@@ -1507,6 +1510,16 @@ export default function ProductFormClient({ id }) {
               color="#e11d48"
               checked={formData.is_new}
               onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
+            />
+            <CheckboxChip
+              label="🎁 Це набір/бокс (є складові)"
+              color="#7c3aed"
+              checked={formData.is_bundle}
+              onChange={(e) => {
+                setFormData({ ...formData, is_bundle: e.target.checked });
+                if (!e.target.checked) setBundleComponents([]);
+                else if (isEditing) fetchBundleComponents(id);
+              }}
             />
           </div>
         </Section>

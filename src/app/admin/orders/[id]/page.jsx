@@ -592,7 +592,23 @@ export default function OrderDetailPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px' }}>
                         {item.size && <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500 }}>Розмір: {item.size}</span>}
                         {item.sku && <span style={{ fontSize: '12px', color: '#78716c', fontWeight: 500, fontFamily: 'monospace' }}>Арт: {item.sku}</span>}
+                        {item.is_bundle && (
+                          <span style={{ fontSize: '10px', fontWeight: 800, color: '#7c3aed', background: '#f3e8ff', border: '1px solid #e9d5ff', padding: '1px 8px', borderRadius: '999px' }}>БОКС</span>
+                        )}
                       </div>
+                      {/* Bundle items breakdown */}
+                      {item.bundle_items && item.bundle_items.length > 0 && (
+                        <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid #e9d5ff' }}>
+                          <p style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>📦 Складові боксу:</p>
+                          {item.bundle_items.map((bi, biIdx) => (
+                            <div key={biIdx} style={{ fontSize: '11px', color: '#57534e', fontWeight: 500, padding: '1px 0', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <span style={{ color: '#a78bfa', fontWeight: 700 }}>•</span>
+                              <span>{bi.name}{bi.size ? ` (${bi.size})` : ''}</span>
+                              <span style={{ color: '#a78bfa', fontWeight: 700 }}>×{bi.quantity || 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <p style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
