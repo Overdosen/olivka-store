@@ -436,8 +436,8 @@ export default function ProductFormClient({ id }) {
 
       setFormData(fetchedProductData);
 
-      // Load bundle components if this is a fullset product or a bundle
-      if (data.category_id === 'fullset' || data.is_bundle) {
+      // Load bundle components if this is a fullset product
+      if (data.category_id === 'fullset') {
         await fetchBundleComponents(id);
       }
 
@@ -665,8 +665,8 @@ export default function ProductFormClient({ id }) {
 
       if (error) throw error;
 
-      // Save bundle components if this is a fullset product or a bundle
-      if (formData.category_id === 'fullset' || formData.is_bundle) {
+      // Save bundle components if this is a fullset product
+      if (formData.category_id === 'fullset') {
         await saveBundleComponents(currentId);
       }
 
@@ -853,8 +853,8 @@ export default function ProductFormClient({ id }) {
               </select>
             </div>
 
-            {/* ── Склад набору (для Готових рішень або товарів-наборів) ── */}
-            {(formData.category_id === 'fullset' || formData.is_bundle) && (() => {
+            {/* ── Склад набору (для Готових рішень) ── */}
+            {(formData.category_id === 'fullset') && (() => {
               // Якщо зберігається selectedSize — враховуємо сток тільки цього розміру
               const getComponentStock = (comp) => {
                 if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
@@ -1510,16 +1510,6 @@ export default function ProductFormClient({ id }) {
               color="#e11d48"
               checked={formData.is_new}
               onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
-            />
-            <CheckboxChip
-              label="🎁 Це набір/бокс (є складові)"
-              color="#7c3aed"
-              checked={formData.is_bundle}
-              onChange={(e) => {
-                setFormData({ ...formData, is_bundle: e.target.checked });
-                if (!e.target.checked) setBundleComponents([]);
-                else if (isEditing) fetchBundleComponents(id);
-              }}
             />
           </div>
         </Section>
