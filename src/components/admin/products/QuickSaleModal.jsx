@@ -898,35 +898,78 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
 
                               {/* Bundle search results dropdown */}
                               {(bundleSearchResults[item.id] || []).length > 0 && (
-                                <div className="absolute left-0 right-0 mt-1 bg-white border border-violet-200 rounded-lg shadow-lg z-50 max-h-40 overflow-y-auto">
+                                <div 
+                                  className="absolute left-0 right-0 mt-1.5 bg-white border border-stone-200 rounded-xl shadow-2xl z-[100] max-h-64 overflow-y-auto custom-scrollbar"
+                                  style={{ background: '#ffffff', color: '#1c1917' }}
+                                >
                                   {(bundleSearchResults[item.id] || []).map(prod => {
                                     const hasProdSizes = Array.isArray(prod.sizes) && prod.sizes.length > 0;
+                                    const imgUrl = prod.image_url ? (prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`) : null;
                                     return (
-                                      <div key={prod.id} className="border-b border-stone-100 last:border-0">
+                                      <div key={prod.id} className="border-b border-stone-100 last:border-0 p-2 space-y-1 bg-white">
+                                        {/* Product header */}
+                                        <div className="flex items-center gap-2 px-2 py-1 bg-stone-50/70 rounded-lg">
+                                          {imgUrl ? (
+                                            <div className="relative w-6 h-6 rounded bg-stone-100 border border-stone-200 overflow-hidden flex-shrink-0">
+                                              <Image src={imgUrl} alt={prod.name} fill sizes="24px" className="object-cover" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-6 h-6 rounded bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0 text-stone-400 text-[10px]">
+                                              📦
+                                            </div>
+                                          )}
+                                          <div className="min-w-0 flex-1">
+                                            <p className="text-[11px] font-bold text-stone-900 truncate leading-tight">{prod.name}</p>
+                                            {prod.sku && <p className="text-[9px] text-stone-400 font-mono">Арт: {prod.sku}</p>}
+                                          </div>
+                                        </div>
+
+                                        {/* Variants list (if sizes exist) */}
                                         {hasProdSizes ? (
-                                          <div>
-                                            <p className="text-[11px] font-bold text-stone-700 px-3 pt-2 pb-1">{prod.name}</p>
-                                            <div className="flex flex-wrap gap-1 px-3 pb-2">
-                                              {prod.sizes.map(s => (
+                                          <div className="space-y-1 pl-1 pr-1 pt-0.5">
+                                            {prod.sizes.map(s => {
+                                              const qty = parseInt(s.quantity) || 0;
+                                              const isDisabled = qty <= 0;
+                                              return (
                                                 <button
                                                   key={s.name}
                                                   type="button"
+                                                  disabled={isDisabled}
                                                   onClick={() => handleAddBundleItem(item.id, prod, s.name)}
-                                                  className="px-2 py-0.5 text-[10px] font-bold bg-violet-50 hover:bg-violet-100 border border-violet-200 text-violet-700 rounded transition"
+                                                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition border ${
+                                                    isDisabled
+                                                      ? 'bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed'
+                                                      : 'bg-white hover:bg-violet-50 text-stone-800 border-stone-200/80 hover:border-violet-300 cursor-pointer'
+                                                  }`}
                                                 >
-                                                  {s.name} ({s.quantity}шт)
+                                                  <span className="font-semibold text-stone-850 truncate">{s.name}</span>
+                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                                    qty > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-400 border border-red-100'
+                                                  }`}>
+                                                    {qty > 0 ? `${qty} шт` : '0 шт'}
+                                                  </span>
                                                 </button>
-                                              ))}
-                                            </div>
+                                              );
+                                            })}
                                           </div>
                                         ) : (
+                                          /* Single product (no sizes) */
                                           <button
                                             type="button"
+                                            disabled={prod.stock <= 0}
                                             onClick={() => handleAddBundleItem(item.id, prod)}
-                                            className="w-full text-left px-3 py-2 hover:bg-violet-50 transition"
+                                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition border ${
+                                              prod.stock <= 0
+                                                ? 'bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed'
+                                                : 'bg-white hover:bg-violet-50 text-stone-800 border-stone-200/80 hover:border-violet-300 cursor-pointer'
+                                            }`}
                                           >
-                                            <p className="text-[11px] font-bold text-stone-700">{prod.name}</p>
-                                            <p className="text-[10px] text-stone-400">Залишок: {prod.stock} шт</p>
+                                            <span className="font-semibold text-stone-850">Додати товар</span>
+                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                              prod.stock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-400 border border-red-100'
+                                            }`}>
+                                              {prod.stock > 0 ? `${prod.stock} шт` : '0 шт'}
+                                            </span>
                                           </button>
                                         )}
                                       </div>
