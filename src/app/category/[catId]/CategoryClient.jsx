@@ -120,8 +120,26 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
     };
     const aIsAvailable = getAvail(a);
     const bIsAvailable = getAvail(b);
-    if (aIsAvailable === bIsAvailable) return 0;
-    return aIsAvailable ? -1 : 1;
+    
+    if (aIsAvailable !== bIsAvailable) {
+      return aIsAvailable ? -1 : 1;
+    }
+
+    if (category?.id === 'boxes' || category?.slug === 'boxes') {
+      const isBoxA = a.name.toLowerCase().includes('бокс');
+      const isBoxB = b.name.toLowerCase().includes('бокс');
+
+      if (isBoxA && !isBoxB) return -1;
+      if (!isBoxA && isBoxB) return 1;
+
+      if (isBoxA && isBoxB) {
+        const priceA = parseFloat(a.price) || 0;
+        const priceB = parseFloat(b.price) || 0;
+        return priceA - priceB;
+      }
+    }
+
+    return 0;
   });
 
   return (
