@@ -76,7 +76,7 @@ function ImageZoom({ src, alt, onClose }) {
 }
 
 // ── Add Bundle Component Modal Overlay ────────────────────────────────────────
-function AddBundleItemModal({ item, onClose, onAddBundleItem }) {
+function AddBundleItemModal({ item, onClose, onAddBundleItem, onRemoveBundleItem }) {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -212,11 +212,34 @@ function AddBundleItemModal({ item, onClose, onAddBundleItem }) {
                     color: '#5b21b6',
                     fontSize: '12px',
                     fontWeight: 700,
-                    padding: '4px 10px',
+                    padding: '4px 8px 4px 10px',
                     borderRadius: '8px'
                   }}
                 >
-                  {bi.name} {bi.size ? `(${bi.size})` : ''} ×{bi.quantity || 1}
+                  <span>{bi.name} {bi.size ? `(${bi.size})` : ''} ×{bi.quantity || 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveBundleItem && onRemoveBundleItem(item.id, idx)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: '#f3e8ff',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '18px',
+                      height: '18px',
+                      color: '#7c3aed',
+                      cursor: 'pointer',
+                      padding: 0,
+                      marginLeft: '2px',
+                      transition: 'all 0.15s'
+                    }}
+                    className="hover:bg-red-500 hover:text-white"
+                    title="Видалити з боксу"
+                  >
+                    <X style={{ width: '11px', height: '11px' }} />
+                  </button>
                 </span>
               ))}
             </div>
@@ -1437,6 +1460,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
           item={cart.find(c => c.id === activeBundleModalCartItemId)}
           onClose={() => setActiveBundleModalCartItemId(null)}
           onAddBundleItem={handleAddBundleItem}
+          onRemoveBundleItem={handleRemoveBundleItem}
         />
       )}
     </div>
