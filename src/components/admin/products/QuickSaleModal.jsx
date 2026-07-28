@@ -75,6 +75,272 @@ function ImageZoom({ src, alt, onClose }) {
   return createPortal(content, document.body);
 }
 
+// ── Add Bundle Component Modal Overlay ────────────────────────────────────────
+function AddBundleItemModal({ item, onClose, onAddBundleItem }) {
+  const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, sku, stock, sizes, cost_price, image_url')
+          .or(`name.ilike.%${searchQuery}%,sku.ilike.%${searchQuery}%`)
+          .limit(20);
+        setSearchResults(data || []);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(searchTimeoutRef.current);
+  }, [searchQuery]);
+
+  if (!mounted || !item) return null;
+
+  const content = (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif"
+      }}
+    >
+      <div
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+        onClick={onClose}
+      />
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          background: '#ffffff',
+          borderRadius: '20px',
+          padding: '24px',
+          maxWidth: '540px',
+          width: '100%',
+          maxHeight: '85vh',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)',
+          gap: '16px'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#1c1917' }}>
+              📦 Складові для: {item.name}
+            </h3>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#78716c', fontWeight: 500 }}>
+              Виберіть пелюшки, пледи чи інші товари у цей бокс
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ padding: '8px', background: '#f5f5f4', border: 'none', borderRadius: '50%', cursor: 'pointer' }}
+          >
+            <X style={{ width: '18px', height: '18px', color: '#57534e' }} />
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div style={{ position: 'relative' }}>
+          <Search style={{ width: '16px', height: '16px', color: '#a8a29e', position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} />
+          <input
+            type="text"
+            autoFocus
+            placeholder="Введіть назву пелюшки або артикул..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              paddingLeft: '40px',
+              paddingRight: '14px',
+              paddingTop: '12px',
+              paddingBottom: '12px',
+              background: '#fafaf9',
+              border: '1.5px solid #e7e5e4',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#1c1917',
+              outline: 'none',
+              boxSizing: 'border-box'
+            }}
+          />
+          {searching && (
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#a8a29e', fontWeight: 600 }}>
+              шукаємо...
+            </span>
+          )}
+        </div>
+
+        {/* Added components list preview */}
+        {item.bundle_items && item.bundle_items.length > 0 && (
+          <div style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: '12px', padding: '12px' }}>
+            <p style={{ margin: '0 0 8px', fontSize: '11px', fontWeight: 800, color: '#6d28d9', textTransform: 'uppercase' }}>
+              Вже додано в цей бокс ({item.bundle_items.length} шт):
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {item.bundle_items.map((bi, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: '#ffffff',
+                    border: '1px solid #c4b5fd',
+                    color: '#5b21b6',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    padding: '4px 10px',
+                    borderRadius: '8px'
+                  }}
+                >
+                  {bi.name} {bi.size ? `(${bi.size})` : ''} ×{bi.quantity || 1}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Results List */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }} className="custom-scrollbar">
+          {searchResults.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#a8a29e', fontSize: '13px', fontWeight: 600 }}>
+              {searchQuery.trim().length < 2 ? 'Введіть принаймні 2 символи для пошуку' : 'Нічого не знайдено'}
+            </div>
+          ) : (
+            searchResults.map(prod => {
+              const hasSizes = Array.isArray(prod.sizes) && prod.sizes.length > 0;
+              const imgUrl = prod.image_url ? (prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`) : null;
+              return (
+                <div key={prod.id} style={{ background: '#fafaf9', border: '1px solid #e7e5e4', borderRadius: '14px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', itemsCenter: 'center', gap: '10px' }}>
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={prod.name} style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e7e5e4' }} />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#e7e5e4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>📦</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: 800, color: '#1c1917' }}>{prod.name}</p>
+                      {prod.sku && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#78716c', fontFamily: 'monospace' }}>Арт: {prod.sku}</p>}
+                    </div>
+                  </div>
+
+                  {hasSizes ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '6px' }}>
+                      {prod.sizes.map(s => {
+                        const qty = parseInt(s.quantity) || 0;
+                        const disabled = qty <= 0;
+                        return (
+                          <button
+                            key={s.name}
+                            type="button"
+                            disabled={disabled}
+                            onClick={() => {
+                              onAddBundleItem(item.id, prod, s.name);
+                              toast.success(`Додано: ${s.name}`);
+                            }}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '8px',
+                              border: disabled ? '1px solid #f5f5f4' : '1.5px solid #ddd6fe',
+                              background: disabled ? '#f5f5f4' : '#ffffff',
+                              color: disabled ? '#d6d3d1' : '#4c1d95',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: disabled ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            <span style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '6px', background: disabled ? '#e7e5e4' : '#f3e8ff' }}>
+                              {qty} шт
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={prod.stock <= 0}
+                      onClick={() => {
+                        onAddBundleItem(item.id, prod);
+                        toast.success(`Додано: ${prod.name}`);
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: prod.stock <= 0 ? '1px solid #f5f5f4' : '1.5px solid #ddd6fe',
+                        background: prod.stock <= 0 ? '#f5f5f4' : '#ffffff',
+                        color: prod.stock <= 0 ? '#d6d3d1' : '#4c1d95',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: prod.stock <= 0 ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <span>+ Додати у бокс</span>
+                      <span style={{ fontSize: '11px', background: '#f3e8ff', padding: '2px 6px', borderRadius: '6px' }}>{prod.stock} шт</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: '#1c1917',
+            color: '#ffffff',
+            borderRadius: '12px',
+            fontWeight: 800,
+            fontSize: '14px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Готово
+        </button>
+      </div>
+    </div>
+  );
+
+  return createPortal(content, document.body);
+}
+
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6 sm:w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -135,6 +401,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
   const [saving, setSaving] = useState(false);
 
   const [zoomedImage, setZoomedImage] = useState(null);
+  const [activeBundleModalCartItemId, setActiveBundleModalCartItemId] = useState(null);
 
   // Bundle composition state (for bundle/box products)
   const [bundleSearchQuery, setBundleSearchQuery] = useState({}); // { [cartItemId]: string }
@@ -883,101 +1150,15 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
                               </div>
                             )}
 
-                            {/* Bundle component search */}
-                            <div className="relative">
-                              <input
-                                type="text"
-                                placeholder="+ Додати складову..."
-                                value={bundleSearchQuery[item.id] || ''}
-                                onChange={e => handleBundleSearch(item.id, e.target.value)}
-                                className="w-full px-3 py-2 text-[11px] bg-violet-50 border border-violet-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-400 focus:border-violet-400 transition font-medium placeholder:text-violet-300"
-                              />
-                              {bundleSearching[item.id] && (
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-violet-400 animate-pulse font-bold">шукаємо...</span>
-                              )}
-
-                              {/* Bundle search results dropdown */}
-                              {(bundleSearchResults[item.id] || []).length > 0 && (
-                                <div 
-                                  className="absolute left-0 right-0 mt-1.5 bg-white border border-stone-200 rounded-xl shadow-2xl z-[100] max-h-64 overflow-y-auto custom-scrollbar"
-                                  style={{ background: '#ffffff', color: '#1c1917' }}
-                                >
-                                  {(bundleSearchResults[item.id] || []).map(prod => {
-                                    const hasProdSizes = Array.isArray(prod.sizes) && prod.sizes.length > 0;
-                                    const imgUrl = prod.image_url ? (prod.image_url.startsWith('http') ? prod.image_url : `/images/${prod.image_url}`) : null;
-                                    return (
-                                      <div key={prod.id} className="border-b border-stone-100 last:border-0 p-2 space-y-1 bg-white">
-                                        {/* Product header */}
-                                        <div className="flex items-center gap-2 px-2 py-1 bg-stone-50/70 rounded-lg">
-                                          {imgUrl ? (
-                                            <div className="relative w-6 h-6 rounded bg-stone-100 border border-stone-200 overflow-hidden flex-shrink-0">
-                                              <Image src={imgUrl} alt={prod.name} fill sizes="24px" className="object-cover" />
-                                            </div>
-                                          ) : (
-                                            <div className="w-6 h-6 rounded bg-stone-100 border border-stone-200 flex items-center justify-center flex-shrink-0 text-stone-400 text-[10px]">
-                                              📦
-                                            </div>
-                                          )}
-                                          <div className="min-w-0 flex-1">
-                                            <p className="text-[11px] font-bold text-stone-900 truncate leading-tight">{prod.name}</p>
-                                            {prod.sku && <p className="text-[9px] text-stone-400 font-mono">Арт: {prod.sku}</p>}
-                                          </div>
-                                        </div>
-
-                                        {/* Variants list (if sizes exist) */}
-                                        {hasProdSizes ? (
-                                          <div className="space-y-1 pl-1 pr-1 pt-0.5">
-                                            {prod.sizes.map(s => {
-                                              const qty = parseInt(s.quantity) || 0;
-                                              const isDisabled = qty <= 0;
-                                              return (
-                                                <button
-                                                  key={s.name}
-                                                  type="button"
-                                                  disabled={isDisabled}
-                                                  onClick={() => handleAddBundleItem(item.id, prod, s.name)}
-                                                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition border ${
-                                                    isDisabled
-                                                      ? 'bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed'
-                                                      : 'bg-white hover:bg-violet-50 text-stone-800 border-stone-200/80 hover:border-violet-300 cursor-pointer'
-                                                  }`}
-                                                >
-                                                  <span className="font-semibold text-stone-850 truncate">{s.name}</span>
-                                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                                    qty > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-400 border border-red-100'
-                                                  }`}>
-                                                    {qty > 0 ? `${qty} шт` : '0 шт'}
-                                                  </span>
-                                                </button>
-                                              );
-                                            })}
-                                          </div>
-                                        ) : (
-                                          /* Single product (no sizes) */
-                                          <button
-                                            type="button"
-                                            disabled={prod.stock <= 0}
-                                            onClick={() => handleAddBundleItem(item.id, prod)}
-                                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between transition border ${
-                                              prod.stock <= 0
-                                                ? 'bg-stone-50 text-stone-300 border-stone-100 cursor-not-allowed'
-                                                : 'bg-white hover:bg-violet-50 text-stone-800 border-stone-200/80 hover:border-violet-300 cursor-pointer'
-                                            }`}
-                                          >
-                                            <span className="font-semibold text-stone-850">Додати товар</span>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                              prod.stock > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-400 border border-red-100'
-                                            }`}>
-                                              {prod.stock > 0 ? `${prod.stock} шт` : '0 шт'}
-                                            </span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
+                            {/* Button to open clean modal for selecting bundle components */}
+                            <button
+                              type="button"
+                              onClick={() => setActiveBundleModalCartItemId(item.id)}
+                              className="w-full py-2 px-3 text-[11px] font-bold text-violet-700 bg-violet-50 hover:bg-violet-100 border border-violet-200 rounded-lg flex items-center justify-center gap-1.5 transition active:scale-[0.98] cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Додати складові (пелюшки / пледи)</span>
+                            </button>
                           </div>
                         )}
                       </div>
@@ -1248,6 +1429,14 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
           src={zoomedImage.src}
           alt={zoomedImage.alt}
           onClose={() => setZoomedImage(null)}
+        />
+      )}
+
+      {activeBundleModalCartItemId && (
+        <AddBundleItemModal
+          item={cart.find(c => c.id === activeBundleModalCartItemId)}
+          onClose={() => setActiveBundleModalCartItemId(null)}
+          onAddBundleItem={handleAddBundleItem}
         />
       )}
     </div>
