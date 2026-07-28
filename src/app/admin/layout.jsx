@@ -45,6 +45,16 @@ export default function AdminLayout({ children }) {
   }, [pathname]);
 
   useEffect(() => {
+    const handleWheel = () => {
+      if (document.activeElement && document.activeElement.type === 'number') {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
+  useEffect(() => {
     async function fetchCount() {
       const { count } = await supabase
         .from('orders')

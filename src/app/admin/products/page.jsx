@@ -188,10 +188,8 @@ export default function AdminProducts() {
   }, [soldDateFilter]);
 
   useEffect(() => {
-    if (activeTab === 'sold') {
-      loadSoldProducts();
-    }
-  }, [activeTab, loadSoldProducts]);
+    loadSoldProducts();
+  }, [loadSoldProducts]);
 
   const getPurchasePrice = (product) => {
     if (product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0) {
@@ -332,12 +330,15 @@ export default function AdminProducts() {
       <div className="flex border-b border-stone-200/80 gap-6">
         <button
           onClick={() => setActiveTab('general')}
-          className={`pb-3 text-sm font-semibold relative transition-colors ${activeTab === 'general'
+          className={`pb-3 text-sm font-semibold relative transition-colors flex items-center gap-2 ${activeTab === 'general'
               ? 'text-stone-900 font-bold'
               : 'text-stone-400 hover:text-stone-600'
             }`}
         >
           <span>Загальні товари</span>
+          <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-stone-100 text-stone-500 border border-stone-200/50 transition-all">
+            {totalCount}
+          </span>
           {activeTab === 'general' && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-stone-800 rounded-full" />
           )}

@@ -21,6 +21,7 @@ export default function CommandPalette() {
   const [results, setResults] = useState([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [cachedData, setCachedData] = useState(null);
   const inputRef = useRef(null);
   const router = useRouter();
 
@@ -45,85 +46,81 @@ export default function CommandPalette() {
       setResults([]);
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
+
+      let isMounted = true;
+      setLoading(true);
+      Promise.all([
+        supabase.from('products').select('*'),
+        supabase.from('orders').select('*'),
+        supabase.from('profiles').select('*')
+      ]).then(([productsRes, ordersRes, profilesRes]) => {
+        if (isMounted) {
+          setCachedData({
+            products: productsRes.data || [],
+            orders: ordersRes.data || [],
+            profiles: profilesRes.data || []
+          });
+          setLoading(false);
+        }
+      }).catch(err => {
+        console.error('Failed to load global search data', err);
+        if (isMounted) setLoading(false);
+      });
+
+      return () => { isMounted = false; };
     }
   }, [open]);
 
-  const search = useCallback(async (q) => {
-    if (!q.trim()) {
+  useEffect(() => {
+    if (!open) return;
+    if (!query.trim() || !cachedData) {
       setResults([]);
+      setSelectedIndex(0);
       return;
     }
 
-    setLoading(true);
-    const searchTerm = q.toLowerCase().trim();
+    const searchTerm = query.toLowerCase().trim();
+    // Глобальний пошук по будь-якому текстовому полю або значенню всередині JSON
+    const matches = (obj) => JSON.stringify(obj).toLowerCase().includes(searchTerm);
 
-    try {
-      const [productsRes, ordersRes, profilesRes] = await Promise.all([
-        supabase
-          .from('products')
-          .select('id, name, sku, price, image_url')
-          .or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%`)
-          .limit(5),
-        supabase
-          .from('orders')
-          .select('id, order_number, full_name, total, status, tracking_number')
-          .or(`full_name.ilike.%${searchTerm}%,tracking_number.ilike.%${searchTerm}%${!isNaN(searchTerm) ? `,order_number.eq.${searchTerm}` : ''}`)
-          .limit(5),
-        supabase
-          .from('profiles')
-          .select('id, full_name, email, phone_ua')
-          .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone_ua.ilike.%${searchTerm}%`)
-          .limit(5),
-      ]);
+    const items = [];
 
-      const items = [];
-
-      (productsRes.data || []).forEach(p => {
-        items.push({
-          id: p.id,
-          name: p.name,
-          subtitle: p.sku ? `Арт: ${p.sku} · ${p.price} ₴` : `${p.price} ₴`,
-          icon: Package,
-          path: `/admin/products/${p.id}`,
-          section: 'Товари',
-        });
+    cachedData.products.filter(matches).slice(0, 5).forEach(p => {
+      items.push({
+        id: p.id,
+        name: p.name,
+        subtitle: p.sku ? `Арт: ${p.sku} · ${p.price} ₴` : `${p.price} ₴`,
+        icon: Package,
+        path: `/admin/products/${p.id}`,
+        section: 'Товари',
       });
+    });
 
-      (ordersRes.data || []).forEach(o => {
-        items.push({
-          id: o.id,
-          name: `Замовлення #${o.order_number}`,
-          subtitle: `${o.full_name || 'Гість'} · ${o.total} ₴`,
-          icon: ShoppingBag,
-          path: `/admin/orders/${o.id}`,
-          section: 'Замовлення',
-        });
+    cachedData.orders.filter(matches).slice(0, 5).forEach(o => {
+      items.push({
+        id: o.id,
+        name: `Замовлення #${o.order_number}`,
+        subtitle: `${o.full_name || 'Гість'} · ${o.total} ₴`,
+        icon: ShoppingBag,
+        path: `/admin/orders/${o.id}`,
+        section: 'Замовлення',
       });
+    });
 
-      (profilesRes.data || []).forEach(p => {
-        items.push({
-          id: p.id,
-          name: p.full_name || p.email,
-          subtitle: p.phone_ua || p.email,
-          icon: Users,
-          path: `/admin/customers`,
-          section: 'Клієнти',
-        });
+    cachedData.profiles.filter(matches).slice(0, 5).forEach(p => {
+      items.push({
+        id: p.id,
+        name: p.full_name || p.email,
+        subtitle: p.phone_ua || p.email,
+        icon: Users,
+        path: `/admin/customers`,
+        section: 'Клієнти',
       });
+    });
 
-      setResults(items);
-      setSelectedIndex(0);
-    } catch (err) {
-      console.error('Command palette search error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => search(query), 250);
-    return () => clearTimeout(timer);
-  }, [query, search]);
+    setResults(items);
+    setSelectedIndex(0);
+  }, [query, cachedData, open]);
 
   const handleSelect = (item) => {
     setOpen(false);

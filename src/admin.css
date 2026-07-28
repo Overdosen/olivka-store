@@ -412,3 +412,13 @@
 .quick-sale-footer-btn-next:active {
   transform: scale(0.97) !important;
 }
+
+/* Remove number input spin buttons */
+input[type='number']::-webkit-inner-spin-button, 
+input[type='number']::-webkit-outer-spin-button { 
+  -webkit-appearance: none !important; 
+  margin: 0 !important; 
+}
+input[type='number'] {
+  -moz-appearance: textfield !important;
+}
