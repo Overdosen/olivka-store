@@ -12,6 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 import AddProductModal from '../../../../components/admin/orders/AddProductModal';
+import { AddBundleItemModal } from '../../../../components/admin/products/QuickSaleModal';
 
 function ImageZoom({ src, alt, onClose }) {
   const [mounted, setMounted] = useState(false);
@@ -135,6 +136,70 @@ export default function OrderDetailPage() {
   const [editQty, setEditQty] = useState('');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
+  const [activeBundleModalIndex, setActiveBundleModalIndex] = useState(null);
+
+  async function handleAddBundleItemToOrder(itemIndex, product, size = null) {
+    const targetItem = order.items[itemIndex];
+    if (!targetItem) return;
+
+    const costPrice = (size && product.sizes?.find(s => s.name === size)?.cost_price)
+      || product.cost_price || 0;
+
+    const bundleItem = {
+      product_id: product.id,
+      name: product.name,
+      sku: product.sku || null,
+      size: size || null,
+      quantity: 1,
+      cost_price: costPrice,
+      image_url: product.image_url || '',
+    };
+
+    const updatedBundleItems = [...(targetItem.bundle_items || []), bundleItem];
+    const newItems = [...order.items];
+    newItems[itemIndex] = {
+      ...targetItem,
+      is_bundle: true,
+      bundle_items: updatedBundleItems
+    };
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Помилка оновлення складових');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems }));
+      toast.success('Складову додано до боксу');
+    }
+  }
+
+  async function handleRemoveBundleItemFromOrder(itemIndex, biIndex) {
+    const targetItem = order.items[itemIndex];
+    if (!targetItem || !targetItem.bundle_items) return;
+
+    const updatedBundleItems = targetItem.bundle_items.filter((_, i) => i !== biIndex);
+
+    const newItems = [...order.items];
+    newItems[itemIndex] = {
+      ...targetItem,
+      bundle_items: updatedBundleItems
+    };
+
+    const { error } = await supabase
+      .from('orders')
+      .update({ items: newItems })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Помилка оновлення складових');
+    } else {
+      setOrder(prev => ({ ...prev, items: newItems }));
+      toast.success('Складову видалено з боксу');
+    }
+  }
 
   useEffect(() => {
     async function fetchOrder() {
@@ -597,16 +662,46 @@ export default function OrderDetailPage() {
                         )}
                       </div>
                       {/* Bundle items breakdown */}
-                      {item.bundle_items && item.bundle_items.length > 0 && (
+                      {(item.is_bundle || (item.bundle_items && item.bundle_items.length > 0) || /бокс|набір/i.test(item.name)) && (
                         <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid #e9d5ff' }}>
-                          <p style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>📦 Складові боксу:</p>
-                          {item.bundle_items.map((bi, biIdx) => (
-                            <div key={biIdx} style={{ fontSize: '11px', color: '#57534e', fontWeight: 500, padding: '1px 0', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                              <span style={{ color: '#a78bfa', fontWeight: 700 }}>•</span>
-                              <span>{bi.name}{bi.size ? ` (${bi.size})` : ''}</span>
-                              <span style={{ color: '#a78bfa', fontWeight: 700 }}>×{bi.quantity || 1}</span>
-                            </div>
-                          ))}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <p style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>📦 Складові боксу:</p>
+                            {order.status === 'new' && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveBundleModalIndex(i)}
+                                style={{ fontSize: '10px', fontWeight: 700, color: '#6d28d9', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '2px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                                className="hover:bg-violet-100 transition-colors"
+                              >
+                                + Додати / Редагувати
+                              </button>
+                            )}
+                          </div>
+                          {item.bundle_items && item.bundle_items.length > 0 ? (
+                            item.bundle_items.map((bi, biIdx) => (
+                              <div key={biIdx} style={{ fontSize: '11px', color: '#57534e', fontWeight: 500, padding: '2px 0', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {bi.name}{bi.size ? ` (${bi.size})` : ''} {bi.sku ? <span style={{ color: '#a8a29e', fontFamily: 'monospace', fontSize: '10px' }}>• Арт: {bi.sku}</span> : ''}
+                                  </span>
+                                  <span style={{ color: '#a78bfa', fontWeight: 700 }}>×{bi.quantity || 1}</span>
+                                </div>
+                                {order.status === 'new' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveBundleItemFromOrder(i, biIdx)}
+                                    style={{ background: 'none', border: 'none', color: '#a8a29e', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                                    className="hover:text-red-500 hover:bg-red-50"
+                                    title="Видалити складову з замовлення"
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <p style={{ fontSize: '11px', color: '#a8a29e', fontStyle: 'italic', margin: '2px 0' }}>Складові ще не вказано</p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1249,6 +1344,14 @@ export default function OrderDetailPage() {
           src={zoomedImage} 
           alt="Збільшене фото" 
           onClose={() => setZoomedImage(null)} 
+        />
+      )}
+      {activeBundleModalIndex !== null && order?.items?.[activeBundleModalIndex] && (
+        <AddBundleItemModal
+          item={order.items[activeBundleModalIndex]}
+          onClose={() => setActiveBundleModalIndex(null)}
+          onAddBundleItem={(cartItemId, product, size) => handleAddBundleItemToOrder(activeBundleModalIndex, product, size)}
+          onRemoveBundleItem={(cartItemId, biIdx) => handleRemoveBundleItemFromOrder(activeBundleModalIndex, biIdx)}
         />
       )}
     </div>

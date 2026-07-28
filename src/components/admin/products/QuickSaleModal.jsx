@@ -76,7 +76,7 @@ function ImageZoom({ src, alt, onClose }) {
 }
 
 // ── Add Bundle Component Modal Overlay ────────────────────────────────────────
-function AddBundleItemModal({ item, onClose, onAddBundleItem, onRemoveBundleItem }) {
+export function AddBundleItemModal({ item, onClose, onAddBundleItem, onRemoveBundleItem }) {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -216,7 +216,9 @@ function AddBundleItemModal({ item, onClose, onAddBundleItem, onRemoveBundleItem
                     borderRadius: '8px'
                   }}
                 >
-                  <span>{bi.name} {bi.size ? `(${bi.size})` : ''} ×{bi.quantity || 1}</span>
+                  <span>
+                    {bi.name} {bi.size ? `(${bi.size})` : ''} {bi.sku ? <span style={{ opacity: 0.75, fontFamily: 'monospace', fontWeight: 600, fontSize: '11px' }}>• Арт: {bi.sku}</span> : ''} ×{bi.quantity || 1}
+                  </span>
                   <button
                     type="button"
                     onClick={() => onRemoveBundleItem && onRemoveBundleItem(item.id, idx)}
@@ -710,21 +712,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
       }
 
       // 4. Deduct stock for bundle component items (box/набір)
-      const allBundleItems = cart.flatMap(item =>
-        item.is_bundle && item.bundle_items && item.bundle_items.length > 0
-          ? item.bundle_items.map(bi => ({
-              ...bi,
-              quantity: (bi.quantity || 1) * (item.quantity || 1),
-            }))
-          : []
-      );
-      if (allBundleItems.length > 0) {
-        await fetch('/api/admin/orders/deduct-bundle-stock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: allBundleItems }),
-        });
-      }
+
 
       toast.success(`Замовлення #${orderData.order_number} успішно сформовано!`, { duration: 4500 });
       onSuccess();
