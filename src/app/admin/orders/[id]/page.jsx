@@ -251,7 +251,40 @@ export default function OrderDetailPage() {
 
   function promptStatusChange(newStatus) {
     const label = STATUS_MAP[newStatus]?.label || newStatus;
-    setConfirmModal({ title: `Змінити статус на «${label}»?`, newStatus });
+    setConfirmModal({ 
+      title: `Змінити статус на «${label}»?`, 
+      action: () => handleStatusChange(newStatus) 
+    });
+  }
+
+  function promptDeleteOrder() {
+    setConfirmModal({
+      title: 'Ви впевнені, що хочете остаточно видалити це замовлення? Цю дію неможливо скасувати.',
+      action: () => handleDeleteOrder()
+    });
+  }
+
+  async function handleDeleteOrder() {
+    setConfirmModal(null);
+    setUpdating(true);
+    
+    try {
+      const res = await fetch(`/api/admin/orders/delete?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Помилка при видаленні замовлення');
+      }
+      
+      toast.success('Замовлення видалено');
+      router.push('/admin/orders');
+    } catch (error) {
+      console.error('Delete order error:', error);
+      toast.error('Помилка при видаленні: ' + error.message);
+      setUpdating(false);
+    }
   }
 
   async function handleStatusChange(newStatus) {
@@ -1177,6 +1210,34 @@ export default function OrderDetailPage() {
                   )}
                 </div>
               </div>
+
+              {/* Видалення замовлення */}
+              <div style={{ paddingTop: '16px', borderTop: '1px solid #f5f5f4', display: 'flex', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={promptDeleteOrder}
+                  disabled={updating}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '12px 16px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#dc2626',
+                    background: '#fef2f2',
+                    border: '1.5px solid #fecaca',
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  className="hover:bg-red-100 hover:text-red-700 w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={16} />
+                  Видалити замовлення
+                </button>
+              </div>
+
             </div>
           </div>
 
@@ -1329,7 +1390,7 @@ export default function OrderDetailPage() {
       {confirmModal && (
         <ConfirmModal
           title={confirmModal.title}
-          onConfirm={() => handleStatusChange(confirmModal.newStatus)}
+          onConfirm={confirmModal.action}
           onClose={() => setConfirmModal(null)}
         />
       )}

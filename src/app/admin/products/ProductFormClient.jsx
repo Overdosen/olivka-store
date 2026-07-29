@@ -690,7 +690,19 @@ export default function ProductFormClient({ id }) {
         toast.success('Створено копію товару, можна редагувати');
         router.push(`/admin/products/${dupGeneratedId}`);
       } else {
-        router.push(customRedirect || '/admin/products');
+        if (!isEditing) {
+          router.push(`/admin/products/${currentId}`);
+        } else {
+          if (customRedirect) {
+            router.push(customRedirect);
+          } else {
+            setInitialState({
+              formData: { ...formData },
+              images: processedImages.map(img => ({ ...img, rawUrl: img.finalUrl }))
+            });
+            setOriginalImages(processedImages.map(img => img.finalUrl).filter(Boolean));
+          }
+        }
       }
 
     } catch (error) {
@@ -1647,7 +1659,7 @@ export default function ProductFormClient({ id }) {
               type="button"
               onClick={(e) => { e.preventDefault(); saveProduct(true); }}
               disabled={saving}
-              className="w-full sm:w-auto px-6 py-4 rounded-md font-bold tracking-wide transition-all shadow-sm border border-stone-200 hover:bg-stone-50 flex items-center justify-center text-stone-700 bg-white"
+              className="w-full sm:w-auto px-6 py-4 rounded-md font-bold tracking-wide transition-all shadow-sm border border-stone-200 hover:bg-stone-50 flex items-center justify-center text-stone-700 bg-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {saving ? (
                 <Loader2 className="w-5 h-5 mr-2 animate-spin text-stone-400" />
@@ -1659,8 +1671,8 @@ export default function ProductFormClient({ id }) {
 
             <button
               type="submit"
-              disabled={saving}
-              className="w-full sm:w-auto px-8 py-4 rounded-md font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center justify-center text-lg shadow-black/30"
+              disabled={saving || !isDirty()}
+              className="w-full sm:w-auto px-8 py-4 rounded-md font-bold tracking-wide transition-all shadow-md hover:-translate-y-1 flex items-center justify-center text-lg shadow-black/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               style={{ backgroundColor: '#1c1917', color: '#ffffff' }}
             >
               {saving ? (
