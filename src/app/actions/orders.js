@@ -6,16 +6,27 @@ const dbClient = supabaseService || supabase;
 
 export async function getOrderStatusCounts() {
   try {
-    const { data, error } = await dbClient
-      .from('orders')
-      .select('status');
+    const { data, error } = await dbClient.rpc('get_order_status_counts');
 
-    if (error) throw error;
+    if (error) {
+      console.warn('RPC failed, falling back to basic count:', error);
+      // Fallback just in case RPC is not applied everywhere
+      const fallback = await dbClient.from('orders').select('status');
+      if (fallback.error) throw fallback.error;
+      const counts = { all: fallback.data.length };
+      fallback.data.forEach(o => {
+        counts[o.status] = (counts[o.status] || 0) + 1;
+      });
+      return counts;
+    }
 
-    const counts = { all: data.length };
-    data.forEach(o => {
-      counts[o.status] = (counts[o.status] || 0) + 1;
+    let total = 0;
+    const counts = { all: 0 };
+    data.forEach(row => {
+      counts[row.status] = Number(row.count);
+      total += Number(row.count);
     });
+    counts.all = total;
 
     return counts;
   } catch (error) {

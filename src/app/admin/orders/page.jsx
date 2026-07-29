@@ -32,11 +32,13 @@ export default function OrdersPage() {
   const loadData = useCallback(async (params) => {
     setLoading(true);
     try {
-      const { orders: fetchedOrders, totalCount: count } = await getPaginatedOrders(params);
-      setOrders(fetchedOrders);
-      setTotalCount(count);
+      const [ordersRes, counts] = await Promise.all([
+        getPaginatedOrders(params),
+        getOrderStatusCounts()
+      ]);
       
-      const counts = await getOrderStatusCounts();
+      setOrders(ordersRes.orders);
+      setTotalCount(ordersRes.totalCount);
       setStatusCounts(counts);
     } catch (err) {
       console.error('Fetch orders error:', err);
