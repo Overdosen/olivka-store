@@ -1398,7 +1398,7 @@ export default function ProductFormClient({ id }) {
             <div>
               <label style={F.label}>Колір (оберіть один або декілька)</label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
-                {['Молочний', 'Рожевий/пудра', 'Сірий', 'Беж/коричневий', 'Гірчичний', 'Інші кольори'].map((color) => (
+                {['Молочний', 'Рожевий/пудра', 'Сірий', 'Беж/коричневий', 'Гірчичний', 'Блакитний', 'Інші кольори'].map((color) => (
                   <CheckboxChip
                     key={color}
                     label={color}
