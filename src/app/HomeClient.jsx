@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import Image from 'next/image';
@@ -64,7 +64,9 @@ function ProductCard({ product }) {
 
 export default function HomeClient({ blogPosts = [] }) {
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [comboProducts, setComboProducts] = useState([]);
   const carouselRef = useRef(null);
+  const comboCarouselRef = useRef(null);
   const [activeFeature, setActiveFeature] = useState(null);
 
   const features = [
@@ -119,6 +121,22 @@ export default function HomeClient({ blogPosts = [] }) {
     fetchNewArrivals();
   }, []);
 
+  useEffect(() => {
+    async function fetchComboProducts() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_combo', true);
+
+      if (error) {
+        console.error('Помилка при завантаженні поєднань:', error);
+      } else if (data) {
+        setComboProducts(data.map(p => ({ ...p, image: p.image_url })));
+      }
+    }
+    fetchComboProducts();
+  }, []);
+
   const scroll = (dir) => {
     if (carouselRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
@@ -130,6 +148,22 @@ export default function HomeClient({ blogPosts = [] }) {
         carouselRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' });
       } else {
         carouselRef.current.scrollBy({ left: dir * itemWidth, behavior: 'smooth' });
+      }
+    }
+  };
+
+  const scrollCombo = (dir) => {
+    if (comboCarouselRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = comboCarouselRef.current;
+      const item = comboCarouselRef.current.querySelector('.combo-card');
+      const itemWidth = item ? item.offsetWidth : 400;
+
+      if (dir === 1 && scrollLeft + clientWidth >= scrollWidth - 10) {
+        comboCarouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+      } else if (dir === -1 && scrollLeft <= 10) {
+        comboCarouselRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' });
+      } else {
+        comboCarouselRef.current.scrollBy({ left: dir * itemWidth, behavior: 'smooth' });
       }
     }
   };
@@ -404,7 +438,72 @@ export default function HomeClient({ blogPosts = [] }) {
         </div>
       </section>
 
+
+
+      {/* Секція: Ідеальне поєднання */}
+      {comboProducts.length > 0 && (
+        <section id="combo" className="section-combo container">
+          <h2 className="section-title">Ідеальне поєднання</h2>
+
+          <div style={{ position: 'relative', padding: '0 10px', maxWidth: '1100px', margin: '0 auto' }}>
+            {comboProducts.length > 1 && (
+              <button onClick={() => scrollCombo(-1)} className="carousel-btn left"><ChevronLeft /></button>
+            )}
+
+            <div
+              ref={comboCarouselRef}
+              className="hide-scrollbar"
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollSnapType: 'x mandatory',
+                padding: '1rem 0',
+                touchAction: 'auto'
+              }}
+            >
+              {comboProducts.map((product, index) => (
+                <div key={product.id} style={{ display: 'contents' }}>
+                  {/* Card */}
+                  <div className="combo-card">
+                    <Link href={`/product/${product.id}`} className="combo-card-inner">
+                      <div style={{ position: 'relative', aspectRatio: '3 / 4' }}>
+                        <Image
+                          src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                      <div className="product-info">
+                        <h3 className="product-title"><span>{product.name}</span></h3>
+                        <p className="product-price">{product.price} грн</p>
+                      </div>
+                    </Link>
+                  </div>
+
+                  {/* Divider after every card except the last */}
+                  {index < comboProducts.length - 1 && (
+                    <div className="combo-divider">
+                      <Plus size={26} strokeWidth={1.5} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {comboProducts.length > 1 && (
+              <button onClick={() => scrollCombo(1)} className="carousel-btn right"><ChevronRight /></button>
+            )}
+          </div>
+        </section>
+      )}
+
+
       <BlogPreviewSection posts={blogPosts} />
+
 
       <StoreReviews />
 

@@ -612,6 +612,12 @@ button {
   /* text-base */
 }
 
+
+
+
+
+
+
 /* Carousel */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -656,25 +662,27 @@ button {
   right: -5px;
 }
 
+
+
+
+
+
+
 .popular-card {
-  flex: 0 0 100%;
-  padding: 0 0.5rem;
+  flex: 0 0 calc(50% - 0.35rem);
+  padding: 0 0.35rem;
 }
 
 @media (min-width: 640px) {
   .popular-card {
-    flex: 0 0 calc(100% / 2.3);
+    flex: 0 0 calc(100% / 3);
   }
-
-  /* Р СћРЎР‚Р С•РЎвЂ¦Р С‘ РЎв‚¬Р С‘РЎР‚РЎв‚¬Р Вµ Р Р…РЎвЂ“Р В¶ Р С—Р С•Р В»Р С•Р Р†Р С‘Р Р…Р В° */
 }
 
 @media (min-width: 1024px) {
   .popular-card {
-    flex: 0 0 calc(100% / 3);
+    flex: 0 0 calc(100% / 5);
   }
-
-  /* 3 Р С—Р В»Р С‘РЎвЂљР С”Р С‘ Р В·Р В°Р СРЎвЂ“РЎРѓРЎвЂљРЎРЉ 4 Р Т‘Р В»РЎРЏ Р В±РЎвЂ“Р В»РЎРЉРЎв‚¬Р С•РЎвЂ” РЎв‚¬Р С‘РЎР‚Р С‘Р Р…Р С‘ */
 }
 
 .popular-card-inner {
@@ -692,6 +700,70 @@ button {
   transform: translateY(-4px);
   box-shadow: 0 10px 25px rgba(82, 79, 37, 0.08);
 }
+
+/* =====================================
+   Combo Section (Ideal Combination)
+   ===================================== */
+
+/* Окремий відступ для секції combo — менший ніж стандартна .section */
+.section-combo {
+  padding: 0 0 3rem;
+  margin-top: -2rem; /* Рівно по центру: 5rem (від попередньої секції) - 2rem = 3rem зверху, і 3rem знизу від заголовка */
+}
+
+/* Кожна картка у combo — самостійна, аналогічно popular-card */
+.combo-card {
+  flex: 0 0 50%;
+  padding: 0 12px;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 640px) {
+  .combo-card {
+    flex: 0 0 calc(100% / 2.5);
+  }
+}
+
+@media (min-width: 1024px) {
+  .combo-card {
+    flex: 0 0 calc(100% / 5);
+  }
+}
+
+.combo-card-inner {
+  background: white;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  padding: 0.5rem 0.5rem 0.45rem 0.5rem;
+  box-shadow: 0 6px 15px rgba(82, 79, 37, 0.04);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: block;
+  height: 100%;
+}
+
+.combo-card-inner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(82, 79, 37, 0.08);
+}
+
+/* Роздільник між кожною карткою — просто іконка, без кола і без ліній */
+.combo-divider {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  margin-left: -12px;
+  margin-right: -12px;
+  padding: 0;
+  color: #524f25;
+  opacity: 1; 
+  align-self: center;
+  position: relative;
+  top: -14px;
+  z-index: 10;
+}
+
 
 /* РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚
    Footer
