@@ -29,7 +29,7 @@ function ProductCard({ product }) {
   return (
     <div className="popular-card" style={{ scrollSnapAlign: 'start' }}>
       <Link href={`/product/${product.id}`} className="popular-card-inner">
-        <div className="product-image-wrapper" style={{ position: 'relative', aspectRatio: '3 / 4' }}>
+        <div className="product-image-wrapper">
           {!isLoaded && (
             <div className="absolute inset-0 bg-stone-100 animate-pulse z-10" />
           )}
@@ -421,6 +421,7 @@ export default function HomeClient({ blogPosts = [] }) {
 
           <div ref={carouselRef} className="hide-scrollbar" style={{
             display: 'flex',
+            alignItems: 'stretch',
             overflowX: 'auto',
             overflowY: 'hidden',
             scrollSnapType: 'x mandatory',

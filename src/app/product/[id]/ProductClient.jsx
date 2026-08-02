@@ -321,6 +321,36 @@ export default function ProductClient({ product }) {
 
         <p className="desc" style={{ marginTop: '2.5rem', marginBottom: '2.5rem' }}>{product.description}</p>
 
+        {/* Product specs block — shows only if at least one characteristic is filled */}
+        {((product.age && product.age.length > 0) || (product.color && product.color.length > 0) || (product.material && product.material.length > 0) || (product.features && product.features.length > 0)) && (
+          <div className="product-specs">
+            {product.age && product.age.length > 0 && (
+              <div className="product-specs-row">
+                <span className="spec-label">Вік</span>
+                <span className="spec-value">{product.age.join(', ')}</span>
+              </div>
+            )}
+            {product.color && product.color.length > 0 && (
+              <div className="product-specs-row">
+                <span className="spec-label">Колір</span>
+                <span className="spec-value">{product.color.join(', ')}</span>
+              </div>
+            )}
+            {product.material && product.material.length > 0 && (
+              <div className="product-specs-row">
+                <span className="spec-label">Матеріал</span>
+                <span className="spec-value">{product.material.join(', ')}</span>
+              </div>
+            )}
+            {product.features && product.features.length > 0 && (
+              <div className="product-specs-row">
+                <span className="spec-label">Особливості</span>
+                <span className="spec-value">{product.features.join(', ')}</span>
+              </div>
+            )}
+          </div>
+        )}
+
         {product.details && product.details.length > 0 && (
           <ul className="details-list">
             {product.details.map((detail, idx) => (

@@ -192,6 +192,7 @@ export default function ProductFormClient({ id }) {
     description: '',
     category_id: '',
     is_new: false,
+    is_combo: false,
     is_published: true,
     is_bundle: false,
     image_url: '',
@@ -224,6 +225,7 @@ export default function ProductFormClient({ id }) {
           description: '',
           category_id: '',
           is_new: false,
+          is_combo: false,
           is_published: true,
           is_bundle: false,
           image_url: '',
@@ -417,6 +419,7 @@ export default function ProductFormClient({ id }) {
         description: data.description || '',
         category_id: data.category_id || '',
         is_new: data.is_new || false,
+        is_combo: data.is_combo || false,
         is_published: data.is_published ?? true,
         is_bundle: data.is_bundle ?? false,
         image_url: data.image_url || '',
@@ -1522,6 +1525,12 @@ export default function ProductFormClient({ id }) {
               color="#e11d48"
               checked={formData.is_new}
               onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
+            />
+            <CheckboxChip
+              label="Ідеальне поєднання (головна сторінка)"
+              color="#524f25"
+              checked={formData.is_combo}
+              onChange={(e) => setFormData({ ...formData, is_combo: e.target.checked })}
             />
           </div>
         </Section>

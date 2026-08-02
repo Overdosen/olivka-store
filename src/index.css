@@ -471,7 +471,9 @@ button {
 }
 
 .product-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   transition: transform 0.3s ease;
   border-radius: 1rem;
   overflow: hidden;
@@ -489,13 +491,15 @@ button {
   margin-bottom: 0.5rem;
   background-color: var(--color-stone-50);
   aspect-ratio: 4 / 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   /* Fix for overflow: hidden with border-radius in some browsers */
   -webkit-mask-image: -webkit-radial-gradient(white, black);
   mask-image: radial-gradient(white, black);
   isolation: isolate;
+}
+
+/* Популярні картки: 3/4 = точний формат всіх фото (855×1140 px) */
+.popular-card .product-image-wrapper {
+  aspect-ratio: 3 / 4;
 }
 
 .product-image {
@@ -581,6 +585,8 @@ button {
   /* Р Р€РЎР‚РЎвЂ“Р В·Р В°Р Р…Р С• Р Р† 2 РЎР‚Р В°Р В·Р С‘ */
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
+  justify-content: space-between;
   gap: 2px;
   /* Р СџР С•Р Р†Р ВµРЎР‚Р Р…РЎС“РЎвЂљР С• Р С”Р С•Р СРЎвЂћР С•РЎР‚РЎвЂљР Р…Р С‘Р в„– РЎвЂ“Р Р…РЎвЂљР ВµРЎР‚Р Р†Р В°Р В» */
 }
@@ -591,8 +597,8 @@ button {
   font-size: 1rem;
   color: #524f25;
   line-height: 1.2;
-  min-height: 2.5rem;
-  /* Р СџР С•Р Р†Р ВµРЎР‚Р Р…РЎС“РЎвЂљР С• РЎРѓРЎвЂљР В°Р В±РЎвЂ“Р В»РЎРЉР Р…РЎС“ Р Р†Р С‘РЎРѓР С•РЎвЂљРЎС“ */
+  height: 2.4rem;       /* Фіксована висота = рівно 2 рядки */
+  overflow: hidden;
   text-align: center;
 }
 
@@ -671,6 +677,8 @@ button {
 .popular-card {
   flex: 0 0 calc(50% - 0.35rem);
   padding: 0 0.35rem;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 640px) {
@@ -693,7 +701,10 @@ button {
   /* Р Р€РЎР‚РЎвЂ“Р В·Р В°Р Р…Р С• Р Р† 2 РЎР‚Р В°Р В·Р С‘ */
   box-shadow: 0 6px 15px rgba(82, 79, 37, 0.04);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
 }
 
 .popular-card-inner:hover {
@@ -716,6 +727,8 @@ button {
   flex: 0 0 50%;
   padding: 0 12px;
   scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 640px) {
@@ -737,8 +750,10 @@ button {
   padding: 0.5rem 0.5rem 0.45rem 0.5rem;
   box-shadow: 0 6px 15px rgba(82, 79, 37, 0.04);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: block;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  flex-grow: 1;
 }
 
 .combo-card-inner:hover {
