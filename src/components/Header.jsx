@@ -200,11 +200,11 @@ export default function Header() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <Search size={15} color="#627b58" />
+                <Search size={15} color="#627b58" style={{ flexShrink: 0 }} />
                 <span className="header-search-text" style={{ color: '#78716c', fontWeight: 400, whiteSpace: 'nowrap' }}>
-                  Пошук товарів...
+                  Пошук...
                 </span>
-                <Sparkles size={14} color="#627b58" style={{ opacity: 0.8 }} />
+                <Sparkles size={14} color="#627b58" style={{ opacity: 0.8, flexShrink: 0 }} />
               </div>
             )}
 

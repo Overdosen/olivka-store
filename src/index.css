@@ -269,7 +269,7 @@ button {
 
 @media (max-width: 767px) {
   .header-inner {
-    padding: 0 0.75rem !important;
+    padding: 0 0.5rem !important;
   }
   .header-left {
     margin-left: -0.25rem;
@@ -280,20 +280,11 @@ button {
     gap: 0.5rem !important;
   }
   .header-search-bar {
-    padding: 6px 10px !important;
-    gap: 4px !important;
+    padding: 6px 14px !important;
+    gap: 8px !important;
   }
   .header-search-text {
-    font-size: 12px !important;
-    max-width: 90px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-search-text {
-    display: none !important;
+    font-size: 13px !important;
   }
 }
 
