@@ -29,21 +29,18 @@ function ProductCard({ product }) {
   return (
     <div className="popular-card" style={{ scrollSnapAlign: 'start' }}>
       <Link href={`/product/${product.id}`} className="popular-card-inner">
-        <div className="product-image-wrapper" style={{ position: 'relative', marginBottom: '0.5rem', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', width: '100%', paddingTop: '133.33%', borderRadius: '1rem', overflow: 'hidden', marginBottom: '0.5rem', backgroundColor: 'var(--color-stone-50)' }}>
           {!isLoaded && (
             <div style={{ position: 'absolute', inset: 0, background: '#f5f5f0', zIndex: 10 }} />
           )}
           <Image
             src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
             alt={product.name}
-            width={855}
-            height={1140}
+            fill
             onLoad={() => setIsLoaded(true)}
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
             style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
+              objectFit: 'cover',
               opacity: isAvailable ? (isLoaded ? 1 : 0) : 0.6,
               transition: 'opacity 0.4s ease'
             }}
@@ -472,7 +469,7 @@ export default function HomeClient({ blogPosts = [] }) {
                   {/* Card */}
                   <div className="combo-card">
                     <Link href={`/product/${product.id}`} className="combo-card-inner">
-                      <div style={{ position: 'relative', aspectRatio: '3 / 4' }}>
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '133.33%', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '0.5rem' }}>
                         <Image
                           src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
                           alt={product.name}

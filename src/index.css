@@ -1772,6 +1772,20 @@ html:has(body.no-scroll) {
   color: #524f25;
 }
 
+.product-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-stone-800);
+  line-height: 1.25rem;
+  height: 2.5rem; /* Чітко 2 рядки (1.25rem * 2) */
+  margin-bottom: 0.35rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
 .blog-card-desc,
 .blog-preview-card-desc {
   font-size: 0.9375rem;
