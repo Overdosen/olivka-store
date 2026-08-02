@@ -29,29 +29,32 @@ function ProductCard({ product }) {
   return (
     <div className="popular-card" style={{ scrollSnapAlign: 'start' }}>
       <Link href={`/product/${product.id}`} className="popular-card-inner">
-        <div className="product-image-wrapper">
-          {!isLoaded && (
-            <div className="absolute inset-0 bg-stone-100 animate-pulse z-10" />
-          )}
-          <Image
-            src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
-            alt={product.name}
-            fill
-            onLoad={() => setIsLoaded(true)}
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
-            className={`product-image ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
-            style={{
-              objectFit: 'cover',
-              opacity: isAvailable ? (isLoaded ? 1 : 0) : 0.6
-            }}
-          />
-          {!isAvailable && (
-            <div style={{
-              position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(28, 25, 23, 0.85)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10
-            }}>
-              Немає в наявності
-            </div>
-          )}
+        {/* Ratio box: paddingBottom = 133.33% = 4/3 × 100% → фіксоване 3:4 */}
+        <div style={{ position: 'relative', width: '100%', paddingBottom: '133.33%', flexShrink: 0, marginBottom: '0.5rem' }}>
+          <div className="product-image-wrapper" style={{ position: 'absolute', inset: 0 }}>
+            {!isLoaded && (
+              <div className="absolute inset-0 bg-stone-100 animate-pulse z-10" />
+            )}
+            <Image
+              src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
+              alt={product.name}
+              fill
+              onLoad={() => setIsLoaded(true)}
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 250px"
+              className={`product-image ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}`}
+              style={{
+                objectFit: 'cover',
+                opacity: isAvailable ? (isLoaded ? 1 : 0) : 0.6
+              }}
+            />
+            {!isAvailable && (
+              <div style={{
+                position: 'absolute', top: '10px', left: '10px', backgroundColor: 'rgba(28, 25, 23, 0.85)', color: 'white', padding: '6px 12px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold', zIndex: 10
+              }}>
+                Немає в наявності
+              </div>
+            )}
+          </div>
         </div>
         <div className="product-info" style={{ opacity: isAvailable ? 1 : 0.6 }}>
           <h3 className="product-title"><span>{product.name}</span></h3>
