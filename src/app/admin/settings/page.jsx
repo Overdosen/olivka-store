@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   Save, Calendar, Globe, AlertTriangle, ShoppingCart,
   Sparkles, ChevronUp, ChevronDown, X, Plus, FolderOpen,
-  Shuffle, Loader2
+  Shuffle, Loader2, Bot, RefreshCw, Search
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -357,6 +357,14 @@ export default function SettingsPage() {
     categories: [],
   });
 
+  const [aiSearchSettings, setAiSearchSettings] = useState({
+    enabled: true,
+    indexed_count: 0,
+    total_count: 0,
+    last_indexed_at: null,
+  });
+  const [reindexing, setReindexing] = useState(false);
+
   const [allCategories, setAllCategories] = useState([]);
 
   // ── Load ──────────────────────────────────────────────────────────────────
@@ -364,9 +372,10 @@ export default function SettingsPage() {
     async function load() {
       setFetching(true);
       try {
-        const [vacRes, relRes, catRes] = await Promise.all([
+        const [vacRes, relRes, aiRes, catRes] = await Promise.all([
           supabase.from('global_settings').select('value').eq('id', 'vacation_mode').single(),
           supabase.from('global_settings').select('value').eq('id', 'related_products_settings').single(),
+          supabase.from('global_settings').select('value').eq('id', 'ai_search_settings').single(),
           supabase.from('categories').select('id, name').order('sort_order', { ascending: true }),
         ]);
 
@@ -377,6 +386,10 @@ export default function SettingsPage() {
         if (relRes.data?.value) {
           const parsed = typeof relRes.data.value === 'string' ? JSON.parse(relRes.data.value) : relRes.data.value;
           setRelatedSettings(p => ({ ...p, ...parsed }));
+        }
+        if (aiRes.data?.value) {
+          const parsed = typeof aiRes.data.value === 'string' ? JSON.parse(aiRes.data.value) : aiRes.data.value;
+          setAiSearchSettings(p => ({ ...p, ...parsed }));
         }
         setAllCategories(catRes.data || []);
       } catch (e) {
@@ -392,17 +405,46 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const [r1, r2] = await Promise.all([
+      const [r1, r2, r3] = await Promise.all([
         supabase.from('global_settings').upsert({ id: 'vacation_mode', value: JSON.stringify(vacationMode) }),
         supabase.from('global_settings').upsert({ id: 'related_products_settings', value: JSON.stringify(relatedSettings) }),
+        supabase.from('global_settings').upsert({ id: 'ai_search_settings', value: JSON.stringify(aiSearchSettings) }),
       ]);
       if (r1.error) throw r1.error;
       if (r2.error) throw r2.error;
+      if (r3.error) throw r3.error;
       toast.success('Налаштування збережено');
     } catch (e) {
       toast.error('Помилка збереження');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Reindex Handler ────────────────────────────────────────────────────────
+  const handleReindex = async () => {
+    setReindexing(true);
+    const toastId = toast.loading('Генерація векторів для товарів...');
+    try {
+      const res = await fetch('/api/admin/ai-search/reindex', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success) {
+        setAiSearchSettings(p => ({
+          ...p,
+          indexed_count: data.indexedCount,
+          total_count: data.totalCount,
+          last_indexed_at: data.lastIndexedAt,
+        }));
+        toast.success(`Успішно проіндексовано ${data.indexedCount} товарів!`, { id: toastId });
+      } else {
+        throw new Error(data.error || 'Помилка індексації');
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Не вдалося проіндексувати вектори', { id: toastId });
+    } finally {
+      setReindexing(false);
     }
   };
 
@@ -730,6 +772,86 @@ export default function SettingsPage() {
               )}
             </>
           )}
+        </SectionCard>
+
+        {/* ════════════════════════════════════════════════════════════════════
+            БЛОК 3: ІНТЕЛЕКТУАЛЬНИЙ AI-ПОШУК (pgvector)
+        ════════════════════════════════════════════════════════════════════ */}
+        <SectionCard
+          icon={Bot}
+          iconBg="#edf3e9"
+          iconColor="#627b58"
+          title="Інтелектуальний AI-пошук (Supabase pgvector)"
+          subtitle="Розуміння природних запитів покупців (по сезону, тканині чи віку)"
+          badge={
+            aiSearchSettings.enabled
+              ? <span style={{ fontSize: '11px', fontWeight: 700, color: '#627b58', background: '#edf3e9', padding: '2px 8px', borderRadius: '999px', letterSpacing: '0.04em' }}>АКТИВНИЙ</span>
+              : <span style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', background: '#f5f5f4', padding: '2px 8px', borderRadius: '999px', letterSpacing: '0.04em' }}>ВИМКНЕНО</span>
+          }
+        >
+          <ToggleRow
+            title="Увімкнути розумний AI-пошук"
+            description={aiSearchSettings.enabled ? 'ШІ шукає товари за значенням запиту' : 'Пошук працюватиме за точним збігом слів'}
+            checked={aiSearchSettings.enabled}
+            onChange={val => setAiSearchSettings(p => ({ ...p, enabled: val }))}
+          />
+
+          <Divider />
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justify: 'space-between',
+              padding: '16px',
+              background: '#fafaf9',
+              borderRadius: '12px',
+              border: '1px solid #f0efed',
+            }}>
+              <div>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>Стан індексації товарів:</span>
+                <p style={{ fontSize: '12px', color: '#78716c', margin: '4px 0 0' }}>
+                  {aiSearchSettings.last_indexed_at
+                    ? `Останне оновлення: ${new Date(aiSearchSettings.last_indexed_at).toLocaleString('uk-UA')}`
+                    : 'Вектори ще не згенеровані'}
+                </p>
+              </div>
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#627b58',
+                background: '#edf3e9',
+                padding: '6px 12px',
+                borderRadius: '8px',
+              }}>
+                {aiSearchSettings.indexed_count || 0} / {aiSearchSettings.total_count || 0} товарів
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleReindex}
+              disabled={reindexing}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                background: reindexing ? '#e7e5e4' : '#627b58',
+                color: reindexing ? '#78716c' : 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: reindexing ? 'not-allowed' : 'pointer',
+                transition: 'background 0.15s',
+              }}
+            >
+              {reindexing ? <Loader2 size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+              {reindexing ? 'Генерація векторів...' : 'Переіндексувати вектори товарів'}
+            </button>
+          </div>
         </SectionCard>
 
       </div>

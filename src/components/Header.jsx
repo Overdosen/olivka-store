@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ShoppingBag, Menu, X, User, Search, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import bearImg from '../assets/teddy_bear.png';
 import TextBorderAnimation from './TextBorderAnimation';
@@ -12,8 +12,7 @@ import { useAuth } from '../context/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import AuthModal from './AuthModal';
-import { useSearchParams } from 'next/navigation';
-import { Suspense, useCallback } from 'react';
+import SmartSearchModal from './SmartSearchModal';
 
 function AuthQueryHandler({ onOpen, onParams }) {
   const searchParams = useSearchParams();
@@ -41,6 +40,8 @@ export default function Header() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [aiSearchEnabled, setAiSearchEnabled] = useState(true);
   const [isMounted, setIsMounted] = useState(false);
   const [authParams, setAuthParams] = useState({ email: '', password: '' });
 
@@ -75,7 +76,6 @@ export default function Header() {
     if (!isMounted) return;
 
     async function fetchCategories() {
-      console.log('[Header] Fetching categories...');
       try {
         const { data, error } = await supabase
           .from('categories')
@@ -85,7 +85,6 @@ export default function Header() {
         if (error) {
           console.error('[Header] Error fetching categories:', error);
         } else if (data) {
-          console.log('[Header] Categories loaded:', data.length);
           const hasFullset = data.some(cat => cat.id === 'fullset' || cat.name === 'Готові рішення');
           if (!hasFullset) {
             setCategories([...data, { id: 'fullset', name: 'Готові рішення' }]);
@@ -97,11 +96,27 @@ export default function Header() {
         console.error('[Header] Unexpected error:', err);
       }
     }
-    fetchCategories();
-  }, [isMounted]);
 
-  // Let the header render naturally, don't hide it with visibility: hidden
-  // This prevents the "white screen" or "ghost site" if hydration hangs
+    async function fetchAiSearchSetting() {
+      try {
+        const { data } = await supabase
+          .from('global_settings')
+          .select('value')
+          .eq('id', 'ai_search_settings')
+          .single();
+
+        if (data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          setAiSearchEnabled(parsed.enabled !== false);
+        }
+      } catch (e) {
+        console.error('[Header] Error fetching ai_search_settings:', e);
+      }
+    }
+
+    fetchCategories();
+    fetchAiSearchSetting();
+  }, [isMounted]);
 
   if (!isMounted) {
     return (
@@ -154,6 +169,44 @@ export default function Header() {
           </nav>
 
           <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', paddingRight: '0', justifySelf: 'end' }}>
+            {/* ІМІТАЦІЙНЕ ПОЛЕ ПОШУКУ (повністю зникає якщо aiSearchEnabled === false) */}
+            {aiSearchEnabled && (
+              <div
+                onClick={() => setIsSearchOpen(true)}
+                title="Пошук товарів"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '7px 16px',
+                  background: '#f7f9f6',
+                  border: '1.5px solid #dae5d4',
+                  borderRadius: '999px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  color: '#78716c',
+                  fontSize: '13px',
+                  userSelect: 'none',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = '#bed1b6';
+                  e.currentTarget.style.background = '#edf3e9';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(98,123,88,0.12)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = '#dae5d4';
+                  e.currentTarget.style.background = '#f7f9f6';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <Search size={15} color="#627b58" />
+                <span className="d-none d-sm-inline" style={{ color: '#78716c', fontWeight: 400, whiteSpace: 'nowrap' }}>
+                  Пошук товарів...
+                </span>
+                <Sparkles size={14} color="#627b58" style={{ opacity: 0.8 }} />
+              </div>
+            )}
+
             <button
               className="btn btn-icon"
               onClick={handleUserClick}
@@ -213,7 +266,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Мобільне меню - тепер поза тегом header */}
+      {/* Мобільне меню */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -223,6 +276,32 @@ export default function Header() {
             className="mobile-menu"
           >
             <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '2rem 1.5rem 100px' }}>
+              {aiSearchEnabled && (
+                <div
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsSearchOpen(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 18px',
+                    background: '#f7f9f6',
+                    border: '1.5px solid #dae5d4',
+                    borderRadius: '16px',
+                    cursor: 'pointer',
+                    color: '#78716c',
+                    fontSize: '15px',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  <Search size={18} color="#627b58" />
+                  <span style={{ flex: 1, color: '#78716c' }}>Пошук товарів...</span>
+                  <Sparkles size={16} color="#627b58" />
+                </div>
+              )}
+
               <Link href="/" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Головна</Link>
               <Link href="/catalog" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Каталог</Link>
               <Link href="/about" className="nav-link" style={{ fontSize: '1.2rem' }} onClick={() => setIsMobileMenuOpen(false)}>Про нас</Link>
@@ -247,9 +326,9 @@ export default function Header() {
       <AuthModal 
         isOpen={isAuthOpen} 
         onClose={() => setIsAuthOpen(false)} 
-        initialEmail={authParams.email}
-        initialPassword={authParams.password}
+        defaultParams={authParams}
       />
+      <SmartSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </>
   );
 }
