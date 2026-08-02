@@ -172,6 +172,7 @@ export default function Header() {
             {/* ІМІТАЦІЙНЕ ПОЛЕ ПОШУКУ (повністю зникає якщо aiSearchEnabled === false) */}
             {aiSearchEnabled && (
               <div
+                className="header-search-bar"
                 onClick={() => setIsSearchOpen(true)}
                 title="Пошук товарів"
                 style={{
@@ -200,7 +201,7 @@ export default function Header() {
                 }}
               >
                 <Search size={15} color="#627b58" />
-                <span className="d-none d-sm-inline" style={{ color: '#78716c', fontWeight: 400, whiteSpace: 'nowrap' }}>
+                <span className="header-search-text" style={{ color: '#78716c', fontWeight: 400, whiteSpace: 'nowrap' }}>
                   Пошук товарів...
                 </span>
                 <Sparkles size={14} color="#627b58" style={{ opacity: 0.8 }} />
