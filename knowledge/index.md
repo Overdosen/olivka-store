@@ -22,5 +22,6 @@
 | [[concepts/reviews-moderation-system]] | Безпечна система відгуків у Supabase, клієнтський модал та інтерфейс модерації в CRM | daily/2026-05-18.md | 2026-05-18 |
 | [[concepts/products]] | Товарний асортимент, облік залишків (розмірний та безрозмірний) та SEO у Store Olivka | daily/2026-05-18.md | 2026-05-18 |
 | [[concepts/categories]] | Структура категорій товарів, динамічна навігація та SEO-описи категорій | daily/2026-04-13.md | 2026-04-13 |
+| [[concepts/flexbox-carousel-card-height-bug]] | Надійне вирішення проблеми різної висоти плит та зображень у каруселях (Ratio-Box + Line-Clamp) | daily/2026-08-02.md | 2026-08-02 |
 
 

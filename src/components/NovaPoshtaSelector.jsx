@@ -343,10 +343,10 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                     disabled={whLoading}
                     style={{ ...inputWrapStyle(!!selectedWh), width: '100%', boxSizing: 'border-box', justifyContent: 'space-between', textAlign: 'left' }}
                   >
-                    <span style={{ flex: 1, minWidth: 0, display: 'block', fontSize: '0.9rem', color: selectedWh ? '#524f25' : 'rgba(82,79,37,0.35)', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    <span style={{ flex: 1, minWidth: 0, display: 'block', fontSize: '0.9rem', color: selectedWh ? '#524f25' : 'rgba(82,79,37,0.65)', whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                       {whLoading ? 'Завантаження...' : selectedWh ? selectedWh.Description : `Оберіть ${WAREHOUSE_TYPES[warehouseType].label.toLowerCase()}...`}
                     </span>
-                    <ChevronDown size={15} style={{ flexShrink: 0, color: 'rgba(82,79,37,0.4)', transform: whOpen ? 'rotate(180deg)' : 'none' }} />
+                    <ChevronDown size={15} style={{ flexShrink: 0, color: 'rgba(82,79,37,0.6)', transform: whOpen ? 'rotate(180deg)' : 'none' }} />
                   </button>
 
                   <AnimatePresence>
@@ -356,7 +356,7 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                           <input
                             value={whQuery}
                             onChange={e => setWhQuery(e.target.value)}
-                            placeholder="Пошук відділення..."
+                            placeholder={warehouseType === 'locker' ? 'Пошук поштомату...' : 'Пошук відділення...'}
                             style={{ border: 'none', outline: 'none', fontSize: '0.82rem', width: '100%', fontFamily: 'var(--font-sans)', color: '#524f25' }}
                           />
                         </div>
@@ -447,6 +447,10 @@ export default function NovaPoshtaSelector({ onChange, value }) {
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        input::placeholder {
+          color: rgba(82, 79, 37, 0.65) !important;
+          opacity: 1 !important;
+        }
       `}</style>
     </div>
   );
@@ -509,9 +513,9 @@ const labelStyle = {
 function inputWrapStyle(active) {
   return {
     display: 'flex', alignItems: 'center', gap: '0.6rem',
-    border: `1px solid ${active ? '#524f25' : 'rgba(82,79,37,0.15)'}`,
+    border: `1px solid ${active ? '#524f25' : 'rgba(82,79,37,0.25)'}`,
     borderRadius: '10px', padding: '0.7rem 1rem',
-    background: active ? 'white' : 'rgba(255,255,255,0.7)', transition: 'all 0.2s',
+    background: active ? 'white' : 'rgba(255,255,255,0.85)', transition: 'all 0.2s',
   };
 }
 
