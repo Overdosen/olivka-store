@@ -497,9 +497,17 @@ button {
   isolation: isolate;
 }
 
-/* Популярні картки: 3/4 = точний формат всіх фото (855×1140 px) */
+/* Популярні картки: 3:4 через ::before (надійно для Safari/iOS — aspect-ratio на flex-item глючить) */
 .popular-card .product-image-wrapper {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: unset;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.popular-card .product-image-wrapper::before {
+  content: '';
+  display: block;
+  padding-bottom: 133.33%; /* 4/3 × 100% = точний 3:4 формат (855×1140 px) */
 }
 
 .product-image {
