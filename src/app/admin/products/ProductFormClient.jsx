@@ -193,6 +193,7 @@ export default function ProductFormClient({ id }) {
     category_id: '',
     is_new: false,
     is_combo: false,
+    is_outfit: false,
     is_published: true,
     is_bundle: false,
     image_url: '',
@@ -226,6 +227,7 @@ export default function ProductFormClient({ id }) {
           category_id: '',
           is_new: false,
           is_combo: false,
+          is_outfit: false,
           is_published: true,
           is_bundle: false,
           image_url: '',
@@ -420,6 +422,7 @@ export default function ProductFormClient({ id }) {
         category_id: data.category_id || '',
         is_new: data.is_new || false,
         is_combo: data.is_combo || false,
+        is_outfit: data.is_outfit || false,
         is_published: data.is_published ?? true,
         is_bundle: data.is_bundle ?? false,
         image_url: data.image_url || '',
@@ -1531,6 +1534,12 @@ export default function ProductFormClient({ id }) {
               color="#524f25"
               checked={formData.is_combo}
               onChange={(e) => setFormData({ ...formData, is_combo: e.target.checked })}
+            />
+            <CheckboxChip
+              label="Готові образи (головна сторінка)"
+              color="#c77dba"
+              checked={formData.is_outfit}
+              onChange={(e) => setFormData({ ...formData, is_outfit: e.target.checked })}
             />
           </div>
         </Section>

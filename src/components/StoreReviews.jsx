@@ -96,23 +96,17 @@ export default function StoreReviews() {
           </div>
         </div>
 
-        <motion.div 
-          layout
-          transition={{ layout: { duration: 0.4, ease: "easeInOut" } }}
-          className="reviews-grid"
-        >
+        <div className="reviews-grid">
           <AnimatePresence initial={false}>
-            {displayedReviews.map((review, index) => (
+            {displayedReviews.map((review) => (
               <motion.div
                 key={review.id}
-                layout
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 12, transition: { duration: 0.18, ease: 'easeIn' } }}
+                exit={{ opacity: 0, y: 10, transition: { duration: 0.15 } }}
                 transition={{
-                  duration: 0.42,
-                  ease: [0.16, 1, 0.3, 1],
-                  delay: index * 0.04,
+                  duration: 0.25,
+                  ease: "easeOut"
                 }}
                 className="review-bubble"
               >
@@ -142,7 +136,7 @@ export default function StoreReviews() {
               </motion.div>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         <div className="reviews-footer">
           <button 

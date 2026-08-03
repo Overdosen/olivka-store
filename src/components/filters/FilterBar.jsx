@@ -83,8 +83,11 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
   // Gender filter is hidden only for Accessories
   const hideGender = categoryName === 'Аксесуари';
 
-  // Size and Age filters are hidden for bedding/textiles and Accessories
-  const hideSizeAge = ['Пледи та текстиль', 'Текстиль (пелюшки, пледи)', 'Пелюшки та бокси', 'Аксесуари'].includes(categoryName);
+  // Size filter is hidden for bedding/textiles, Accessories, hats, socks, and ready-made sets
+  const hideSize = ['Пледи та текстиль', 'Текстиль (пелюшки, пледи)', 'Пелюшки та бокси', 'Аксесуари', 'Чепчики, шапочки', 'Шкарпетки', 'Готові рішення'].includes(categoryName);
+
+  // Age filter is hidden only for bedding/textiles and Accessories
+  const hideAge = ['Пледи та текстиль', 'Текстиль (пелюшки, пледи)', 'Пелюшки та бокси', 'Аксесуари'].includes(categoryName);
 
   return (
     <div className="flex flex-col" style={{ gap: '14px', paddingTop: '8px' }}>
@@ -101,7 +104,7 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Size Filter */}
-      {!hideSizeAge && (
+      {!hideSize && (
         <FilterDropdown
           label=" Розмір  "
           options={options.sizes.filter(s => !s.includes('*'))}
@@ -112,7 +115,7 @@ export default function FilterBar({ products, filters, setFilters, onClear, opti
       )}
 
       {/* Age Filter */}
-      {!hideSizeAge && (
+      {!hideAge && (
         <FilterDropdown
           label=" Вік   "
           options={options.ages}

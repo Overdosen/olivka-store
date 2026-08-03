@@ -65,8 +65,11 @@ function ProductCard({ product }) {
 export default function HomeClient({ blogPosts = [] }) {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [comboProducts, setComboProducts] = useState([]);
+  const [outfitProducts, setOutfitProducts] = useState([]);
+  const [activeGender, setActiveGender] = useState('boy');
   const carouselRef = useRef(null);
   const comboCarouselRef = useRef(null);
+  const outfitCarouselRef = useRef(null);
   const [activeFeature, setActiveFeature] = useState(null);
 
   const features = [
@@ -136,6 +139,36 @@ export default function HomeClient({ blogPosts = [] }) {
     }
     fetchComboProducts();
   }, []);
+
+  useEffect(() => {
+    async function fetchOutfitProducts() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_outfit', true);
+
+      if (error) {
+        console.error('Помилка при завантаженні образів:', error);
+      } else if (data) {
+        setOutfitProducts(data.map(p => ({ ...p, image: p.image_url })));
+      }
+    }
+    fetchOutfitProducts();
+  }, []);
+
+  // Скидати позицію каруселі outfit при зміні гендеру
+  useEffect(() => {
+    if (outfitCarouselRef.current) {
+      outfitCarouselRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [activeGender]);
+
+  // Фільтруємо outfit-товари за активним гендером
+  const filteredOutfitProducts = outfitProducts.filter(p =>
+    activeGender === 'boy'
+      ? p.gender === 'Хлопчик'
+      : p.gender === 'Дівчинка'
+  );
 
   const scroll = (dir) => {
     if (carouselRef.current) {
@@ -441,7 +474,7 @@ export default function HomeClient({ blogPosts = [] }) {
 
 
 
-      {/* Секція: Ідеальне поєднання */}
+      {/* Секція: Ідеальне поєднання — оригінальний вигляд, всі is_combo товари */}
       {comboProducts.length > 0 && (
         <section id="combo" className="section-combo container">
           <h2 className="section-title">Ідеальне поєднання</h2>
@@ -466,7 +499,115 @@ export default function HomeClient({ blogPosts = [] }) {
             >
               {comboProducts.map((product, index) => (
                 <div key={product.id} style={{ display: 'contents' }}>
-                  {/* Card */}
+                  <div className="combo-card">
+                    <Link href={`/product/${product.id}`} className="combo-card-inner">
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '133.33%', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                        <Image
+                          src={product.image?.startsWith('http') ? product.image : `/images/${product.image}`}
+                          alt={product.name}
+                          fill
+                          sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 200px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                      <div className="product-info">
+                        <h3 className="product-title"><span>{product.name}</span></h3>
+                        <p className="product-price">{product.price} грн</p>
+                      </div>
+                    </Link>
+                  </div>
+                  {index < comboProducts.length - 1 && (
+                    <div className="combo-divider">
+                      <Plus size={26} strokeWidth={1.5} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {comboProducts.length > 1 && (
+              <button onClick={() => scrollCombo(1)} className="carousel-btn right"><ChevronRight /></button>
+            )}
+          </div>
+        </section>
+      )}
+
+
+      {/* Секція: Готові образи — з фільтром по статі */}
+      {outfitProducts.length > 0 && (
+        <section id="outfit" className="section-combo container" style={{ marginTop: '0.5rem' }}>
+          {/* Заголовок з перемикачем гендеру */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '1.25rem' }}>
+            <h2 className="section-title" style={{ margin: 0 }}>Готові образи</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: '#78716c', fontWeight: 500, marginRight: '0.4rem' }}>для</span>
+              <button
+                onClick={() => setActiveGender('boy')}
+                style={{
+                  padding: '4px 14px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-sans)',
+                  letterSpacing: '0.01em',
+                  transition: 'background 0.2s, color 0.2s, transform 0.15s',
+                  transform: activeGender === 'boy' ? 'scale(1.06)' : 'scale(1)',
+                  background: activeGender === 'boy' ? '#7eb8d4' : '#e7e5e4',
+                  color: activeGender === 'boy' ? '#fff' : '#78716c',
+                  boxShadow: activeGender === 'boy' ? '0 2px 8px rgba(126,184,212,0.35)' : 'none',
+                }}
+              >
+                Хлопчика
+              </button>
+              <button
+                onClick={() => setActiveGender('girl')}
+                style={{
+                  padding: '4px 14px',
+                  borderRadius: '999px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-sans)',
+                  letterSpacing: '0.01em',
+                  transition: 'background 0.2s, color 0.2s, transform 0.15s',
+                  transform: activeGender === 'girl' ? 'scale(1.06)' : 'scale(1)',
+                  background: activeGender === 'girl' ? '#c77dba' : '#e7e5e4',
+                  color: activeGender === 'girl' ? '#fff' : '#78716c',
+                  boxShadow: activeGender === 'girl' ? '0 2px 8px rgba(199,125,186,0.35)' : 'none',
+                }}
+              >
+                Дівчинки
+              </button>
+            </div>
+          </div>
+
+          <div style={{ position: 'relative', padding: '0 10px', maxWidth: '1100px', margin: '0 auto' }}>
+            {filteredOutfitProducts.length > 1 && (
+              <button onClick={() => { if (outfitCarouselRef.current) { const { scrollLeft, scrollWidth, clientWidth } = outfitCarouselRef.current; const item = outfitCarouselRef.current.querySelector('.combo-card'); const itemWidth = item ? item.offsetWidth : 400; if (scrollLeft <= 10) { outfitCarouselRef.current.scrollTo({ left: scrollWidth, behavior: 'smooth' }); } else { outfitCarouselRef.current.scrollBy({ left: -itemWidth, behavior: 'smooth' }); } } }} className="carousel-btn left"><ChevronLeft /></button>
+            )}
+
+            <motion.div
+              key={activeGender}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              ref={outfitCarouselRef}
+              className="hide-scrollbar"
+              style={{
+                display: 'flex',
+                alignItems: 'stretch',
+                overflowX: 'auto',
+                overflowY: 'hidden',
+                scrollSnapType: 'x mandatory',
+                padding: '1rem 0',
+                touchAction: 'auto'
+              }}
+            >
+              {filteredOutfitProducts.map((product, index) => (
+                <div key={product.id} style={{ display: 'contents' }}>
                   <div className="combo-card">
                     <Link href={`/product/${product.id}`} className="combo-card-inner">
                       <div style={{ position: 'relative', width: '100%', paddingTop: '133.33%', borderRadius: '0.75rem', overflow: 'hidden', marginBottom: '0.5rem' }}>
@@ -485,18 +626,12 @@ export default function HomeClient({ blogPosts = [] }) {
                     </Link>
                   </div>
 
-                  {/* Divider after every card except the last */}
-                  {index < comboProducts.length - 1 && (
-                    <div className="combo-divider">
-                      <Plus size={26} strokeWidth={1.5} />
-                    </div>
-                  )}
                 </div>
               ))}
-            </div>
+            </motion.div>
 
-            {comboProducts.length > 1 && (
-              <button onClick={() => scrollCombo(1)} className="carousel-btn right"><ChevronRight /></button>
+            {filteredOutfitProducts.length > 1 && (
+              <button onClick={() => { if (outfitCarouselRef.current) { const { scrollLeft, scrollWidth, clientWidth } = outfitCarouselRef.current; const item = outfitCarouselRef.current.querySelector('.combo-card'); const itemWidth = item ? item.offsetWidth : 400; if (scrollLeft + clientWidth >= scrollWidth - 10) { outfitCarouselRef.current.scrollTo({ left: 0, behavior: 'smooth' }); } else { outfitCarouselRef.current.scrollBy({ left: itemWidth, behavior: 'smooth' }); } } }} className="carousel-btn right"><ChevronRight /></button>
             )}
           </div>
         </section>
