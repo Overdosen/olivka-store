@@ -109,7 +109,33 @@ export default function CategoryClient({ initialCategory, initialProducts }) {
       if (!product.color || !product.color.some(c => filters.colors.includes(c))) return false;
     }
     if (filters.features && filters.features.length > 0) {
-      if (!product.features || !product.features.some(f => filters.features.includes(f))) return false;
+      const FEATURE_GROUPS = [
+        ['З боді', 'З сорочкою'],
+        ['З шапочкою', 'Без шапочки'],
+        ['Короткий рукав', 'Довгий рукав'],
+        ['Пісочник', 'Ромпер'],
+        ['Шапочка-вузлик', 'Чепчик'],
+        ['Костюм', 'Сукня', 'Футболка/шорти', 'Лонгслів/штани'],
+        ['Пустушки', 'Прорізувачі', 'Контейнери', 'Ланцюжки для пустушок']
+      ];
+
+      for (const group of FEATURE_GROUPS) {
+        const selectedInGroup = group.filter(f => filters.features.includes(f));
+        if (selectedInGroup.length > 0) {
+          if (!product.features || !product.features.some(f => selectedInGroup.includes(f))) {
+            return false;
+          }
+        }
+      }
+
+      const ungroupedSelected = filters.features.filter(
+        f => !FEATURE_GROUPS.some(group => group.includes(f))
+      );
+      if (ungroupedSelected.length > 0) {
+        if (!product.features || !product.features.some(f => ungroupedSelected.includes(f))) {
+          return false;
+        }
+      }
     }
     return true;
   }).sort((a, b) => {
