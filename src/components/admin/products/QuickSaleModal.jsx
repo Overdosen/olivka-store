@@ -717,8 +717,13 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
       toast.success(`Замовлення #${orderData.order_number} успішно сформовано!`, { duration: 4500 });
       onSuccess();
     } catch (err) {
-      toast.error('Помилка формування замовлення: ' + err.message);
-      console.error(err);
+      console.error('Помилка формування замовлення:', err);
+      const errMsg = err?.message || '';
+      if (errMsg.includes('[OUT_OF_STOCK]')) {
+        toast.error(errMsg.replace('[OUT_OF_STOCK] ', ''), { duration: 8000 });
+      } else {
+        toast.error('Помилка формування замовлення: ' + errMsg);
+      }
     } finally {
       setSaving(false);
     }

@@ -84,7 +84,7 @@ export default function CheckoutClient() {
           }
         })
       }).catch(err => console.error('Tracking error:', err));
-    } catch (e) {}
+    } catch (e) { /* ignore */ }
   }, []);
 
   // Форма
@@ -215,6 +215,44 @@ export default function CheckoutClient() {
     const loadingToast = toast.loading("Оформлюємо замовлення...");
     
     try {
+      // 1. Отримуємо актуальні залишки з бази даних перед створенням замовлення
+      const productIds = cartItems.map(item => item.id);
+      const { data: dbProducts, error: dbError } = await supabase
+        .from('products')
+        .select('id, name, stock, sizes')
+        .in('id', productIds);
+
+      if (dbError) throw dbError;
+
+      const outOfStock = [];
+      for (const item of cartItems) {
+        const dbProd = dbProducts.find(p => p.id === item.id);
+        if (!dbProd) {
+          outOfStock.push(item.name);
+          continue;
+        }
+
+        let availableStock = dbProd.stock;
+        if (item.size && dbProd.sizes) {
+          const sizeObj = dbProd.sizes.find(s => s.name === item.size);
+          if (sizeObj) {
+            availableStock = sizeObj.quantity;
+          }
+        }
+
+        if (availableStock < item.quantity || availableStock <= 0) {
+          const displaySize = item.size ? ` (Розмір: ${item.size})` : '';
+          outOfStock.push(`"${item.name}${displaySize}"`);
+        }
+      }
+
+      if (outOfStock.length > 0) {
+        toast.dismiss(loadingToast);
+        setSubmitting(false);
+        toast.error(`Вибачте, наступні товари щойно закінчилися або доступні в меншій кількості: ${outOfStock.join(', ')}`, { duration: 8000 });
+        return;
+      }
+
       // Fallback для crypto.randomUUID()
       const generateUUID = () => {
         if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -432,7 +470,12 @@ export default function CheckoutClient() {
     } catch (err) {
       toast.dismiss(loadingToast);
       console.error('Помилка замовлення:', err);
-      toast.error('Помилка при оформленні. Спробуйте ще раз.');
+      const errMsg = err?.message || '';
+      if (errMsg.includes('[OUT_OF_STOCK]')) {
+        toast.error(errMsg.replace('[OUT_OF_STOCK] ', ''), { duration: 8000 });
+      } else {
+        toast.error('Помилка при оформленні. Спробуйте ще раз.');
+      }
     } finally {
       setSubmitting(false);
     }

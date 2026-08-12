@@ -1049,6 +1049,34 @@ export default function OrderDetailPage() {
                 ))}
               </select>
 
+              {/* Прапорець складського списання */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                background: order.is_stock_deducted ? '#f0fdf4' : '#fff7ed',
+                border: order.is_stock_deducted ? '1px solid #bbf7d0' : '1px solid #ffedd5',
+                color: order.is_stock_deducted ? '#15803d' : '#c2410c'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14px' }}>{order.is_stock_deducted ? '📦' : '🔄'}</span>
+                  <span>Стан на складі:</span>
+                </div>
+                <span style={{
+                  fontWeight: 800,
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  background: order.is_stock_deducted ? '#dcfce7' : '#ffedd5',
+                  color: order.is_stock_deducted ? '#166534' : '#9a3412'
+                }}>
+                  {order.is_stock_deducted ? 'Списано' : 'Повернуто на склад'}
+                </span>
+              </div>
+
               {/* TTN */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
