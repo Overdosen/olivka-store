@@ -317,7 +317,19 @@ export default function OrderDetailPage() {
     }
 
     await supabase.from('orders').update(orderUpdatePayload).eq('id', id);
-    setOrder(prev => ({ ...prev, ...orderUpdatePayload }));
+
+    // Отримуємо найновіший стан замовлення з бази даних (щоб підхопити is_stock_deducted після спрацювання тригерів)
+    const { data: updatedOrderData } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (updatedOrderData) {
+      setOrder(updatedOrderData);
+    } else {
+      setOrder(prev => ({ ...prev, ...orderUpdatePayload }));
+    }
 
     const isShippingStatus = ['shipped', 'arrived', 'delivered'].includes(newStatus);
     if (isShippingStatus) {
