@@ -454,7 +454,7 @@ export default function OrderDetailPage() {
     const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
     const { error } = await supabase
       .from('orders')
-      .update({ items: newItems, total: newTotal })
+      .update({ items: newItems, total: newTotal, is_stock_deducted: false })
       .eq('id', id);
     if (error) {
       toast.error('Помилка при видаленні товару');
@@ -473,7 +473,7 @@ export default function OrderDetailPage() {
     const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
     const { error } = await supabase
       .from('orders')
-      .update({ items: newItems, total: newTotal })
+      .update({ items: newItems, total: newTotal, is_stock_deducted: false })
       .eq('id', id);
     if (error) {
       toast.error('Помилка при збереженні кількості');
@@ -491,7 +491,7 @@ export default function OrderDetailPage() {
     const newTotal = newItems.reduce((sum, item) => sum + (item.price * (item.qty || item.quantity || 1)), 0);
     const { error } = await supabase
       .from('orders')
-      .update({ items: newItems, total: newTotal })
+      .update({ items: newItems, total: newTotal, is_stock_deducted: false })
       .eq('id', id);
     if (error) {
       toast.error('Помилка при додаванні товару');

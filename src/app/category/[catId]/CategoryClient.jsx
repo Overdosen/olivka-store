@@ -326,6 +326,11 @@ function ProductCard({ product, index }) {
         </div>
         <div className="product-info" style={{ opacity: isAvailable ? 1 : 0.6 }}>
           <h3 className="product-title leading-tight line-clamp-2"><span>{product.name}</span></h3>
+          {product.sku && (
+            <p className="text-[10px] text-stone-400 tracking-wide font-mono mt-0.5">
+              Арт: {product.sku}
+            </p>
+          )}
           <p className="product-price">{product.price} грн</p>
         </div>
       </Link>
