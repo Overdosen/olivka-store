@@ -235,11 +235,39 @@ export default function OrderDetailPage() {
       if (productIds.length > 0) {
         const { data: productsData, error: prodError } = await supabase
           .from('products')
-          .select('id, name, cost_price, sizes')
+          .select('id, name, cost_price, sizes, category_id')
           .in('id', productIds);
         
+        const { data: compData } = await supabase
+          .from('product_components')
+          .select('bundle_id, size, products!component_id(id, name, sku, image_url, cost_price, sizes)')
+          .in('bundle_id', productIds);
+
+        const compMap = {};
+        if (compData && compData.length > 0) {
+          compData.forEach(row => {
+            if (!row.products) return;
+            if (!compMap[row.bundle_id]) compMap[row.bundle_id] = [];
+            const biCost = (row.size && row.products.sizes?.find(s => s.name === row.size)?.cost_price)
+              || row.products.cost_price || 0;
+            compMap[row.bundle_id].push({
+              product_id: row.products.id,
+              name: row.products.name,
+              sku: row.products.sku || null,
+              size: row.size || null,
+              quantity: 1,
+              cost_price: biCost,
+              image_url: row.products.image_url || ''
+            });
+          });
+        }
+
         if (!prodError && productsData) {
-          setProducts(productsData);
+          const mergedProducts = productsData.map(p => ({
+            ...p,
+            defaultBundleItems: compMap[p.id] || []
+          }));
+          setProducts(mergedProducts);
         }
       }
 
@@ -389,7 +417,7 @@ export default function OrderDetailPage() {
   }
 
   const calculateItemCost = (item) => {
-    if (item.cost_price !== undefined && item.cost_price !== null) {
+    if (item.cost_price !== undefined && item.cost_price !== null && Number(item.cost_price) > 0) {
       return Number(item.cost_price);
     }
     
@@ -398,13 +426,13 @@ export default function OrderDetailPage() {
     if (product) {
       if (item.size && Array.isArray(product.sizes) && product.sizes.length > 0) {
         const sizeObj = product.sizes.find(s => s.name === item.size);
-        if (sizeObj && sizeObj.cost_price !== undefined && sizeObj.cost_price !== null) {
+        if (sizeObj && sizeObj.cost_price !== undefined && sizeObj.cost_price !== null && Number(sizeObj.cost_price) > 0) {
           return Number(sizeObj.cost_price);
         }
       }
       return Number(product.cost_price || 0);
     }
-    return 0;
+    return Number(item.cost_price || 0);
   };
 
   async function handlePackagingSave() {
@@ -707,48 +735,58 @@ export default function OrderDetailPage() {
                         )}
                       </div>
                       {/* Bundle items breakdown */}
-                      {(item.is_bundle || (item.bundle_items && item.bundle_items.length > 0) || /бокс|набір/i.test(item.name)) && (
-                        <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid #e9d5ff' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <p style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>📦 Складові боксу:</p>
-                            {order.status === 'new' && (
-                              <button
-                                type="button"
-                                onClick={() => setActiveBundleModalIndex(i)}
-                                style={{ fontSize: '10px', fontWeight: 700, color: '#6d28d9', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '2px 8px', borderRadius: '6px', cursor: 'pointer' }}
-                                className="hover:bg-violet-100 transition-colors"
-                              >
-                                + Додати / Редагувати
-                              </button>
+                      {(() => {
+                        const prod = products.find(p => p.id === (item.product_id || item.id));
+                        const effectiveBundleItems = (item.bundle_items && item.bundle_items.length > 0)
+                          ? item.bundle_items
+                          : (prod?.defaultBundleItems || []);
+                        const isBundleProduct = item.is_bundle || effectiveBundleItems.length > 0 || (prod?.category_id === 'fullset') || /бокс|набір/i.test(item.name);
+
+                        if (!isBundleProduct) return null;
+
+                        return (
+                          <div style={{ marginTop: '8px', paddingLeft: '12px', borderLeft: '2px solid #e9d5ff' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <p style={{ fontSize: '10px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>📦 Складові боксу:</p>
+                              {order.status === 'new' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveBundleModalIndex(i)}
+                                  style={{ fontSize: '10px', fontWeight: 700, color: '#6d28d9', background: '#f5f3ff', border: '1px solid #ddd6fe', padding: '2px 8px', borderRadius: '6px', cursor: 'pointer' }}
+                                  className="hover:bg-violet-100 transition-colors"
+                                >
+                                  + Додати / Редагувати
+                                </button>
+                              )}
+                            </div>
+                            {effectiveBundleItems.length > 0 ? (
+                              effectiveBundleItems.map((bi, biIdx) => (
+                                <div key={biIdx} style={{ fontSize: '11px', color: '#57534e', fontWeight: 500, padding: '2px 0', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                      {bi.name}{bi.size ? ` (${bi.size})` : ''} {bi.sku ? <span style={{ color: '#a8a29e', fontFamily: 'monospace', fontSize: '10px' }}>• Арт: {bi.sku}</span> : ''}
+                                    </span>
+                                    <span style={{ color: '#a78bfa', fontWeight: 700 }}>×{bi.quantity || 1}</span>
+                                  </div>
+                                  {order.status === 'new' && item.bundle_items && item.bundle_items.length > 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveBundleItemFromOrder(i, biIdx)}
+                                      style={{ background: 'none', border: 'none', color: '#a8a29e', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
+                                      className="hover:text-red-500 hover:bg-red-50"
+                                      title="Видалити складову з замовлення"
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <p style={{ fontSize: '11px', color: '#a8a29e', fontStyle: 'italic', margin: '2px 0' }}>Складові ще не вказано</p>
                             )}
                           </div>
-                          {item.bundle_items && item.bundle_items.length > 0 ? (
-                            item.bundle_items.map((bi, biIdx) => (
-                              <div key={biIdx} style={{ fontSize: '11px', color: '#57534e', fontWeight: 500, padding: '2px 0', display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    {bi.name}{bi.size ? ` (${bi.size})` : ''} {bi.sku ? <span style={{ color: '#a8a29e', fontFamily: 'monospace', fontSize: '10px' }}>• Арт: {bi.sku}</span> : ''}
-                                  </span>
-                                  <span style={{ color: '#a78bfa', fontWeight: 700 }}>×{bi.quantity || 1}</span>
-                                </div>
-                                {order.status === 'new' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveBundleItemFromOrder(i, biIdx)}
-                                    style={{ background: 'none', border: 'none', color: '#a8a29e', cursor: 'pointer', padding: '2px', display: 'flex', borderRadius: '4px' }}
-                                    className="hover:text-red-500 hover:bg-red-50"
-                                    title="Видалити складову з замовлення"
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                )}
-                              </div>
-                            ))
-                          ) : (
-                            <p style={{ fontSize: '11px', color: '#a8a29e', fontStyle: 'italic', margin: '2px 0' }}>Складові ще не вказано</p>
-                          )}
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <p style={{ fontSize: '14px', fontWeight: 700, color: '#1c1917', margin: 0, fontVariantNumeric: 'tabular-nums' }}>
