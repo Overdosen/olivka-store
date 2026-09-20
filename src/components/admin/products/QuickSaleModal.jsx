@@ -509,7 +509,7 @@ export default function QuickSaleModal({ product: initialProduct, onClose, onSuc
             sku: row.products.sku || null,
             size: row.size || null,
             quantity: 1,
-            cost_price: row.products.cost_price || 0,
+            cost_price: (row.size && row.products.sizes?.find(s => s.name === row.size)?.cost_price) || row.products.cost_price || 0,
             image_url: row.products.image_url || '',
           } : null)
           .filter(Boolean);

@@ -347,7 +347,17 @@ export default function ProductFormClient({ id }) {
     const sumPrice = bundleComponents.reduce((sum, c) => sum + (parseFloat(c.price) || 0), 0);
 
     // Cost price = сума закупівельних цін
-    const sumCostPrice = bundleComponents.reduce((sum, c) => sum + (parseFloat(c.cost_price) || 0), 0);
+    const getCompCostPrice = (comp) => {
+      if (comp.selectedSize && comp.sizes && comp.sizes.length > 0) {
+        const sizeObj = comp.sizes.find(s => s.name === comp.selectedSize);
+        if (sizeObj && sizeObj.cost_price !== undefined && sizeObj.cost_price !== null && sizeObj.cost_price !== '') {
+          return parseFloat(sizeObj.cost_price) || 0;
+        }
+      }
+      return parseFloat(comp.cost_price) || 0;
+    };
+
+    const sumCostPrice = bundleComponents.reduce((sum, c) => sum + getCompCostPrice(c), 0);
 
     setFormData(prev => ({
       ...prev,
