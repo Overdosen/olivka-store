@@ -35,7 +35,7 @@ export default function NotificationBell() {
     // Real-time subscription
     const channel = supabase
       .channel('notification-bell')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: 'status=eq.new' }, () => {
         fetchNewOrders();
       })
       .subscribe();

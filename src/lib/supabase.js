@@ -13,6 +13,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: true,
   },
+  tracePropagation: true,
   global: {
     // Перехоплюємо мережеві помилки refresh-запитів
     fetch: async (url, options) => {
