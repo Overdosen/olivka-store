@@ -7,7 +7,7 @@ import { supabase } from '../../../../lib/supabase';
 import { STATUS_MAP, STATUS_OPTIONS, DELIVERY_LABELS, PAYMENT_LABELS, getAuthHeaders, formatDateShort, formatMoney } from '../../../../lib/admin-constants';
 import { getOptimizedUrl } from '../../../../lib/image-utils';
 import StatusBadge from '../../../../components/admin/ui/StatusBadge';
-import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, User, MapPin, CreditCard, Truck, Package, RefreshCw, Check, ShoppingBag, Mail, Phone, FileText, TrendingUp, ExternalLink, X, ZoomIn, Trash2, Plus, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
@@ -123,6 +123,11 @@ export default function OrderDetailPage() {
   const [fiscalReceiptUrl, setFiscalReceiptUrl] = useState('');
   const [isReceiptUrlChanged, setIsReceiptUrlChanged] = useState(false);
 
+  // Customer info editing state
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+
   const [products, setProducts] = useState([]);
   const [packagingCost, setPackagingCost] = useState('0');
   const [isPackagingChanged, setIsPackagingChanged] = useState(false);
@@ -219,6 +224,8 @@ export default function OrderDetailPage() {
       setTtn(data.tracking_number || '');
       setFiscalReceiptUrl(data.fiscal_receipt_url || '');
       setPackagingCost(String(data.packaging_cost || 0));
+      setEditFullName(data.full_name || '');
+      setEditPhone(data.phone || '');
 
       // Fetch global scratchpad
       const { data: settingsData } = await supabase
@@ -412,6 +419,26 @@ export default function OrderDetailPage() {
       setOrder(prev => ({ ...prev, fiscal_receipt_url: fiscalReceiptUrl }));
       setIsReceiptUrlChanged(false);
       toast.success('Чек збережено');
+    }
+    setUpdating(false);
+  }
+
+  async function handleSaveCustomerInfo() {
+    setUpdating(true);
+    const { error } = await supabase
+      .from('orders')
+      .update({
+        full_name: editFullName,
+        phone: editPhone
+      })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Помилка при збереженні даних клієнта');
+    } else {
+      setOrder(prev => ({ ...prev, full_name: editFullName, phone: editPhone }));
+      setIsEditingCustomer(false);
+      toast.success('Дані клієнта оновлено');
     }
     setUpdating(false);
   }
@@ -1330,43 +1357,175 @@ export default function OrderDetailPage() {
             <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '14px',
+              justifyContent: 'space-between',
               padding: '18px 24px',
               borderBottom: '1px solid #f5f5f4',
               background: 'linear-gradient(to bottom, #fafaf9, white)'
             }}>
-              <div style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: '#eff6ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                <User size={18} color="#3b82f6" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  background: '#eff6ff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <User size={18} color="#3b82f6" />
+                </div>
+                <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>Дані клієнта</h2>
               </div>
-              <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#1c1917', margin: 0 }}>Дані клієнта</h2>
+              {!isEditingCustomer ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditFullName(order.full_name || '');
+                    setEditPhone(order.phone || '');
+                    setIsEditingCustomer(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#3b82f6',
+                    background: '#eff6ff',
+                    border: 'none',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  className="hover:bg-blue-100"
+                >
+                  <Edit2 size={13} />
+                  Редагувати
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingCustomer(false)}
+                    disabled={updating}
+                    style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#78716c',
+                      background: '#f5f5f4',
+                      border: 'none',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveCustomerInfo}
+                    disabled={updating}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: 'white',
+                      background: '#10b981',
+                      border: 'none',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Check size={14} strokeWidth={3} />
+                    Зберегти
+                  </button>
+                </div>
+              )}
             </div>
 
             <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              {order.full_name && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <User size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>{order.full_name}</span>
-                </div>
-              )}
-              {order.phone && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Phone size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c' }}>{order.phone}</span>
-                </div>
-              )}
-              {order.email && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Mail size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
-                  <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.email}</span>
+              {!isEditingCustomer ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <User size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#1c1917' }}>
+                      {order.full_name || <span style={{ color: '#a8a29e', fontStyle: 'italic' }}>ПІБ не вказано</span>}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Phone size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c' }}>
+                      {order.phone || <span style={{ color: '#a8a29e', fontStyle: 'italic' }}>Телефон не вказано</span>}
+                    </span>
+                  </div>
+                  {order.email && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <Mail size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: '#44403c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{order.email}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#78716c', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      ПІБ клієнта
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <User size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                      <input
+                        type="text"
+                        value={editFullName}
+                        onChange={(e) => setEditFullName(e.target.value)}
+                        placeholder="Введіть ПІБ"
+                        style={{
+                          flex: 1,
+                          fontSize: '14px',
+                          padding: '8px 12px',
+                          border: '1.5px solid #e7e5e4',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#1c1917',
+                          fontWeight: 500
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: '#78716c', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Номер телефону
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Phone size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                      <input
+                        type="text"
+                        value={editPhone}
+                        onChange={(e) => setEditPhone(e.target.value)}
+                        placeholder="Введіть телефон"
+                        style={{
+                          flex: 1,
+                          fontSize: '14px',
+                          padding: '8px 12px',
+                          border: '1.5px solid #e7e5e4',
+                          borderRadius: '8px',
+                          outline: 'none',
+                          color: '#1c1917',
+                          fontWeight: 500
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {order.email && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.6, paddingTop: '4px' }}>
+                      <Mail size={16} color="#a8a29e" style={{ flexShrink: 0 }} />
+                      <span style={{ fontSize: '13px', fontWeight: 500, color: '#78716c' }}>{order.email}</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
