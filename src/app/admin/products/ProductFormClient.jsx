@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { supabase, deleteImageFromStorage } from '../../../lib/supabase';
-import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette, Check, Boxes, Plus, X as XIcon, AlertCircle } from 'lucide-react';
+import { Package, Upload, Trash2, Star, Save, ArrowLeft, Loader2, DollarSign, TrendingUp, Search, Settings, Ruler, Image as ImageIcon, Palette, Check, Boxes, Plus, X as XIcon, AlertCircle, ExternalLink, Copy } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -137,6 +137,17 @@ const CheckboxChip = ({ checked, onChange, label, color = '#1c1917' }) => {
   );
 };
 
+const translite = (text) => {
+  const map = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+    'з': 'z', 'и': 'y', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+    'і': 'i', 'ї': 'yi', 'є': 'ye'
+  };
+  return (text || '').toLowerCase().split('').map(char => map[char] || char).join('');
+};
+
 const Section = ({ icon: Icon, title, children, theme = 'stone', className = '' }) => {
   const t = THEMES[theme] || THEMES.stone;
   return (
@@ -159,6 +170,15 @@ export default function ProductFormClient({ id }) {
   const isEditing = Boolean(id);
   const router = useRouter();
   const pathname = usePathname();
+
+  const [creationTimestamp] = useState(() => Date.now());
+  const [baseUrl, setBaseUrl] = useState('https://olivka.store');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      setBaseUrl(window.location.origin);
+    }
+  }, []);
 
   const SIZE_OPTIONS = ['56', '56-62', '62', '62-68', '68', '74', '80', '86', '92'];
 
@@ -210,6 +230,18 @@ export default function ProductFormClient({ id }) {
     features: [],
     seo_title: ''
   });
+
+  const currentSlug = isEditing 
+    ? id 
+    : (() => {
+        const nameToTranslit = (formData.name || '').substring(0, 5);
+        const namePart = translite(nameToTranslit).replace(/[^a-z0-9]/g, '') || 'tovar';
+        const skuPart = formData.sku ? String(formData.sku).toLowerCase().replace(/[^a-z0-9]/g, '-') : '555';
+        return `${namePart}-art-${skuPart}-${creationTimestamp}`.replace(/-+/g, '-').replace(/^-|-$/g, '');
+      })();
+
+  const productRelativeUrl = `/product/${currentSlug}`;
+  const fullProductUrl = `${baseUrl}${productRelativeUrl}`;
 
   const [sizeInput, setSizeInput] = useState('');
   const [sizeQuantity, setSizeQuantity] = useState('1'); 
@@ -580,17 +612,6 @@ export default function ProductFormClient({ id }) {
     }
   };
 
-  const translite = (text) => {
-    const map = {
-      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
-      'з': 'z', 'и': 'y', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
-      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
-      'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
-      'і': 'i', 'ї': 'yi', 'є': 'ye'
-    };
-    return text.toLowerCase().split('').map(char => map[char] || char).join('');
-  };
-
   const saveProduct = async (duplicate = false, customRedirect = null) => {
     if (images.length === 0) {
       if (!confirm('Ви не додали жодного фото. Продовжити?')) {
@@ -662,16 +683,8 @@ export default function ProductFormClient({ id }) {
         seo_title: formData.seo_title
       };
 
-      let currentId = id;
+      let currentId = isEditing ? id : currentSlug;
       if (!isEditing) {
-        const nameToTranslit = (formData.name || '').substring(0, 5);
-        const namePart = translite(nameToTranslit)
-          .replace(/[^a-z0-9]/g, '');
-
-        const skuPart = formData.sku ? String(formData.sku).toLowerCase().replace(/[^a-z0-9]/g, '-') : '555';
-        let generatedId = `${namePart}-art-${skuPart}-${Date.now()}`;
-
-        currentId = generatedId.replace(/-+/g, '-').replace(/^-|-$/g, '');
         productPayload.id = currentId;
       }
 
@@ -863,6 +876,86 @@ export default function ProductFormClient({ id }) {
                   placeholder="OLV-001" />
               </div>
             </div>
+
+            {/* 🔗 Посилання на сторінку товару */}
+            <div>
+              <label style={F.label}>Посилання на сторінку товару</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  readOnly
+                  value={fullProductUrl}
+                  style={{
+                    ...F.input,
+                    background: '#f5f5f4',
+                    color: '#57534e',
+                    cursor: 'text',
+                    userSelect: 'all',
+                    fontSize: '13px',
+                    fontFamily: 'monospace'
+                  }}
+                  title="Посилання на сторінку товару"
+                />
+                <a
+                  href={isEditing ? productRelativeUrl : undefined}
+                  onClick={(e) => {
+                    if (!isEditing) {
+                      e.preventDefault();
+                      toast('Збережіть товар, щоб переглянути його на сайті', { icon: 'ℹ️' });
+                    }
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '11px 16px',
+                    borderRadius: '10px',
+                    backgroundColor: isEditing ? '#524f25' : '#e7e5e4',
+                    color: isEditing ? '#fff' : '#a8a29e',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                    cursor: isEditing ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.15s'
+                  }}
+                  title={isEditing ? "Відкрити товар у новій вкладці" : "Збережіть товар, щоб переглянути його"}
+                >
+                  <ExternalLink size={16} />
+                  <span>Переглянути</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(fullProductUrl);
+                    toast.success('Посилання скопійовано');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '11px',
+                    borderRadius: '10px',
+                    border: '1.5px solid #e7e5e4',
+                    backgroundColor: '#fff',
+                    color: '#57534e',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  title="Скопіювати повне посилання"
+                >
+                  <Copy size={16} />
+                </button>
+              </div>
+              <p style={F.hint}>
+                {isEditing
+                  ? 'Пряме посилання на сторінку товару на сайті. Клікніть «Переглянути», щоб відкрити в новій вкладці.'
+                  : 'Попереднє посилання для нового товару. Воно стане активним одразу після збереження.'}
+              </p>
+            </div>
+
             <div>
               <label style={F.label}>Категорія<span style={F.req}>*</span></label>
               <select required value={formData.category_id}

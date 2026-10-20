@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   LayoutDashboard, ShoppingBag, Users, Package, FolderOpen,
   LogOut, Menu, X, ChevronRight, Plus, DollarSign, MessageSquare, Settings
@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import ProtectedRoute from './ProtectedRoute';
 import CommandPalette from '../../components/admin/ui/CommandPalette';
 import NotificationBell from '../../components/admin/ui/NotificationBell';
+import AdminScrollToTop from '../../components/admin/ui/AdminScrollToTop';
 
 const NAV_SECTIONS = [
   {
@@ -35,6 +36,7 @@ const NAV_SECTIONS = [
 export default function AdminLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
+  const mainRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
@@ -397,11 +399,12 @@ export default function AdminLayout({ children }) {
           </header>
 
           {/* ─── MAIN CONTENT ─── */}
-          <main className="flex-1 min-h-0 overflow-y-auto custom-scrollbar" style={{ background: '#f8f8f6' }}>
+          <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto custom-scrollbar" style={{ background: '#f8f8f6' }}>
             <div className="admin-fade-in" style={{ maxWidth: '1200px', margin: '0 auto', padding: '28px 32px 80px' }}>
               {children}
             </div>
           </main>
+          <AdminScrollToTop targetRef={mainRef} />
         </div>
       </div>
     </ProtectedRoute>
