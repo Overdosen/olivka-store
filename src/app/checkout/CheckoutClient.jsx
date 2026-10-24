@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -450,7 +450,11 @@ export default function CheckoutClient() {
           
           document.body.appendChild(form);
           
-          // Очищаємо localStorage безпосередньо перед переходом на LiqPay
+          // Зберігаємо orderId — CartContext перевірить статус при наступному завантаженні
+          // (на випадок якщо клієнт не повернеться на /payment/success після оплати)
+          localStorage.setItem('olivka_pending_order_id', newOrderId);
+
+          // Очищаємо localStorage форми перед переходом на LiqPay
           clearFormStorage();
           
           form.submit();

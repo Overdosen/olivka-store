@@ -18,6 +18,25 @@ export function CartProvider({ children }) {
     }
     setIsLoaded(true);
   }, []);
+
+  // Перевіряємо чи є незавершене LiqPay-замовлення (клієнт міг не повернутися на success-сторінку)
+  useEffect(() => {
+    const pendingOrderId = localStorage.getItem('olivka_pending_order_id');
+    if (!pendingOrderId) return;
+
+    fetch(`/api/order-status?id=${pendingOrderId}`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        const paidStatuses = ['paid', 'sandbox', 'wait_accept'];
+        if (data && paidStatuses.includes(data.status)) {
+          console.log('[CartContext] Pending LiqPay order is paid. Clearing cart.');
+          setCartItems([]);
+          localStorage.removeItem('olivka_cart');
+          localStorage.removeItem('olivka_pending_order_id');
+        }
+      })
+      .catch(err => console.error('[CartContext] Failed to check pending order:', err));
+  }, []);
   
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -119,6 +138,7 @@ export function CartProvider({ children }) {
   const clearCart = useCallback(() => {
     setCartItems([]);
     localStorage.removeItem('olivka_cart');
+    localStorage.removeItem('olivka_pending_order_id');
   }, []);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
