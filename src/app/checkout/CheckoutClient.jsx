@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, forwardRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -224,6 +224,34 @@ export default function CheckoutClient() {
 
       if (dbError) throw dbError;
 
+      // 2. Отримуємо складові наборів (Готові рішення) з таблиці product_components
+      //    Це потрібно, щоб тригер БД міг списати залишки кожної складової окремо
+      const { data: compData } = await supabase
+        .from('product_components')
+        .select('bundle_id, size, products!component_id(id, name, sku, image_url, cost_price, sizes)')
+        .in('bundle_id', productIds);
+
+      // Будуємо map: bundle_id -> масив складових
+      const bundleComponentsMap = {};
+      if (compData && compData.length > 0) {
+        compData.forEach(row => {
+          if (!row.products) return;
+          if (!bundleComponentsMap[row.bundle_id]) bundleComponentsMap[row.bundle_id] = [];
+          const compSize = row.size || null;
+          const compCostPrice = (compSize && row.products.sizes?.find(s => s.name === compSize)?.cost_price)
+            || row.products.cost_price || 0;
+          bundleComponentsMap[row.bundle_id].push({
+            product_id: row.products.id,
+            name:       row.products.name,
+            sku:        row.products.sku || null,
+            size:       compSize,
+            quantity:   1,
+            cost_price: compCostPrice,
+            image_url:  row.products.image_url || '',
+          });
+        });
+      }
+
       const outOfStock = [];
       for (const item of cartItems) {
         const dbProd = dbProducts.find(p => p.id === item.id);
@@ -277,15 +305,18 @@ export default function CheckoutClient() {
           itemCostPrice = Number(item.cost_price);
         }
 
+        const bundleItems = bundleComponentsMap[item.id] || [];
+
         return {
-          product_id: item.id,
-          name:       item.name,
-          sku:        item.sku || null,
-          price:      item.price,
-          qty:        item.quantity,
-          size:       item.size,
-          image_url:  item.image_url || item.image || null,
-          cost_price: itemCostPrice,
+          product_id:   item.id,
+          name:         item.name,
+          sku:          item.sku || null,
+          price:        item.price,
+          qty:          item.quantity,
+          size:         item.size,
+          image_url:    item.image_url || item.image || null,
+          cost_price:   itemCostPrice,
+          ...(bundleItems.length > 0 ? { is_bundle: true, bundle_items: bundleItems } : {}),
         };
       });
 

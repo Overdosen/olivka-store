@@ -13,6 +13,7 @@ export default function AddProductModal({ onAdd, onClose }) {
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProductBundleItems, setSelectedProductBundleItems] = useState([]);
   const [selectedSize, setSelectedSize] = useState('');
   const [qty, setQty] = useState(1);
   const debounceRef = useRef(null);
@@ -37,12 +38,40 @@ export default function AddProductModal({ onAdd, onClose }) {
     }, 300);
   }, [query]);
 
-  function selectProduct(product) {
+  async function selectProduct(product) {
     setSelectedProduct(product);
     const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
     setSelectedSize(hasSizes ? (product.sizes[0]?.name || '') : '');
     setQty(1);
     setResults([]);
+
+    // Підтягуємо складові набору (Готові рішення)
+    const { data: compData } = await supabase
+      .from('product_components')
+      .select('bundle_id, size, products!component_id(id, name, sku, image_url, cost_price, sizes)')
+      .eq('bundle_id', product.id);
+
+    if (compData && compData.length > 0) {
+      const bundleItems = compData
+        .filter(row => row.products)
+        .map(row => {
+          const compSize = row.size || null;
+          const compCostPrice = (compSize && row.products.sizes?.find(s => s.name === compSize)?.cost_price)
+            || row.products.cost_price || 0;
+          return {
+            product_id: row.products.id,
+            name:       row.products.name,
+            sku:        row.products.sku || null,
+            size:       compSize,
+            quantity:   1,
+            cost_price: compCostPrice,
+            image_url:  row.products.image_url || '',
+          };
+        });
+      setSelectedProductBundleItems(bundleItems);
+    } else {
+      setSelectedProductBundleItems([]);
+    }
   }
 
   function getAvailableStock() {
@@ -76,6 +105,9 @@ export default function AddProductModal({ onAdd, onClose }) {
       ...(selectedProduct.image_url ? { image_url: selectedProduct.image_url } : {}),
       ...(selectedProduct.sku ? { sku: selectedProduct.sku } : {}),
       cost_price: getCostPrice(),
+      ...(selectedProductBundleItems.length > 0
+        ? { is_bundle: true, bundle_items: selectedProductBundleItems }
+        : {}),
     };
     onAdd(newItem);
   }
@@ -219,7 +251,7 @@ export default function AddProductModal({ onAdd, onClose }) {
                   <p style={{ fontSize: '12px', color: '#059669', fontWeight: 600, margin: '3px 0 0' }}>{formatMoney(selectedProduct.price)} ₴</p>
                 </div>
                 <button
-                  onClick={() => { setSelectedProduct(null); setQuery(''); setTimeout(() => inputRef.current?.focus(), 50); }}
+                  onClick={() => { setSelectedProduct(null); setSelectedProductBundleItems([]); setQuery(''); setTimeout(() => inputRef.current?.focus(), 50); }}
                   style={{ padding: '5px', color: '#a8a29e', background: 'rgba(0,0,0,0.05)', border: 'none', cursor: 'pointer', borderRadius: '6px', flexShrink: 0, display: 'flex' }}
                   title="Обрати інший товар"
                 >
