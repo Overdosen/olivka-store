@@ -1051,22 +1051,6 @@ export default function OrderDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Notes */}
-          {order.notes && (
-            <div style={{
-              background: '#fffbeb',
-              borderRadius: '16px',
-              border: '1px solid rgba(251,191,36,0.3)',
-              padding: '20px 28px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <FileText size={16} color="#d97706" />
-                <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#92400e', margin: 0 }}>Коментар клієнта</h2>
-              </div>
-              <p style={{ fontSize: '14px', color: '#78350f', fontStyle: 'italic', margin: 0, lineHeight: 1.5 }}>"{order.notes}"</p>
-            </div>
-          )}
         </div>
 
         {/* Right column — info */}
@@ -1345,6 +1329,47 @@ export default function OrderDetailPage() {
 
             </div>
           </div>
+
+          {/* Customer Note Card */}
+          {order.notes && (
+            <div style={{
+              background: '#fffbeb',
+              borderRadius: '16px',
+              border: '1px solid rgba(251,191,36,0.35)',
+              boxShadow: '0 2px 10px rgba(245,158,11,0.04)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '12px 18px',
+                borderBottom: '1px solid rgba(251,191,36,0.2)',
+                background: 'linear-gradient(to bottom, #fef3c7, #fffbeb)'
+              }}>
+                <div style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '8px',
+                  background: '#fde68a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <FileText size={15} color="#b45309" />
+                </div>
+                <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#92400e', margin: 0 }}>
+                  Коментар клієнта
+                </h2>
+              </div>
+              <div style={{ padding: '14px 18px' }}>
+                <p style={{ fontSize: '13.5px', color: '#78350f', fontStyle: 'italic', margin: 0, lineHeight: 1.55, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
+                  "{order.notes}"
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Customer info SectionCard */}
           <div style={{

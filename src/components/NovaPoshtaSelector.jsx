@@ -17,15 +17,30 @@ const WAREHOUSE_TYPES = {
   locker:  { ref: 'f9316480-5f2d-425d-bc2c-ac7cd29decf0', label: 'Поштомат'  },
 };
 
-async function npPost(modelName, calledMethod, methodProperties = {}) {
-  const res = await fetch(NP_API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey: API_KEY, modelName, calledMethod, methodProperties }),
-  });
-  const json = await res.json();
-  if (!json.success) throw new Error(json.errors?.[0] || 'NP API error');
-  return json.data;
+async function npPost(modelName, calledMethod, methodProperties = {}, retries = 1) {
+  try {
+    const res = await fetch(NP_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey: API_KEY, modelName, calledMethod, methodProperties }),
+    });
+    const json = await res.json();
+    if (!json.success) {
+      const err = json.errors?.[0] || 'NP API error';
+      if (err.toLowerCase().includes('many requests') && retries > 0) {
+        await new Promise(r => setTimeout(r, 700));
+        return npPost(modelName, calledMethod, methodProperties, retries - 1);
+      }
+      throw new Error(err);
+    }
+    return json.data;
+  } catch (err) {
+    if (err.message?.toLowerCase().includes('many requests') && retries > 0) {
+      await new Promise(r => setTimeout(r, 700));
+      return npPost(modelName, calledMethod, methodProperties, retries - 1);
+    }
+    throw err;
+  }
 }
 
 export default function NovaPoshtaSelector({ onChange, value }) {
@@ -45,6 +60,8 @@ export default function NovaPoshtaSelector({ onChange, value }) {
   const [whQuery, setWhQuery]             = useState('');
   const [selectedWh, setSelectedWh]       = useState(null);
   const [whLoading, setWhLoading]         = useState(false);
+  const [whSearching, setWhSearching]     = useState(false);
+  const [whSearchResults, setWhSearchResults] = useState(null);
   const [whOpen, setWhOpen]               = useState(false);
 
   // Courier mode
@@ -57,6 +74,7 @@ export default function NovaPoshtaSelector({ onChange, value }) {
   const [apartment, setApartment]       = useState('');
 
   const debounceRef  = useRef(null);
+  const whDebounceRef = useRef(null);
 
   // ── Sync with external value ──
   useEffect(() => {
@@ -146,7 +164,58 @@ export default function NovaPoshtaSelector({ onChange, value }) {
     setWarehouses(filtered);
     setSelectedWh(null);
     setWhOpen(false);
+    setWhQuery('');
+    setWhSearchResults(null);
   }, [allWarehouses, warehouseType]);
+
+  // ── Effect: Динамічний пошук відділень/поштоматів через API NP (покриває 1000+ поштоматів) ──
+  useEffect(() => {
+    const q = whQuery.trim();
+    if (!q || !selectedCity || deliveryMethod !== 'WAREHOUSE') {
+      setWhSearchResults(null);
+      setWhSearching(false);
+      return;
+    }
+
+    clearTimeout(whDebounceRef.current);
+    whDebounceRef.current = setTimeout(async () => {
+      setWhSearching(true);
+      try {
+        const isLocker = warehouseType === 'locker';
+        const typeRef = WAREHOUSE_TYPES[warehouseType].ref;
+
+        // Єдиний швидкий запит за FindByString (шукає як номер поштомату/відділення, так і назву вулиці)
+        const data = await npPost('Address', 'getWarehouses', {
+          CityRef: selectedCity.DeliveryCity,
+          ...(isLocker ? { TypeOfWarehouseRef: typeRef } : {}),
+          FindByString: q,
+          Limit: 50,
+        });
+
+        const found = Array.isArray(data) ? data : [];
+
+        // Фільтрація за типом (відділення або поштомат)
+        const filtered = found.filter(w => {
+          if (isLocker) {
+            return w.CategoryOfWarehouse === 'Postomat' || (w.Description || '').includes('Поштомат') || w.TypeOfWarehouse === typeRef;
+          } else {
+            return (w.CategoryOfWarehouse === 'Branch' || w.CategoryOfWarehouse === 'Warehouse' || !(w.Description || '').includes('Поштомат')) && w.TypeOfWarehouse !== 'f9316480-5f2d-425d-bc2c-ac7cd29decf0';
+          }
+        });
+
+        setWhSearchResults(filtered);
+      } catch (err) {
+        if (!err.message?.toLowerCase().includes('many requests')) {
+          console.warn('[NP search]', err.message);
+        }
+        setWhSearchResults(null);
+      } finally {
+        setWhSearching(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(whDebounceRef.current);
+  }, [whQuery, selectedCity, deliveryMethod, warehouseType]);
 
   // ── Effect: Пошук вулиці ──
   useEffect(() => {
@@ -216,9 +285,28 @@ export default function NovaPoshtaSelector({ onChange, value }) {
     setStreetOpen(false);
   }
 
-  const filteredWarehouses = warehouses.filter(wh =>
-    !whQuery || (wh.Description || '').toLowerCase().includes(whQuery.toLowerCase())
-  );
+  const displayWarehouses = (() => {
+    if (!whQuery.trim()) {
+      return warehouses;
+    }
+    // Якщо прийшли результати серверного пошуку від API
+    if (whSearchResults !== null) {
+      // Об'єднуємо результати локального фільтру та API-пошуку для максимальної повноти
+      const localMatches = warehouses.filter(wh =>
+        (wh.Description || '').toLowerCase().includes(whQuery.toLowerCase()) ||
+        (wh.ShortAddress || '').toLowerCase().includes(whQuery.toLowerCase()) ||
+        (wh.Number && String(wh.Number) === whQuery.trim())
+      );
+      const combined = [...localMatches, ...whSearchResults];
+      return Array.from(new Map(combined.map(item => [item.Ref, item])).values());
+    }
+    // Поки іде серверний запит — показуємо локальні збіги
+    return warehouses.filter(wh =>
+      (wh.Description || '').toLowerCase().includes(whQuery.toLowerCase()) ||
+      (wh.ShortAddress || '').toLowerCase().includes(whQuery.toLowerCase()) ||
+      (wh.Number && String(wh.Number) === whQuery.trim())
+    );
+  })();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
@@ -352,23 +440,45 @@ export default function NovaPoshtaSelector({ onChange, value }) {
                   <AnimatePresence>
                     {whOpen && (
                       <DropdownList onClose={() => setWhOpen(false)} maxHeight="280px">
-                        <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid rgba(82,79,37,0.08)', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
-                          <input
-                            value={whQuery}
-                            onChange={e => setWhQuery(e.target.value)}
-                            placeholder={warehouseType === 'locker' ? 'Пошук поштомату...' : 'Пошук відділення...'}
-                            style={{ border: 'none', outline: 'none', fontSize: '0.82rem', width: '100%', fontFamily: 'var(--font-sans)', color: '#524f25' }}
-                          />
+                        <div style={{ padding: '0.5rem 0.75rem', borderBottom: '1px solid rgba(82,79,37,0.12)', position: 'sticky', top: 0, background: 'white', zIndex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(82,79,37,0.05)', border: '1px solid rgba(82,79,37,0.15)', borderRadius: '8px', padding: '0.45rem 0.75rem' }}>
+                            <Search size={14} style={{ color: 'rgba(82,79,37,0.45)', flexShrink: 0 }} />
+                            <input
+                              value={whQuery}
+                              onChange={e => setWhQuery(e.target.value)}
+                              placeholder={warehouseType === 'locker' ? 'Пошук поштомату (номер або адреса)...' : 'Пошук відділення (номер або адреса)...'}
+                              style={{ border: 'none', outline: 'none', fontSize: '0.82rem', width: '100%', fontFamily: 'var(--font-sans)', color: '#524f25', background: 'transparent' }}
+                              autoFocus
+                            />
+                            {whSearching && (
+                              <Loader size={13} style={{ color: '#524f25', animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+                            )}
+                            {whQuery && !whSearching && (
+                              <button
+                                type="button"
+                                onClick={() => { setWhQuery(''); setWhSearchResults(null); }}
+                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, color: 'rgba(82,79,37,0.4)', display: 'flex', alignItems: 'center' }}
+                              >
+                                <X size={13} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        {filteredWarehouses.slice(0, 50).map((wh, i) => (
-                          <DropdownItem key={wh.Ref || i} onClick={() => handleWhSelect(wh)}>
-                            <Package size={14} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ fontSize: '0.875rem', fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.ShortAddress || wh.Description}</div>
-                              <div style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.45)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.Description}</div>
-                            </div>
-                          </DropdownItem>
-                        ))}
+                        {displayWarehouses.length === 0 ? (
+                          <div style={{ padding: '1.25rem', textAlign: 'center', fontSize: '0.85rem', color: 'rgba(82,79,37,0.5)', fontFamily: 'var(--font-sans)' }}>
+                            {whSearching ? 'Шукаємо...' : 'Нічого не знайдено'}
+                          </div>
+                        ) : (
+                          displayWarehouses.slice(0, 60).map((wh, i) => (
+                            <DropdownItem key={wh.Ref || i} onClick={() => handleWhSelect(wh)}>
+                              <Package size={14} style={{ color: '#524f25', flexShrink: 0, marginTop: '2px' }} />
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontSize: '0.875rem', fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.ShortAddress || wh.Description}</div>
+                                <div style={{ fontSize: '0.72rem', color: 'rgba(82,79,37,0.45)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{wh.Description}</div>
+                              </div>
+                            </DropdownItem>
+                          ))
+                        )}
                       </DropdownList>
                     )}
                   </AnimatePresence>
