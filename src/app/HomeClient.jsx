@@ -449,9 +449,9 @@ export default function HomeClient({ blogPosts = [] }) {
               }}
             >
               {isWinter && (
-                <span className="btn-snowflake" style={{ fontSize: '1.4em', lineHeight: 1, marginRight: '8px', color: '#f4c97a', display: 'inline-flex', alignItems: 'center' }}>
+                <span className="btn-snowflake" style={{ fontSize: '1.3em', lineHeight: 1, marginRight: '8px', display: 'inline-flex', alignItems: 'center', color: '#ffffff' }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M11 2h2v3.586l2.293-2.293 1.414 1.414L13 8.414V11h2.586l3.707-3.707 1.414 1.414L18.414 11H22v2h-3.586l2.293 2.293-1.414 1.414L16 13.586V16h-2.586l-3.707 3.707-1.414-1.414L11 15.586V19h-2v-3.414l-2.293 2.293-1.414-1.414L8.414 13H5.586l-2.293 2.293-1.414-1.414L4.414 11H2v-2h2.414L2.707 7.293l1.414-1.414L7 8.586V5h2v3.414l2.293-2.293L12.707 7 11 8.707V5zm1 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                    <path d="M13 1v3.586l1.293-1.293 1.414 1.414L13 7.414V11h3.586l2.707-2.707 1.414 1.414L18.414 11H22v2h-3.586l1.293 1.293-1.414 1.414L15.586 13H13v3.586l2.707 2.707-1.414 1.414L13 19.414V23h-2v-3.586l-1.293 1.293-1.414-1.414L11 17.586V13H7.414l-2.707 2.707-1.414-1.414L5.586 13H2v-2h3.586L4.293 9.707l1.414-1.414L8.414 11H11V7.414L8.293 4.707l1.414-1.414L11 4.586V1h2zm-1 9a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
                   </svg>
                 </span>
               )}
