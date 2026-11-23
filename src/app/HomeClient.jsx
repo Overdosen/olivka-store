@@ -449,8 +449,10 @@ export default function HomeClient({ blogPosts = [] }) {
               }}
             >
               {isWinter && (
-                <span className="btn-snowflake" style={{ fontSize: '1.7em', lineHeight: 1, marginRight: '8px', color: '#f4c97a' }}>
-                  ❄
+                <span className="btn-snowflake" style={{ fontSize: '1.4em', lineHeight: 1, marginRight: '8px', color: '#f4c97a', display: 'inline-flex', alignItems: 'center' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M11 2h2v3.586l2.293-2.293 1.414 1.414L13 8.414V11h2.586l3.707-3.707 1.414 1.414L18.414 11H22v2h-3.586l2.293 2.293-1.414 1.414L16 13.586V16h-2.586l-3.707 3.707-1.414-1.414L11 15.586V19h-2v-3.414l-2.293 2.293-1.414-1.414L8.414 13H5.586l-2.293 2.293-1.414-1.414L4.414 11H2v-2h2.414L2.707 7.293l1.414-1.414L7 8.586V5h2v3.414l2.293-2.293L12.707 7 11 8.707V5zm1 7a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
+                  </svg>
                 </span>
               )}
               Обрати набір
