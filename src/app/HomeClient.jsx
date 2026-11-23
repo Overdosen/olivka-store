@@ -449,7 +449,7 @@ export default function HomeClient({ blogPosts = [] }) {
               }}
             >
               {isWinter && (
-                <span className="btn-snowflake" style={{ fontSize: '1.7em', lineHeight: 1, marginRight: '8px' }}>
+                <span className="btn-snowflake" style={{ fontSize: '1.7em', lineHeight: 1, marginRight: '8px', color: '#f4c97a' }}>
                   ❄
                 </span>
               )}
