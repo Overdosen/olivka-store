@@ -540,6 +540,24 @@ function OrderTableRow({ order, onUpdateStatus, onUpdateTracking }) {
           <p style={{ fontSize: '12px', color: '#a8a29e', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {order.phone || order.email || '—'}
           </p>
+          {order.include_postcard && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#047857',
+              background: '#ecfdf5',
+              border: '1px solid #a7f3d0',
+              padding: '2px 8px',
+              borderRadius: '999px',
+              marginTop: '4px'
+            }}>
+              <img src="/images/winter_gift_box.png" alt="" style={{ width: '13px', height: '13px', objectFit: 'contain' }} />
+              Листівка
+            </span>
+          )}
         </Link>
       </td>
 

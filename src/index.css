@@ -2572,3 +2572,33 @@ input[type='number']::-webkit-outer-spin-button {
 input[type='number'] {
   -moz-appearance: textfield !important;
 }
+
+/* =========================================
+   ❄  WINTER / NEW YEAR BANNER MODE
+   ========================================= */
+
+/* ── Sparkle star animation ── */
+@keyframes winterSparkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
+  50%       { opacity: 0.9; transform: scale(1.2) rotate(20deg); }
+}
+
+.winter-sparkle {
+  animation: winterSparkle 2.5s ease-in-out infinite;
+}
+
+/* ── Spinning snowflake decoration inside the button ── */
+@keyframes btnSnowSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.btn-snowflake {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: btnSnowSpin 9s linear infinite;
+  transform-origin: center center;
+  line-height: 1;
+  vertical-align: middle;
+}

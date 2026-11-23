@@ -95,6 +95,7 @@ export default function CheckoutClient() {
   const [delivery, setDelivery]     = useState('nova_poshta');
   const [payment, setPayment]       = useState('liqpay');
   const [notes, setNotes]           = useState('');
+  const [includePostcard, setIncludePostcard] = useState(false);
   const [infoModal, setInfoModal]   = useState({ isOpen: false, title: '', type: '', src: '' });
 
   // --- Phone Formatting (Mask is handled by component internally) ---
@@ -342,6 +343,7 @@ export default function CheckoutClient() {
         delivery_method: delivery,
         payment_method:  payment,
         notes:           notes.trim() || null,
+        include_postcard: Boolean(includePostcard),
       }).select('order_number').single();
 
       const dbTime = performance.now();
@@ -412,6 +414,7 @@ export default function CheckoutClient() {
                 delivery_method: delivery,
                 payment_method: payment,
                 notes: notes.trim() || null,
+                include_postcard: Boolean(includePostcard),
                 created_at: new Date().toISOString()
               },
               timestamp: new Date().toISOString()
@@ -997,6 +1000,7 @@ export default function CheckoutClient() {
 
                 {/* 6. Кнопка "Підтвердити замовлення" (мобілка) */}
                 <div className="mobile-submit-container" style={{ margin: '1rem 0' }}>
+                  <PostcardOption value={includePostcard} onChange={setIncludePostcard} namePrefix="mobile" />
                   {vacationMode?.enabled && (
                     <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl" style={{ margin: '0 0.5rem 1rem' }}>
                       <label className="flex items-start gap-3 cursor-pointer">
@@ -1134,6 +1138,8 @@ export default function CheckoutClient() {
                         ))}
                       </div>
                       <div style={{ padding: '1rem 1.5rem 1.5rem', background: '#faf9f6' }}>
+                        <PostcardOption value={includePostcard} onChange={setIncludePostcard} namePrefix="desktop" />
+
                         {/* Dynamic Delivery Message for Desktop */}
                         <div style={{ 
                           marginBottom: '0.5rem', 
@@ -1307,5 +1313,68 @@ const CheckoutInput = forwardRef(({ label, onClear, ...props }, ref) => {
     </div>
   );
 });
+
+function PostcardOption({ value, onChange, namePrefix }) {
+  return (
+    <div style={{
+      background: 'rgba(82, 79, 37, 0.03)',
+      borderRadius: '16px',
+      border: '1px solid rgba(82, 79, 37, 0.1)',
+      padding: '1rem 1.15rem',
+      marginBottom: '1rem',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+        <img
+          src="/images/winter_gift_box.png"
+          alt="Святкова коробка"
+          style={{ width: '32px', height: '32px', objectFit: 'contain', flexShrink: 0 }}
+        />
+        <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 600, color: '#524f25', lineHeight: 1.35 }}>
+          Для малюків, народжених взимку, — листівка в подарунок
+        </h3>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          cursor: 'pointer',
+          fontSize: '0.84rem',
+          color: '#524f25',
+          fontWeight: value ? 600 : 400,
+          userSelect: 'none',
+        }}>
+          <input
+            type="radio"
+            name={`postcard_${namePrefix}`}
+            checked={value === true}
+            onChange={() => onChange(true)}
+            style={{ accentColor: '#524f25', width: '16px', height: '16px', cursor: 'pointer' }}
+          />
+          <span>Так, додайте листівку</span>
+        </label>
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.6rem',
+          cursor: 'pointer',
+          fontSize: '0.84rem',
+          color: '#524f25',
+          fontWeight: !value ? 600 : 400,
+          userSelect: 'none',
+        }}>
+          <input
+            type="radio"
+            name={`postcard_${namePrefix}`}
+            checked={value === false}
+            onChange={() => onChange(false)}
+            style={{ accentColor: '#524f25', width: '16px', height: '16px', cursor: 'pointer' }}
+          />
+          <span>Ні, дякую</span>
+        </label>
+      </div>
+    </div>
+  );
+}
 
 CheckoutInput.displayName = 'CheckoutInput';

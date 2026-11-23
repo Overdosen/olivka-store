@@ -13,6 +13,7 @@ import giftIcon from '../assets/icons/gift.png';
 import InfoModal from '../components/InfoModal';
 import BlogPreviewSection from '../components/blog/BlogPreviewSection';
 import StoreReviews from '../components/StoreReviews';
+import WinterBannerOverlay from '../components/WinterBannerOverlay';
 
 function ProductCard({ product }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -71,6 +72,7 @@ export default function HomeClient({ blogPosts = [] }) {
   const comboCarouselRef = useRef(null);
   const outfitCarouselRef = useRef(null);
   const [activeFeature, setActiveFeature] = useState(null);
+  const [isWinter, setIsWinter] = useState(false);
 
   const features = [
     {
@@ -163,6 +165,26 @@ export default function HomeClient({ blogPosts = [] }) {
     }
   }, [activeGender]);
 
+  // ── Winter banner mode ──────────────────────────────────────────────────────
+  useEffect(() => {
+    async function fetchWinterMode() {
+      try {
+        const { data } = await supabase
+          .from('global_settings')
+          .select('value')
+          .eq('id', 'winter_banner_mode')
+          .single();
+        if (data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          setIsWinter(!!parsed?.enabled);
+        }
+      } catch {
+        // Якщо запис ще не створено — просто залишаємо false
+      }
+    }
+    fetchWinterMode();
+  }, []);
+
   // Фільтруємо outfit-товари за активним гендером
   const filteredOutfitProducts = outfitProducts.filter(p =>
     activeGender === 'boy'
@@ -204,7 +226,7 @@ export default function HomeClient({ blogPosts = [] }) {
   return (
     <main>
       {/* Головна секція (Hero) */}
-      <section className="hero" style={{
+      <section className={`hero${isWinter ? ' winter-mode' : ''}`} style={{
         position: 'relative',
         overflow: 'visible', /* Тепер дівчинка не буде обрізана знизу */
         height: 'auto',
@@ -212,7 +234,7 @@ export default function HomeClient({ blogPosts = [] }) {
       }}>
 
         {/* Mobile animated banner */}
-        <div className="mobile-only mobile-banner-wrap">
+        <div className="mobile-only mobile-banner-wrap" style={{ position: 'relative' }}>
           {/* Background */}
           <Image
             src="/images/emptybanner.png"
@@ -261,7 +283,13 @@ export default function HomeClient({ blogPosts = [] }) {
               transition={{ duration: 1.0, delay: 0.2 }}
               style={{ width: '100%', height: '100%', position: 'relative' }}
             >
-              <Image src="/images/leleka.png" alt="Stork" fill priority style={{ objectFit: 'contain', objectPosition: 'right top' }} />
+              <Image
+                src={isWinter ? '/images/leleka_winter.png' : '/images/leleka.png'}
+                alt="Stork"
+                fill
+                priority
+                style={{ objectFit: 'contain', objectPosition: 'right top' }}
+              />
             </motion.div>
           </div>
 
@@ -282,9 +310,12 @@ export default function HomeClient({ blogPosts = [] }) {
               transition={{ duration: 1.0, delay: 0.3 }}
               style={{ width: '100%', height: '100%', position: 'relative' }}
             >
-              <Image src="/images/girl.png" alt="Girl" fill priority style={{ objectFit: 'contain', objectPosition: 'center bottom' }} />
+              <Image src={isWinter ? "/images/girl_winter.png" : "/images/girl.png"} alt="Girl" fill priority style={{ objectFit: 'contain', objectPosition: 'center bottom' }} />
             </motion.div>
           </div>
+
+          {/* ❄ Winter overlay — mobile */}
+          {isWinter && <WinterBannerOverlay />}
         </div>
 
         <div className="desktop-only" style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
@@ -339,7 +370,7 @@ export default function HomeClient({ blogPosts = [] }) {
               style={{ width: '100%', height: '100%', position: 'relative' }}
             >
               <Image
-                src="/images/girl.png"
+                src={isWinter ? '/images/girl_winter.png' : '/images/girl.png'}
                 alt="Girl"
                 fill
                 priority
@@ -367,7 +398,7 @@ export default function HomeClient({ blogPosts = [] }) {
               style={{ width: '100%', height: '100%', position: 'relative' }}
             >
               <Image
-                src="/images/leleka.png"
+                src={isWinter ? '/images/leleka_winter.png' : '/images/leleka.png'}
                 alt="Stork"
                 fill
                 priority
@@ -375,6 +406,9 @@ export default function HomeClient({ blogPosts = [] }) {
               />
             </motion.div>
           </div>
+
+          {/* ❄ Winter overlay — desktop */}
+          {isWinter && <WinterBannerOverlay />}
 
         </div>
 
@@ -402,7 +436,23 @@ export default function HomeClient({ blogPosts = [] }) {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="hero-buttons"
           >
-            <Link href="/category/sets" className="btn btn-primary" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', backgroundColor: '#524f25', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Link
+              href="/category/sets"
+              className="btn btn-primary"
+              style={{
+                padding: '0.75rem 2rem',
+                fontSize: '0.9rem',
+                backgroundColor: '#524f25',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {isWinter && (
+                <span className="btn-snowflake" style={{ fontSize: '1.7em', lineHeight: 1, marginRight: '8px' }}>
+                  ❄
+                </span>
+              )}
               Обрати набір
             </Link>
             <Link href="/catalog" className="btn btn-outline" style={{ padding: '0.75rem 2rem', fontSize: '0.9rem', borderColor: '#524f25', color: '#524f25' }}>

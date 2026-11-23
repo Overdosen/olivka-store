@@ -443,6 +443,19 @@ export default function OrderDetailPage() {
     setUpdating(false);
   }
 
+  async function handleTogglePostcard() {
+    setUpdating(true);
+    const newVal = !order.include_postcard;
+    const { error } = await supabase.from('orders').update({ include_postcard: newVal }).eq('id', id);
+    if (error) {
+      toast.error('Помилка при оновленні статусу листівки');
+    } else {
+      setOrder(prev => ({ ...prev, include_postcard: newVal }));
+      toast.success(newVal ? 'Листівку додано до замовлення' : 'Листівку вимкнено для замовлення');
+    }
+    setUpdating(false);
+  }
+
   const calculateItemCost = (item) => {
     if (item.cost_price !== undefined && item.cost_price !== null && Number(item.cost_price) > 0) {
       return Number(item.cost_price);
@@ -1327,6 +1340,64 @@ export default function OrderDetailPage() {
                 </button>
               </div>
 
+            </div>
+          </div>
+
+          {/* Postcard Option Card */}
+          <div style={{
+            background: order.include_postcard ? '#f0fdf4' : '#fafaf9',
+            borderRadius: '16px',
+            border: order.include_postcard ? '1.5px solid #86efac' : '1px solid rgba(231,229,228,0.8)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              padding: '12px 18px',
+              borderBottom: order.include_postcard ? '1px solid #bbf7d0' : '1px solid #f5f5f4',
+              background: order.include_postcard ? 'linear-gradient(to bottom, #dcfce7, #f0fdf4)' : 'linear-gradient(to bottom, #fafaf9, white)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <img src="/images/winter_gift_box.png" alt="" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                <h2 style={{ fontSize: '14px', fontWeight: 700, color: order.include_postcard ? '#166534' : '#57534e', margin: 0 }}>
+                  Вкладиш у посилку
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={handleTogglePostcard}
+                disabled={updating}
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: order.include_postcard ? '#15803d' : '#78716c',
+                  background: 'white',
+                  border: '1px solid #d1d5db',
+                  padding: '3px 8px',
+                  borderRadius: '6px',
+                  cursor: 'pointer'
+                }}
+                className="hover:bg-stone-50"
+              >
+                {order.include_postcard ? 'Вимкнути листівку' : '+ Додати листівку'}
+              </button>
+            </div>
+            <div style={{ padding: '14px 18px' }}>
+              {order.include_postcard ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '18px' }}>💌</span>
+                  <p style={{ fontSize: '13.5px', color: '#14532d', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+                    Клієнт обрав святкову листівку у подарунок — обов'язково вкладіть у посилку!
+                  </p>
+                </div>
+              ) : (
+                <p style={{ fontSize: '13px', color: '#a8a29e', margin: 0 }}>
+                  Клієнт не додавав листівку до замовлення.
+                </p>
+              )}
             </div>
           </div>
 

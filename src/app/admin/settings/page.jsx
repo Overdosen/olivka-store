@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {
   Save, Calendar, Globe, AlertTriangle, ShoppingCart,
   Sparkles, ChevronUp, ChevronDown, X, Plus, FolderOpen,
-  Shuffle, Loader2, Bot, RefreshCw, Search
+  Shuffle, Loader2, Bot, RefreshCw, Search, Snowflake
 } from 'lucide-react';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -365,6 +365,8 @@ export default function SettingsPage() {
   });
   const [reindexing, setReindexing] = useState(false);
 
+  const [winterBannerMode, setWinterBannerMode] = useState({ enabled: false });
+
   const [allCategories, setAllCategories] = useState([]);
 
   // ── Load ──────────────────────────────────────────────────────────────────
@@ -392,6 +394,14 @@ export default function SettingsPage() {
           setAiSearchSettings(p => ({ ...p, ...parsed }));
         }
         setAllCategories(catRes.data || []);
+
+        // Winter banner mode
+        const { data: winterRes } = await supabase
+          .from('global_settings').select('value').eq('id', 'winter_banner_mode').single();
+        if (winterRes?.value) {
+          const parsed = typeof winterRes.value === 'string' ? JSON.parse(winterRes.value) : winterRes.value;
+          setWinterBannerMode(p => ({ ...p, ...parsed }));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -405,14 +415,16 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         supabase.from('global_settings').upsert({ id: 'vacation_mode', value: JSON.stringify(vacationMode) }),
         supabase.from('global_settings').upsert({ id: 'related_products_settings', value: JSON.stringify(relatedSettings) }),
         supabase.from('global_settings').upsert({ id: 'ai_search_settings', value: JSON.stringify(aiSearchSettings) }),
+        supabase.from('global_settings').upsert({ id: 'winter_banner_mode', value: JSON.stringify(winterBannerMode) }),
       ]);
       if (r1.error) throw r1.error;
       if (r2.error) throw r2.error;
       if (r3.error) throw r3.error;
+      if (r4.error) throw r4.error;
       toast.success('Налаштування збережено');
     } catch (e) {
       toast.error('Помилка збереження');
@@ -540,6 +552,33 @@ export default function SettingsPage() {
 
       {/* ── SECTIONS ──────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+        {/* ════════════════════════════════════════════════════════════════════
+            БЛОК: ЗИМОВИЙ / НОВОРІЧНИЙ БАНЕР
+        ════════════════════════════════════════════════════════════════════ */}
+        <SectionCard
+          icon={Snowflake}
+          iconBg="#e0f2fe"
+          iconColor="#0284c7"
+          title="Зимовий / Новорічний банер"
+          subtitle="Сезонне оформлення головного банера: шапочки для персонажів, сніг, новорічна кнопка"
+          badge={
+            winterBannerMode.enabled
+              ? <span style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', background: '#e0f2fe', padding: '2px 8px', borderRadius: '999px', letterSpacing: '0.04em' }}>АКТИВНИЙ</span>
+              : null
+          }
+        >
+          <ToggleRow
+            title="Увімкнути зимовий режим"
+            description={
+              winterBannerMode.enabled
+                ? 'Увімкнено: святкові шапочки на персонажах (зайчик у шапці Санти), ніжний сніг та темно-синя новорічна кнопка'
+                : 'Вимкнено: стандартний вигляд головного банера магазину'
+            }
+            checked={winterBannerMode.enabled}
+            onChange={val => setWinterBannerMode(p => ({ ...p, enabled: val }))}
+          />
+        </SectionCard>
 
         {/* ════════════════════════════════════════════════════════════════════
             БЛОК 1: ВІДПУСТКА
