@@ -18,8 +18,9 @@ const SnowCanvas = memo(function SnowCanvas() {
     };
     resize();
 
-    // 130 сніжинок
-    const FLAKES = 130;
+    // 130 на десктопі, 65 на мобільних
+    const isMobile = window.innerWidth < 768;
+    const FLAKES = isMobile ? 65 : 130;
     const flakes = Array.from({ length: FLAKES }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
