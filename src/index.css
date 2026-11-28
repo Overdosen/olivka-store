@@ -166,6 +166,10 @@ button {
   .mobile-only {
     display: none !important;
   }
+
+  .desktop-only {
+    display: block !important;
+  }
 }
 
 /* Buttons */
@@ -362,10 +366,12 @@ button {
   flex-wrap: wrap;
 }
 
-/* Tablet Hero adjustments */
-@media (max-width: 1024px) {
+/* Tablet & landscape phone Hero adjustments */
+@media (max-width: 1024px) and (min-width: 640px) {
   .hero-content {
-    max-width: 50%;
+    left: 5%;
+    top: 50%;
+    max-width: 46%;
   }
 }
 
@@ -1653,24 +1659,7 @@ html:has(body.no-scroll) {
   /* Firefox */
 }
 
-/* Media helper classes */
-.mobile-only {
-  display: block;
-}
-
-.desktop-only {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .mobile-only {
-    display: none;
-  }
-
-  .desktop-only {
-    display: block;
-  }
-}
+/* Media helper classes (controlled by 640px breakpoints above) */
 
 /* ---------------------------------------------------------
    BLOG & ARTICLES

@@ -319,7 +319,7 @@ export default function HomeClient({ blogPosts = [] }) {
         </div>
 
         <div className="desktop-only" style={{ position: 'relative', width: '100%', minHeight: '350px' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '1920 / 600' }}>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '1920 / 600', minHeight: '350px' }}>
             <Image
               src="/images/emptybanner.png"
               alt="Hero Background"
