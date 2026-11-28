@@ -160,8 +160,8 @@ export default function Header() {
                   src="/images/logo_winter.png"
                   alt="store.olivka"
                   className="logo-winter-img"
-                  width={180}
-                  height={64}
+                  width={260}
+                  height={93}
                   priority
                 />
               ) : (

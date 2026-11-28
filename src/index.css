@@ -260,15 +260,17 @@ button {
 }
 
 .logo-winter-img {
-  height: 3.1rem;
+  height: 4.2rem;
   width: auto;
+  margin: -0.6rem 0;
   display: block;
   object-fit: contain;
 }
 
 @media (max-width: 767px) {
   .logo-winter-img {
-    height: 2.3rem;
+    height: 2.8rem;
+    margin: -0.3rem 0;
   }
 }
 
