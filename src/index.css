@@ -259,6 +259,19 @@ button {
   }
 }
 
+.logo-winter-img {
+  height: 3.1rem;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+@media (max-width: 767px) {
+  .logo-winter-img {
+    height: 2.3rem;
+  }
+}
+
 .nav {
   display: none;
 }

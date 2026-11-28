@@ -42,6 +42,7 @@ export default function Header() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [aiSearchEnabled, setAiSearchEnabled] = useState(true);
+  const [isWinter, setIsWinter] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [authParams, setAuthParams] = useState({ email: '', password: '' });
 
@@ -114,8 +115,26 @@ export default function Header() {
       }
     }
 
+    async function fetchWinterMode() {
+      try {
+        const { data } = await supabase
+          .from('global_settings')
+          .select('value')
+          .eq('id', 'winter_banner_mode')
+          .single();
+
+        if (data?.value) {
+          const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+          setIsWinter(!!parsed?.enabled);
+        }
+      } catch {
+        // Fallback to false if setting does not exist yet
+      }
+    }
+
     fetchCategories();
     fetchAiSearchSetting();
+    fetchWinterMode();
   }, [isMounted]);
 
   if (!isMounted) {
@@ -136,8 +155,21 @@ export default function Header() {
             </button>
 
             <Link href="/" className="logo">
-              <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear" width={45} height={45} priority />
-              store.olivka
+              {isWinter ? (
+                <Image
+                  src="/images/logo_winter.png"
+                  alt="store.olivka"
+                  className="logo-winter-img"
+                  width={180}
+                  height={64}
+                  priority
+                />
+              ) : (
+                <>
+                  <Image src={bearImg} alt="Olivka Bear Logo" className="logo-bear" width={45} height={45} priority />
+                  store.olivka
+                </>
+              )}
             </Link>
           </div>
 
